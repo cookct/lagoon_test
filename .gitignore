@@ -1,0 +1,82 @@
+# API keys and secrets
+app_config.json
+
+# SSL certificates (generated locally)
+cert.pem
+key.pem
+
+# Session state and personal data
+.gondola_index.json
+.gondola_knowledge/
+.gondola_diagnostics.json
+.venice_memory.json
+recovered_chat.txt
+installed_models.json
+
+# Dev-only docs
+CLAUDE.md
+RELEASE_PLAN.md
+VENICE_IMAGE_DOCS.md
+VENICE_IMAGE_KB.md
+VENICE_MODEL_PRICING.md
+reddit_localllama.md
+installer/BUILD.md
+
+# Test artifacts
+test_write_file.txt
+test_google_api.py
+test_import.py
+
+# Screenshots
+images/Screenshot*
+images/*
+!images/matrix1.png
+!images/matrix1_twinkle.gif
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Chat history and user data
+chats/
+configs/*
+!configs/Nathan Young.json
+!configs/Hermione Granger.json
+!configs/Lagoon Assistant.json
+!configs/.lore/
+configs/.lore/*
+!configs/.lore/Hermione Granger.lore.json
+*.swp
+
+# Generated avatars
+avatars/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Model cache (large files)
+.models_cache/
+
+# JS tooling
+node_modules/
+claude_code_tool/
+
+# Auto-backups
+.venice_backups/
+.js/configs/
+*.bak
+*.backup
+lagoon_macros.json
+sample_configs/
+css/themes_abyss*.css
+css/themes.pdf

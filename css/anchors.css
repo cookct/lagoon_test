@@ -1,0 +1,323 @@
+/* ── Anchors Modal ──────────────────────────────────────────────────────── */
+
+.anchors-modal-content {
+    width: 600px;
+    max-width: 95vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+
+.anchors-scroll-body {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 80px;
+}
+
+.anchors-entries-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.anchors-entry {
+    background: var(--bg-secondary, #1e1e2e);
+    border: 1px solid var(--border, #333);
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.anchors-entry.disabled {
+    opacity: 0.45;
+}
+
+.lore-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.lore-entry-keywords {
+    font-size: 0.75rem;
+    color: var(--accent, #7c9ef8);
+    font-family: monospace;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lore-entry-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.lore-entry-content {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #aaa);
+    white-space: pre-wrap;
+    max-height: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.lore-btn {
+    background: none;
+    border: 1px solid var(--border, #333);
+    border-radius: 4px;
+    color: var(--text-secondary, #aaa);
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.lore-btn:hover {
+    background: var(--bg-hover, #2a2a3e);
+    color: var(--text, #fff);
+}
+
+.lore-btn.danger:hover {
+    background: #5c1a1a;
+    color: #ff8888;
+    border-color: #883333;
+}
+
+
+/* ── Anchors Entry Editor ───────────────────────────────────────────────── */
+
+.lore-entry-editor {
+    background: var(--bg-secondary, #1e1e2e);
+    border: 1px solid var(--accent, #7c9ef8);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lore-editor-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* ── Author's Note in Config Modal ──────────────────────────────────────── */
+
+.input-small-num {
+    width: 52px;
+    padding: 3px 5px;
+    background: var(--bg-secondary, #1e1e2e);
+    border: 1px solid var(--border, #333);
+    border-radius: 4px;
+    color: var(--text, #fff);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.field-label-muted {
+    font-size: 0.72rem;
+    color: var(--text-muted, #888);
+}
+
+/* ── Author's Note Session Panel (right sidebar) ─────────────────────────── */
+
+#writing-tools-panel .tool-section-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#session-author-note {
+    width: 100%;
+    resize: vertical;
+    font-size: 0.78rem;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-main);
+    padding: 6px 8px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.an-depth-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tool-btn-sm {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.tool-btn-sm:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+}
+
+.tool-btn-sm.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.tool-btn-sm.primary:hover {
+    filter: brightness(1.1);
+}
+
+/* ── Cost Tracking Panel ─────────────────────────────────────────────────── */
+
+.cost-tracking-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cost-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.cost-label {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.cost-value {
+    font-size: 0.78rem;
+    color: var(--text-main);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cost-session {
+    color: var(--ansi-cyan);
+    font-weight: 600;
+}
+
+.cost-tokens {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    opacity: 0.6;
+    line-height: 1.4;
+    margin-top: 2px;
+}
+
+/* ── Anchor Awareness ──────────────────────────────────────────────────────── */
+
+.lore-entry-unaware {
+    opacity: 0.7;
+    border-color: var(--text-muted, #555);
+    font-style: italic;
+}
+
+.lore-unaware-badge {
+    font-size: 0.65rem;
+    color: var(--text-muted, #888);
+    background: var(--bg, #111);
+    border: 1px solid var(--border, #333);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    font-family: inherit;
+    font-style: normal;
+    vertical-align: middle;
+}
+
+/* ── Anchor Update Toast ───────────────────────────────────────────────────── */
+
+.lore-toast {
+    position: fixed;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-secondary, #1e1e2e);
+    border: 1px solid #d4a820;
+    color: #d4a820;
+    font-size: 0.8rem;
+    padding: 7px 16px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.6s ease-out, bottom 0.6s ease-out;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+}
+
+.lore-toast.lore-toast-visible {
+    opacity: 1;
+    bottom: 80px;
+}
+
+.lore-toast.lore-toast-exit {
+    opacity: 0;
+    bottom: 80px;
+    transition: opacity 0.35s ease-in;
+}
+
+/* ── Toast variants ─────────────────────────────────────────────────────────── */
+
+.lore-toast.lore-toast-error {
+    border-color: var(--ansi-red, #f38ba8);
+    color: var(--ansi-red, #f38ba8);
+}
+
+/* ── Lore Signal Badge (on assistant message) ──────────────────────────────── */
+
+.lore-signal-badge {
+    font-size: 0.62rem;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: default;
+}
+
+.lore-signal-ok {
+    color: #6db86d;
+    border-color: #6db86d55;
+    background: #6db86d11;
+}
+
+.lore-signal-bad {
+    color: var(--ansi-red, #f38ba8);
+    border-color: #f38ba855;
+    background: #f38ba811;
+}
+
+/* ── E2EE Badge ─────────────────────────────────────────────────────────────── */
+
+.e2ee-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    margin-right: 6px;
+    vertical-align: middle;
+    opacity: 0.75;
+    cursor: default;
+}

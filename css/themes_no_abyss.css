@@ -1,0 +1,822 @@
+/* --- Themes --- */
+
+/* Hacker Console (Default) */
+.theme-hacker body,
+body.theme-hacker {
+    background-color: var(--bg-dark) !important;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../images/matrix1.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-attachment: fixed !important;
+}
+
+.theme-hacker #matrix-rain,
+body.theme-hacker #matrix-rain {
+    display: none;
+}
+
+/* Matrix Console - animated canvas */
+.theme-matrix body,
+body.theme-matrix {
+    background-color: #020812;
+    background-image: none;
+}
+
+.theme-matrix #matrix-rain,
+body.theme-matrix #matrix-rain {
+    display: block;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Dark Mode (Pure Black & Grey) */
+.theme-dark body,
+body.theme-dark {
+    background-color: #0a0a0a;
+    background-image: none;
+}
+
+.theme-dark #matrix-rain {
+    display: none;
+}
+
+/* 90s Retro Theme */
+.theme-90s body,
+body.theme-90s {
+    background-color: #000000;
+    background-image: url('../images/90s-background.png'), linear-gradient(45deg, #ff00ff, #00ffff, #ffff00);
+    background-size: 200px 200px, auto;
+    background-position: center;
+    background-attachment: fixed;
+    font-family: 'Comic Sans MS', 'Arial', sans-serif;
+}
+
+.theme-90s .sidebar-left,
+.theme-90s .sidebar-right,
+.theme-90s #chat-wrapper,
+.theme-90s #chat-input-container {
+    border: 4px solid #ff00ff;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    box-shadow: 0 0 10px #00ffff, 0 0 20px #ff00ff;
+    font-family: 'Comic Sans MS', 'Arial', sans-serif;
+}
+
+.theme-90s .message {
+    border: 3px dashed #ffff00;
+    border-radius: 0;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    font-family: var(--chat-font-family, 'Comic Sans MS', 'Arial', sans-serif);
+    font-size: var(--chat-font-size, 16px);
+    line-height: var(--chat-line-height, 1.5);
+}
+
+.theme-90s .message.user {
+    border-color: #00ffff;
+}
+
+.theme-90s .message.assistant {
+    border-color: #ff00ff;
+}
+
+.theme-90s button,
+.theme-90s .tab {
+    background: linear-gradient(45deg, #ff00ff, #00ffff);
+    color: #000000;
+    border: 3px solid #ffff00;
+    border-radius: 0;
+    font-weight: bold;
+    text-shadow: 2px 2px 0 #ff00ff;
+    font-family: 'Comic Sans MS', 'Arial', sans-serif;
+}
+
+.theme-90s button:hover,
+.theme-90s .tab:hover {
+    background: linear-gradient(45deg, #00ffff, #ff00ff);
+    box-shadow: 0 0 15px #ffff00;
+}
+
+.theme-90s #matrix-rain {
+    display: none;
+}
+
+.theme-90s .visitor-counter {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background-color: #000000;
+    color: #00ff00;
+    padding: 5px 10px;
+    border: 2px solid #00ff00;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    z-index: 1000;
+}
+
+.theme-90s .under-construction {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+}
+
+.theme-90s .best-viewed {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background-color: #000000;
+    color: #ff00ff;
+    padding: 5px 10px;
+    border: 2px solid #ff00ff;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    z-index: 1000;
+}
+
+/* Glassmorphism Theme - Ultimate Cutting Edge */
+.theme-glassmorphism body,
+body.theme-glassmorphism {
+    /* Deep, rich aurora background */
+    background: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+    background-color: #0f0f13;
+    background-attachment: fixed;
+    color: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    --accent-glow: 0 0 20px rgba(139, 92, 246, 0.5);
+    --text-main: #ffffff;
+    --text-dim: rgba(255, 255, 255, 0.6);
+}
+
+.theme-glassmorphism #matrix-rain {
+    display: none;
+}
+
+/* Glassmorphic Panel Base */
+.theme-glassmorphism .sidebar-left,
+.theme-glassmorphism .sidebar-right,
+.theme-glassmorphism .modal-content,
+.theme-glassmorphism .tab-panel {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important; /* Highlight top edge */
+    box-shadow: var(--glass-shadow) !important;
+}
+
+/* Specific border-radius control */
+.theme-glassmorphism .modal-content {
+    border-radius: 24px !important;
+}
+
+.theme-glassmorphism .sidebar-left,
+.theme-glassmorphism .sidebar-right,
+.theme-glassmorphism .tab-panel {
+    border-radius: 0 !important;
+}
+
+/* Sidebar Specifics */
+.theme-glassmorphism .sidebar-left,
+.theme-glassmorphism .sidebar-right {
+    margin: 10px !important;
+    height: calc(100vh - 20px) !important;
+    border-radius: 0 !important;
+}
+
+/* Chat Area */
+.theme-glassmorphism #chat-wrapper {
+    background: transparent !important; /* Let body gradient show through */
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.theme-glassmorphism #chat-input-container {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 20px !important;
+    margin: 0 20px 20px 20px !important;
+    box-shadow: var(--glass-shadow) !important;
+    padding: 8px 20px !important; /* Shrunk height */
+}
+
+.theme-glassmorphism #chat-form {
+    align-items: center !important;
+}
+
+.theme-glassmorphism #message-input {
+    height: 38px !important; /* Match sidebar items height */
+    min-height: 38px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    padding-right: 45px !important;
+    border-radius: 10px !important;
+}
+
+.theme-glassmorphism #send-btn {
+    bottom: 50% !important;
+    transform: translateY(50%) !important;
+    border-radius: 8px !important;
+    height: 28px !important;
+    width: 28px !important;
+    right: 10px !important;
+}
+
+/* Messages */
+.theme-glassmorphism .message {
+    background: rgba(20, 20, 25, 0.6) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 18px !important;
+    padding: 16px 20px !important;
+    margin-bottom: 16px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    color: #eeeeee !important;
+    font-size: var(--chat-font-size, 0.95rem);
+    line-height: var(--chat-line-height, 1.6);
+}
+
+.theme-glassmorphism .message.user {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%) !important;
+    border: 1px solid rgba(168, 85, 247, 0.3) !important;
+    border-bottom-right-radius: 4px !important;
+}
+
+.theme-glassmorphism .message.assistant {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-bottom-left-radius: 4px !important;
+    margin-right: 10% !important;
+}
+
+/* Inputs & Textareas */
+.theme-glassmorphism input,
+.theme-glassmorphism textarea,
+.theme-glassmorphism select {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: white !important;
+    padding: 12px 16px !important;
+    transition: all 0.2s ease !important;
+}
+
+.theme-glassmorphism input:focus,
+.theme-glassmorphism textarea:focus,
+.theme-glassmorphism select:focus {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-color: rgba(139, 92, 246, 0.5) !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+    outline: none !important;
+}
+
+/* Buttons */
+.theme-glassmorphism button,
+.theme-glassmorphism .tab-btn {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(4px) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.5px !important;
+}
+
+.theme-glassmorphism .tab-btn {
+    height: 35px !important;
+    margin: 10px 5px !important;
+}
+
+.theme-glassmorphism #send-btn {
+    border-radius: 8px !important;
+    height: 32px !important;
+    width: 32px !important;
+}
+
+.theme-glassmorphism .file-upload-btn,
+.theme-glassmorphism .settings-btn,
+.theme-glassmorphism .export-btn,
+.theme-glassmorphism .image-gen-btn {
+    height: 38px !important;
+    width: 38px !important;
+}
+
+.theme-glassmorphism .sidebar-tabs {
+    height: auto !important; /* Allow height to fit buttons with margin */
+    margin-bottom: 10px !important;
+}
+
+.theme-glassmorphism button:hover,
+.theme-glassmorphism .tab-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    text-shadow: 0 0 8px rgba(255,255,255,0.4) !important;
+}
+
+.theme-glassmorphism .tab-btn.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(168, 85, 247, 0.4) 100%) !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+    color: white !important;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Scrollbars */
+.theme-glassmorphism ::-webkit-scrollbar {
+    width: 8px;
+}
+.theme-glassmorphism ::-webkit-scrollbar-track {
+    background: transparent;
+}
+.theme-glassmorphism ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+.theme-glassmorphism ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Headers & Text */
+.theme-glassmorphism h1, 
+.theme-glassmorphism h2, 
+.theme-glassmorphism h3, 
+.theme-glassmorphism .section-header {
+    color: transparent !important;
+    background: linear-gradient(to right, #fff, #a5b4fc) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px !important;
+}
+
+/* Code Blocks */
+.theme-glassmorphism pre, 
+.theme-glassmorphism code {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 8px !important;
+    color: #e2e8f0 !important;
+}
+
+.theme-glassmorphism .options-btn {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 16px;
+    padding: 0 !important;
+    margin: 3px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.theme-glassmorphism .context-menu {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+    padding: 5px !important;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 12px !important;
+}
+
+.theme-glassmorphism .context-menu-item, .theme-glassmorphism .censor-mode-btns .mode-btn {
+    border-radius: 8px !important;
+    margin: 0 !important;
+    background: var(--glass-bg);
+    color: var(--text-main);
+}
+
+.theme-glassmorphism .context-menu-item:hover, .theme-glassmorphism .censor-mode-btns .mode-btn:hover {
+    background: var(--glass-hover);
+}
+
+.theme-glassmorphism .context-menu-item:active, .theme-glassmorphism .censor-mode-btns .mode-btn:active {
+    background: var(--glass-active);
+}
+
+.theme-glassmorphism .censor-mode-btns .mode-btn.active {
+    background: var(--glass-active);
+    color: var(--text-main);
+}
+
+.theme-glassmorphism .context-menu-item {
+    border-radius: 8px !important;
+    margin: 0 !important;
+}
+
+/* Cyberpunk Neon Theme */
+.theme-cyberpunk body,
+body.theme-cyberpunk {
+ /* Deep black with subtle purple undertone */
+ background-color: #0a0a0f;
+ background-image: 
+   repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 0, 255, 0.03) 2px, rgba(255, 0, 255, 0.03) 4px),
+   repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 255, 255, 0.03) 2px, rgba(0, 255, 255, 0.03) 4px),
+   linear-gradient(180deg, #0a0a0f 0%, #1a0a1f 50%, #0a0a0f 100%);
+ background-attachment: fixed;
+ color: #00ffff;
+ font-family: 'Courier New', 'Consolas', monospace;
+ 
+ /* Cyberpunk color variables */
+ --neon-pink: #ff0080;
+ --neon-cyan: #00ffff;
+ --neon-orange: #ff6600;
+ --neon-purple: #b300ff;
+ --neon-yellow: #ffff00;
+ 
+ --bg-dark: #0a0a0f;
+ --bg-darker: #050508;
+ --bg-panel: rgba(20, 10, 30, 0.8);
+ 
+ --text-main: #00ffff;
+ --text-dim: #8800ff;
+ --text-bright: #ffffff;
+ 
+ --border-glow: rgba(255, 0, 128, 0.6);
+ --shadow-neon: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink), 0 0 30px var(--neon-pink);
+}
+
+.theme-cyberpunk #matrix-rain {
+ display: none;
+}
+
+/* Sidebars - Neon bordered panels */
+.theme-cyberpunk .sidebar-left,
+.theme-cyberpunk .sidebar-right {
+ background: var(--bg-panel) !important;
+ border: 2px solid var(--neon-pink) !important;
+ box-shadow: 
+   inset 0 0 20px rgba(255, 0, 128, 0.1),
+   0 0 15px rgba(255, 0, 128, 0.4),
+   0 0 30px rgba(255, 0, 128, 0.2) !important;
+ border-radius: 0 !important;
+}
+
+.theme-cyberpunk .sidebar-left {
+ border-left: 4px solid var(--neon-cyan) !important;
+ box-shadow: 
+   inset 0 0 20px rgba(0, 255, 255, 0.1),
+   -5px 0 15px rgba(0, 255, 255, 0.3) !important;
+}
+
+.theme-cyberpunk .sidebar-right {
+ border-right: 4px solid var(--neon-orange) !important;
+ box-shadow: 
+   inset 0 0 20px rgba(255, 102, 0, 0.1),
+   5px 0 15px rgba(255, 102, 0, 0.3) !important;
+}
+
+/* Chat wrapper - transparent to show grid */
+.theme-cyberpunk #chat-wrapper {
+ background: transparent !important;
+ border: none !important;
+}
+
+/* Messages - Neon speech bubbles */
+.theme-cyberpunk .message {
+ background: rgba(10, 10, 20, 0.9) !important;
+ border: 1px solid var(--neon-cyan) !important;
+ border-left: 4px solid var(--neon-cyan) !important;
+ box-shadow: 
+   0 0 10px rgba(0, 255, 255, 0.3),
+   inset 0 0 10px rgba(0, 255, 255, 0.05) !important;
+ color: var(--text-main) !important;
+ padding: 16px 20px !important;
+ margin-bottom: 16px !important;
+ border-radius: 0 12px 12px 0 !important;
+ position: relative;
+}
+
+.theme-cyberpunk .message.user {
+ background: rgba(20, 0, 30, 0.9) !important;
+ border: 1px solid var(--neon-pink) !important;
+ border-right: 4px solid var(--neon-pink) !important;
+ border-left: 1px solid var(--neon-pink) !important;
+ box-shadow: 
+   0 0 10px rgba(255, 0, 128, 0.4),
+   inset 0 0 10px rgba(255, 0, 128, 0.05) !important;
+ color: var(--text-bright) !important;
+ border-radius: 12px 0 0 12px !important;
+ margin-left: 10% !important;
+}
+
+.theme-cyberpunk .message.assistant {
+ border-color: var(--neon-cyan) !important;
+ margin-right: 10% !important;
+}
+
+/* Glitch effect on message hover */
+.theme-cyberpunk .message:hover {
+ animation: glitch 0.3s ease-in-out;
+}
+
+ @keyframes glitch {
+ 0%, 100% { transform: translate(0); }
+ 25% { transform: translate(-2px, 2px); }
+ 50% { transform: translate(2px, -2px); }
+ 75% { transform: translate(-2px, -2px); }
+}
+
+/* Input container - Neon glow */
+.theme-cyberpunk #chat-input-container {
+ background: rgba(10, 10, 20, 0.95) !important;
+ border: 2px solid var(--neon-purple) !important;
+ border-radius: 0 !important;
+ box-shadow: 
+   0 -5px 30px rgba(179, 0, 255, 0.4),
+   inset 0 0 20px rgba(179, 0, 255, 0.1) !important;
+ padding: 12px 20px !important;
+}
+
+.theme-cyberpunk #message-input {
+ background: rgba(0, 0, 0, 0.6) !important;
+ border: 1px solid var(--neon-cyan) !important;
+ border-radius: 0 !important;
+ color: var(--neon-cyan) !important;
+ padding: 12px 16px !important;
+ font-family: 'Courier New', monospace !important;
+ text-shadow: 0 0 5px rgba(0, 255, 255, 0.5) !important;
+}
+
+.theme-cyberpunk #message-input:focus {
+ border-color: var(--neon-pink) !important;
+ box-shadow: 
+   0 0 10px var(--neon-pink),
+   inset 0 0 10px rgba(255, 0, 128, 0.1) !important;
+ outline: none !important;
+ text-shadow: 0 0 8px rgba(255, 0, 128, 0.6) !important;
+}
+
+/* Buttons - Neon outlined */
+.theme-cyberpunk button,
+.theme-cyberpunk .tab-btn {
+ background: rgba(0, 0, 0, 0.8) !important;
+ border: 2px solid var(--neon-pink) !important;
+ border-radius: 0 !important;
+ color: var(--neon-pink) !important;
+ text-transform: uppercase !important;
+ font-weight: bold !important;
+ letter-spacing: 1px !important;
+ transition: all 0.2s ease !important;
+ text-shadow: 0 0 5px var(--neon-pink) !important;
+ position: relative !important;
+ overflow: hidden !important;
+}
+
+.theme-cyberpunk button:before,
+.theme-cyberpunk .tab-btn:before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: -100%;
+ width: 100%;
+ height: 100%;
+ background: linear-gradient(90deg, transparent, rgba(255, 0, 128, 0.4), transparent);
+ transition: left 0.5s ease;
+}
+
+.theme-cyberpunk button:hover,
+.theme-cyberpunk .tab-btn:hover {
+ background: rgba(255, 0, 128, 0.2) !important;
+ box-shadow:
+   0 0 10px var(--neon-pink),
+   0 0 20px var(--neon-pink),
+   inset 0 0 10px rgba(255, 0, 128, 0.3) !important;
+ transform: translateY(-2px) !important;
+ text-shadow: 0 0 10px var(--neon-pink) !important;
+}
+
+/* ================================================
+   CYBERPUNK 2077 THEME
+   Based on: github.com/gwannon/Cyberpunk-2077-theme-css
+   Yellow background, black elements, subtle glitch
+   ================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Advent+Pro:wght@400;600;700&display=swap');
+
+.theme-cyberpunk2077 body,
+body.theme-cyberpunk2077 {
+  --cp-yellow: #f9f002;
+  --cp-black: #000000;
+  --cp-red: #ff003c;
+  --cp-cyan: #00f0ff;
+  --cp-border: #8ae66e;
+  --glitch-duration: 0.9s;
+
+  background-color: var(--cp-yellow) !important;
+  background-image: none !important;
+  color: var(--cp-black);
+  font-family: 'Advent Pro', -apple-system, sans-serif;
+}
+
+.theme-cyberpunk2077 #matrix-rain {
+  display: none;
+}
+
+/* Sidebars - Black panels */
+.theme-cyberpunk2077 .sidebar-left,
+.theme-cyberpunk2077 .sidebar-right {
+  background: var(--cp-black) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: var(--cp-yellow) !important;
+}
+
+.theme-cyberpunk2077 .sidebar-left {
+  border-right: 3px solid var(--cp-border) !important;
+}
+
+.theme-cyberpunk2077 .sidebar-right {
+  border-left: 3px solid var(--cp-border) !important;
+}
+
+/* Chat area - Yellow */
+.theme-cyberpunk2077 #chat-wrapper {
+  background: var(--cp-yellow) !important;
+  border: none !important;
+}
+
+.theme-cyberpunk2077 #chat-messages {
+  background: var(--cp-yellow) !important;
+}
+
+/* Messages - Clean black boxes */
+.theme-cyberpunk2077 .message {
+  background: var(--cp-black) !important;
+  border: none !important;
+  border-left: 4px solid var(--cp-border) !important;
+  border-radius: 0 !important;
+  color: var(--cp-yellow) !important;
+  padding: 16px 20px !important;
+  margin-bottom: 12px !important;
+}
+
+.theme-cyberpunk2077 .message.user {
+  background: var(--cp-red) !important;
+  border-left-color: var(--cp-yellow) !important;
+  color: #fff !important;
+}
+
+/* Glitch on hover */
+.theme-cyberpunk2077 .message:hover {
+  animation: cp2077glitch var(--glitch-duration) infinite linear;
+}
+
+@keyframes cp2077glitch {
+  0%, 59%, 71%, 100% { transform: none; }
+  60% { transform: skew(3deg) translateX(2px); }
+  70% { transform: skew(-2deg) translateX(-2px); }
+}
+
+/* Input container */
+.theme-cyberpunk2077 #chat-input-container {
+  background: var(--cp-black) !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.theme-cyberpunk2077 #message-input {
+  background: var(--cp-yellow) !important;
+  border: 2px solid var(--cp-black) !important;
+  border-radius: 0 !important;
+  color: var(--cp-black) !important;
+  font-family: 'Advent Pro', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.theme-cyberpunk2077 #message-input:focus {
+  border-color: var(--cp-red) !important;
+  outline: none !important;
+}
+
+/* Buttons - Red */
+.theme-cyberpunk2077 button,
+.theme-cyberpunk2077 .tab-btn {
+  background: var(--cp-red) !important;
+  border: none !important;
+  border-right: 2px solid var(--cp-border) !important;
+  border-radius: 0 !important;
+  color: #fff !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+  letter-spacing: 1px !important;
+  font-family: 'Advent Pro', sans-serif !important;
+}
+
+.theme-cyberpunk2077 button:hover,
+.theme-cyberpunk2077 .tab-btn:hover {
+  animation: cp2077glitch var(--glitch-duration) infinite linear;
+}
+
+.theme-cyberpunk2077 .tab-btn.active {
+  background: var(--cp-black) !important;
+  color: var(--cp-yellow) !important;
+}
+
+/* Section headers */
+.theme-cyberpunk2077 .section-header {
+  color: var(--cp-yellow) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid var(--cp-yellow) !important;
+  padding-bottom: 8px !important;
+}
+
+/* Scrollbars */
+.theme-cyberpunk2077 ::-webkit-scrollbar {
+  width: 10px;
+  background: var(--cp-yellow);
+}
+
+.theme-cyberpunk2077 ::-webkit-scrollbar-track {
+  background: var(--cp-yellow);
+}
+
+.theme-cyberpunk2077 ::-webkit-scrollbar-thumb {
+  background: var(--cp-red);
+  border-bottom: 2px solid var(--cp-border);
+  border-right: 2px solid var(--cp-border);
+}
+
+.theme-cyberpunk2077 ::-webkit-scrollbar-thumb:hover {
+  background: #ff6600;
+}
+
+/* Code blocks */
+.theme-cyberpunk2077 pre,
+.theme-cyberpunk2077 code {
+  background: var(--cp-black) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: var(--cp-cyan) !important;
+}
+
+/* Modal styling */
+.theme-cyberpunk2077 .modal-content {
+  background: var(--cp-black) !important;
+  border: 3px solid var(--cp-border) !important;
+  border-radius: 0 !important;
+  color: var(--cp-yellow) !important;
+}
+
+/* Links */
+.theme-cyberpunk2077 a {
+  color: var(--cp-cyan) !important;
+}
+
+/* Headings with blinking cursor */
+.theme-cyberpunk2077 h1,
+.theme-cyberpunk2077 h2,
+.theme-cyberpunk2077 h3,
+.theme-cyberpunk2077 h4 {
+  color: var(--cp-yellow) !important;
+  font-weight: 600 !important;
+}
+
+.theme-cyberpunk2077 h1::after,
+.theme-cyberpunk2077 h2::after {
+  content: '_';
+  animation: cp2077blink var(--glitch-duration) infinite linear;
+}
+
+@keyframes cp2077blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* Form inputs */
+.theme-cyberpunk2077 input,
+.theme-cyberpunk2077 textarea,
+.theme-cyberpunk2077 select {
+  background: var(--cp-yellow) !important;
+  border: 2px solid var(--cp-black) !important;
+  border-radius: 0 !important;
+  color: var(--cp-black) !important;
+}
+
+.theme-cyberpunk2077 input:focus,
+.theme-cyberpunk2077 textarea:focus,
+.theme-cyberpunk2077 select:focus {
+  border-color: var(--cp-red) !important;
+  outline: none !important;
+}
+
+.theme-cyberpunk2077 select option {
+  background: var(--cp-black);
+  color: var(--cp-yellow);
+}
+
+

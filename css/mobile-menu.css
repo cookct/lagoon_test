@@ -1,0 +1,637 @@
+/**
+ * Mobile Menu Drawer Styles
+ */
+
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 100;
+}
+
+.mobile-menu-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 80vw;
+  background: var(--bg-primary, #1a1a1a);
+  border-right: 1px solid var(--border-color, #333);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+}
+
+.mobile-menu-drawer.active {
+  transform: translateX(0);
+}
+
+/* Menu header */
+.mobile-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.mobile-menu-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin: 0;
+}
+
+.mobile-menu-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary, #fff);
+  border-radius: 8px;
+}
+
+.mobile-menu-close svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+/* Menu content container */
+.mobile-menu-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tabs */
+.mobile-menu-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color, #333);
+  background: var(--bg-secondary, #1a1a1a);
+}
+
+.mobile-menu-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary, #888);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-tab.active {
+  color: var(--accent-color, #007AFF);
+  border-bottom-color: var(--accent-color, #007AFF);
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.mobile-menu-tab svg {
+  opacity: 0.7;
+}
+
+.mobile-menu-tab.active svg {
+  opacity: 1;
+}
+
+/* Panels */
+.mobile-menu-panel {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mobile-menu-panel.active {
+  display: block;
+}
+
+/* Chat List */
+.mobile-chat-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-chat-list-item {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color, #333);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.mobile-chat-list-item:hover,
+.mobile-chat-list-item:active {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+}
+
+.mobile-chat-list-item.active {
+  background: rgba(0, 122, 255, 0.1);
+  border-left: 3px solid var(--accent-color, #007AFF);
+}
+
+.mobile-chat-item-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+  margin-bottom: 4px;
+  padding-right: 32px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-chat-item-date {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+}
+
+.mobile-chat-item-delete {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #888);
+  border-radius: 6px;
+  opacity: 0.6;
+}
+
+.mobile-chat-item-delete:hover {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+  opacity: 1;
+}
+
+/* New Chat Button */
+.mobile-new-chat-btn {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(0, 122, 255, 0.1);
+  border: none;
+  border-bottom: 1px solid var(--border-color, #333);
+  color: var(--accent-color, #007AFF);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.mobile-new-chat-btn:active {
+  background: rgba(0, 122, 255, 0.2);
+}
+
+/* Character group */
+.mobile-char-group {
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.mobile-char-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: var(--bg-secondary, #141414);
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease;
+}
+
+.mobile-char-group-header:active {
+  background: var(--bg-hover, rgba(255,255,255,0.05));
+}
+
+.mobile-char-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.mobile-char-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-color, #007AFF);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mobile-char-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-char-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  background: var(--accent-color, #007AFF);
+  border-radius: 10px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+
+.mobile-char-arrow {
+  font-size: 9px;
+  color: var(--text-secondary, #888);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.mobile-char-chat-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-char-chat-list.collapsed {
+  display: none;
+}
+
+/* Nested chat items */
+.mobile-chat-list-item.nested {
+  padding-left: 24px;
+  border-left: 2px solid var(--border-color, #333);
+}
+
+/* Other Chats label */
+.mobile-char-group-label {
+  padding: 8px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary, #888);
+  background: var(--bg-secondary, #141414);
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+/* Section styling for Settings */
+.mobile-menu-section {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.mobile-menu-section:last-child {
+  border-bottom: none;
+}
+
+.mobile-menu-section h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+/* Collapsible sections */
+.mobile-menu-section.collapsible {
+  padding: 0;
+  gap: 0;
+}
+
+.mobile-menu-section .section-header {
+  padding: 14px 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-menu-section .section-header:active {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+}
+
+.mobile-menu-section .collapse-icon {
+  font-size: 10px;
+  color: var(--text-secondary, #888);
+  transition: transform 0.2s ease;
+}
+
+.mobile-menu-section .section-content {
+  padding: 0 20px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Preferences & Toggles */
+.mobile-toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.mobile-voice-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mobile-voice-selection label {
+  font-size: 14px;
+  color: var(--text-secondary, #888);
+}
+
+.mobile-voice-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mobile-select-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-secondary, #0d0d0d);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+.mobile-select-input:focus {
+  border-color: var(--accent-color, #007AFF);
+}
+
+.mobile-toggle-item span {
+  font-size: 15px;
+  color: var(--text-primary, #fff);
+}
+
+.mobile-toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+}
+
+.mobile-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.mobile-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-secondary, #2a2a2a);
+  transition: .3s;
+  border-radius: 24px;
+  border: 1px solid var(--border-color, #333);
+}
+
+.mobile-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .mobile-toggle-slider {
+  background-color: var(--accent-color, #007AFF);
+  border-color: var(--accent-color, #007AFF);
+}
+
+input:checked + .mobile-toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.mobile-menu-placeholder {
+  color: var(--text-secondary, #888);
+  text-align: center;
+  padding: 48px 16px;
+  font-size: 14px;
+}
+
+/* Reuse textarea/btn styles from before */
+.mobile-system-prompt-textarea {
+  width: 100%;
+  min-height: 120px;
+  max-height: 300px;
+  padding: 12px;
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  background: var(--bg-secondary, #0d0d0d);
+  color: var(--text-primary, #fff);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.mobile-save-prompt-btn {
+  padding: 12px 20px;
+  background: var(--accent-color, #007AFF);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.mobile-prompt-status {
+  font-size: 12px;
+  text-align: center;
+  min-height: 16px;
+}
+
+/* Section description text */
+.mobile-section-desc {
+  font-size: 13px;
+  color: var(--text-secondary, #888);
+  margin: -8px 0 4px 0;
+}
+
+/* API Key input field */
+.mobile-text-input-field {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-secondary, #0d0d0d);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+
+.mobile-text-input-field:focus {
+  border-color: var(--accent-color, #007AFF);
+}
+
+.mobile-text-input-field::placeholder {
+  color: var(--text-secondary, #888);
+}
+
+/* API Key row */
+.mobile-api-key-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mobile-api-key-row .mobile-text-input-field {
+  flex: 1;
+}
+
+/* Save key button */
+.mobile-save-key-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--accent-color, #007AFF);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.mobile-save-key-btn:hover {
+  opacity: 0.9;
+}
+
+.mobile-save-key-btn:active {
+  opacity: 0.8;
+}
+
+/* API key status */
+.mobile-api-key-status {
+  font-size: 12px;
+  text-align: center;
+  min-height: 16px;
+  transition: color 0.2s ease;
+}
+
+/* Action button in rows */
+.mobile-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  background: var(--bg-secondary, #0d0d0d);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary, #888);
+  transition: all 0.2s ease;
+}
+
+.mobile-action-btn:hover {
+  border-color: var(--accent-color, #4a9eff);
+  color: var(--accent-color, #4a9eff);
+}
+
+.mobile-action-btn:active {
+  transform: scale(0.95);
+}
+
+.mobile-action-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Field labels */
+.mobile-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #888);
+  margin-bottom: -4px;
+}
+
+/* Gemini save button (smaller inline style) */
+.mobile-save-gemini-prompt-btn {
+  padding: 8px 16px;
+  background: var(--accent-color, #007AFF);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.mobile-gemini-prompt-status {
+  font-size: 12px;
+  min-height: 16px;
+}
+
+/* Settings divider */
+.mobile-settings-divider {
+  height: 1px;
+  background: var(--border-color, #333);
+  margin: 8px 0;
+}

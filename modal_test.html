@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Modal Transparency Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: url('/images/slider.png') center/cover no-repeat fixed;
+        }
+
+        #scrim {
+            position: fixed;
+            inset: 0 0 200px 0;
+            background: rgba(0, 5, 20, 0.00);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        #modal {
+            background: rgba(0, 8, 15, 0.48);
+            backdrop-filter: blur(5px) saturate(40%);
+            -webkit-backdrop-filter: blur(5px) saturate(40%);
+            border: 1px solid rgba(0, 200, 180, 0.55);
+            border-radius: 8px;
+            padding: 1rem;
+            width: 600px;
+            max-width: 90vw;
+            height: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            color: #a0e0e0;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.56);
+        }
+
+        .modal-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(0, 200, 180, 0.15);
+            cursor: move;
+        }
+        .mock-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.85rem;
+            color: #6aabab;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0,200,180,0.1);
+        }
+        .mode-btns { display: flex; gap: 4px; flex: 1; }
+        .mock-btn {
+            flex: 1;
+            padding: 7px;
+            border: 1px solid rgba(85,255,255,0.63);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.19);
+            color: #c9cfcf;
+            font-size: 0.8rem;
+            cursor: default;
+            text-align: center;
+        }
+        .mock-btn.active {
+            background: rgba(0,0,0,0.19);
+            border-color: rgba(85,255,255,0.63);
+            color: #c9cfcf;
+        }
+        .mock-section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: rgba(0,200,180,0.5);
+            text-transform: uppercase;
+        }
+        .mock-card {
+            background: rgba(0, 30, 50, 0.4);
+            border: 1px solid rgba(0,150,150,0.25);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.82rem;
+            color: #7acfcf;
+            flex: 1;
+        }
+        .mock-card p { margin-bottom: 0.4rem; opacity: 0.8; }
+        .modal-footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: auto;
+        }
+        .mock-action-btn {
+            padding: 7px;
+            border: 1px solid rgba(85,255,255,0.63);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.19);
+            color: #c9cfcf;
+            font-size: 0.82rem;
+            text-align: center;
+        }
+
+        /* ── Controls Panel ── */
+        #controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 190px;
+            background: rgba(0, 5, 15, 0.94);
+            border-top: 1px solid rgba(0,200,180,0.35);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            padding: 10px 20px 12px;
+            gap: 8px;
+        }
+
+        #ctrl-tabs {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .ctrl-tab {
+            padding: 3px 14px;
+            border: 1px solid rgba(0,200,180,0.3);
+            border-radius: 4px;
+            background: transparent;
+            color: #6aabab;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .ctrl-tab.active {
+            background: rgba(0,200,180,0.25);
+            color: #a0e0e0;
+            border-color: rgba(0,200,180,0.6);
+        }
+        .ctrl-tab:hover:not(.active) { background: rgba(0,200,180,0.1); }
+
+        .panel { display: none; }
+        .panel.active { display: flex; gap: 18px; flex: 1; align-items: flex-end; }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 0;
+        }
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.72rem;
+            color: #7ababa;
+            white-space: nowrap;
+        }
+        .val {
+            font-family: monospace;
+            font-size: 0.72rem;
+            color: #00e5c0;
+            min-width: 36px;
+            text-align: right;
+        }
+        input[type=range] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(0,200,180,0.2);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 13px; height: 13px;
+            border-radius: 50%;
+            background: rgba(0,200,180,0.9);
+            cursor: pointer;
+        }
+        .color-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .color-group span { font-size: 0.72rem; color: #7ababa; }
+        input[type=color] {
+            width: 44px;
+            height: 28px;
+            border: 1px solid rgba(0,200,180,0.4);
+            border-radius: 4px;
+            background: none;
+            cursor: pointer;
+            padding: 2px;
+        }
+        .vdiv {
+            width: 1px;
+            background: rgba(0,200,180,0.15);
+            align-self: stretch;
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+        .copy-btn {
+            padding: 6px 16px;
+            background: rgba(0,200,180,0.15);
+            border: 1px solid rgba(0,200,180,0.5);
+            border-radius: 6px;
+            color: #a0e0e0;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            align-self: flex-end;
+        }
+        .copy-btn:hover { background: rgba(0,200,180,0.3); }
+        .copy-btn.copied { color: #00e5c0; border-color: #00e5c0; }
+
+        /* sub-label for active state section */
+        .section-label {
+            font-size: 0.65rem;
+            color: rgba(0,200,180,0.45);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            align-self: flex-end;
+            padding-bottom: 18px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="scrim">
+    <div id="modal">
+        <div class="modal-header">System Context</div>
+        <div class="mock-toggle">
+            Summarization:
+            <div class="mode-btns">
+                <button class="mock-btn active">Auto</button>
+                <button class="mock-btn">Manual</button>
+            </div>
+        </div>
+        <div class="mock-section-label">Stacked Summaries (2)</div>
+        <div class="mock-card">
+            <p><strong>Summary 1</strong> — Apr 1</p>
+            <p>Kelly and the user discussed her background, her time at university, and her complicated relationship with her sister. She revealed that she hasn't spoken to her family in over two years.</p>
+        </div>
+        <div class="modal-footer">
+            <div class="mock-action-btn" id="btn-a">Summarize Now</div>
+            <div class="mock-action-btn" id="btn-b">Close</div>
+        </div>
+    </div>
+</div>
+
+<div id="controls">
+
+    <div id="ctrl-tabs">
+        <button class="ctrl-tab active" data-panel="bg">Background</button>
+        <button class="ctrl-tab" data-panel="btns">Buttons</button>
+    </div>
+
+    <!-- ── Background panel ── -->
+    <div class="panel active" id="panel-bg">
+
+        <div class="color-group">
+            <span>Tint color</span>
+            <input type="color" id="tint-color" value="#00080f">
+        </div>
+        <div class="color-group">
+            <span>Text color</span>
+            <input type="color" id="text-color" value="#a0e0e0">
+        </div>
+
+        <div class="slider-group">
+            <label>Tint opacity <span class="val" id="tint-val">0.48</span></label>
+            <input type="range" id="tint" min="0" max="1" step="0.01" value="0.48">
+        </div>
+
+        <div class="vdiv"></div>
+
+        <div class="slider-group">
+            <label>Blur (px) <span class="val" id="blur-val">5</span></label>
+            <input type="range" id="blur" min="0" max="40" step="1" value="5">
+        </div>
+        <div class="slider-group">
+            <label>Saturate (%) <span class="val" id="sat-val">40</span></label>
+            <input type="range" id="sat" min="0" max="200" step="5" value="40">
+        </div>
+
+        <div class="vdiv"></div>
+
+        <div class="slider-group">
+            <label>Scrim opacity <span class="val" id="scrim-val">0.00</span></label>
+            <input type="range" id="scrim-slider" min="0" max="0.8" step="0.01" value="0.00">
+        </div>
+        <div class="slider-group">
+            <label>Shadow depth <span class="val" id="shadow-val">0.56</span></label>
+            <input type="range" id="shadow-slider" min="0" max="1" step="0.01" value="0.56">
+        </div>
+
+        <div class="vdiv"></div>
+
+        <div class="slider-group">
+            <label>Border opacity <span class="val" id="border-val">0.55</span></label>
+            <input type="range" id="border-slider" min="0" max="1" step="0.01" value="0.55">
+        </div>
+        <div class="slider-group">
+            <label>Border radius <span class="val" id="radius-val">8</span></label>
+            <input type="range" id="radius-slider" min="0" max="32" step="1" value="8">
+        </div>
+
+        <div class="vdiv"></div>
+
+        <button class="copy-btn" id="copy-btn-bg">Copy Values</button>
+    </div>
+
+    <!-- ── Buttons panel ── -->
+    <div class="panel" id="panel-btns">
+
+        <!-- Normal state -->
+        <div class="color-group">
+            <span>Bg color</span>
+            <input type="color" id="btn-bg-color" value="#000000">
+        </div>
+        <div class="slider-group">
+            <label>Bg opacity <span class="val" id="btn-bg-val">0.19</span></label>
+            <input type="range" id="btn-bg-opacity" min="0" max="1" step="0.01" value="0.19">
+        </div>
+        <div class="slider-group">
+            <label>Bg blur (px) <span class="val" id="btn-blur-val">0</span></label>
+            <input type="range" id="btn-blur" min="0" max="20" step="1" value="0">
+        </div>
+
+        <div class="vdiv"></div>
+
+        <div class="color-group">
+            <span>Border color</span>
+            <input type="color" id="btn-border-color" value="#55ffff">
+        </div>
+        <div class="slider-group">
+            <label>Border opacity <span class="val" id="btn-border-val">0.63</span></label>
+            <input type="range" id="btn-border-opacity" min="0" max="1" step="0.01" value="0.63">
+        </div>
+
+        <div class="vdiv"></div>
+
+        <div class="color-group">
+            <span>Text color</span>
+            <input type="color" id="btn-text-color" value="#c9cfcf">
+        </div>
+        <div class="slider-group">
+            <label>Radius <span class="val" id="btn-radius-val">6</span></label>
+            <input type="range" id="btn-radius" min="0" max="24" step="1" value="6">
+        </div>
+        <div class="slider-group">
+            <label>Padding <span class="val" id="btn-pad-val">7</span></label>
+            <input type="range" id="btn-pad" min="2" max="20" step="1" value="7">
+        </div>
+
+        <div class="vdiv"></div>
+
+        <!-- Active state -->
+        <span class="section-label">Active state</span>
+
+        <div class="color-group">
+            <span>Active bg</span>
+            <input type="color" id="btn-active-bg-color" value="#003030">
+        </div>
+        <div class="slider-group">
+            <label>Active bg opacity <span class="val" id="btn-active-bg-val">0.35</span></label>
+            <input type="range" id="btn-active-bg-opacity" min="0" max="1" step="0.01" value="0.35">
+        </div>
+        <div class="color-group">
+            <span>Active text</span>
+            <input type="color" id="btn-active-text-color" value="#e0ffff">
+        </div>
+
+        <div class="vdiv"></div>
+
+        <button class="copy-btn" id="copy-btn-b">Copy Values</button>
+    </div>
+
+</div>
+
+<script>
+    const modal   = document.getElementById('modal');
+    const scrim   = document.getElementById('scrim');
+    const allBtns = () => document.querySelectorAll('#btn-a, #btn-b, .mock-btn');
+    const activeBtns = () => document.querySelectorAll('.mock-btn.active');
+
+    function hexToRgb(hex) {
+        return {
+            r: parseInt(hex.slice(1,3),16),
+            g: parseInt(hex.slice(3,5),16),
+            b: parseInt(hex.slice(5,7),16)
+        };
+    }
+
+    // ── Background ──
+    function updateBg() {
+        const {r,g,b} = hexToRgb(document.getElementById('tint-color').value);
+        const tint   = +document.getElementById('tint').value;
+        const blur   = +document.getElementById('blur').value;
+        const sat    = +document.getElementById('sat').value;
+        const scrimV = +document.getElementById('scrim-slider').value;
+        const shadow = +document.getElementById('shadow-slider').value;
+        const border = +document.getElementById('border-slider').value;
+        const radius = +document.getElementById('radius-slider').value;
+        const text   = document.getElementById('text-color').value;
+
+        modal.style.background           = `rgba(${r}, ${g}, ${b}, ${tint})`;
+        modal.style.backdropFilter       = `blur(${blur}px) saturate(${sat}%)`;
+        modal.style.webkitBackdropFilter = `blur(${blur}px) saturate(${sat}%)`;
+        modal.style.border               = `1px solid rgba(0, 200, 180, ${border})`;
+        modal.style.borderRadius         = `${radius}px`;
+        modal.style.boxShadow            = `0 8px 40px rgba(0,0,0,${shadow})`;
+        modal.style.color                = text;
+        scrim.style.background           = `rgba(0, 5, 20, ${scrimV})`;
+
+        document.getElementById('tint-val').textContent   = tint.toFixed(2);
+        document.getElementById('blur-val').textContent   = blur;
+        document.getElementById('sat-val').textContent    = sat;
+        document.getElementById('scrim-val').textContent  = scrimV.toFixed(2);
+        document.getElementById('shadow-val').textContent = shadow.toFixed(2);
+        document.getElementById('border-val').textContent = border.toFixed(2);
+        document.getElementById('radius-val').textContent = radius;
+    }
+
+    // ── Buttons ──
+    function updateBtns() {
+        const {r:br,g:bg,b:bb} = hexToRgb(document.getElementById('btn-bg-color').value);
+        const bgOp   = +document.getElementById('btn-bg-opacity').value;
+        const btnBlur= +document.getElementById('btn-blur').value;
+        const {r:er,g:eg,b:eb} = hexToRgb(document.getElementById('btn-border-color').value);
+        const brdOp  = +document.getElementById('btn-border-opacity').value;
+        const text   = document.getElementById('btn-text-color').value;
+        const radius = +document.getElementById('btn-radius').value;
+        const pad    = +document.getElementById('btn-pad').value;
+
+        const {r:ar,g:ag,b:ab} = hexToRgb(document.getElementById('btn-active-bg-color').value);
+        const actBgOp  = +document.getElementById('btn-active-bg-opacity').value;
+        const actText  = document.getElementById('btn-active-text-color').value;
+
+        allBtns().forEach(btn => {
+            btn.style.background           = `rgba(${br},${bg},${bb},${bgOp})`;
+            btn.style.backdropFilter       = btnBlur ? `blur(${btnBlur}px)` : '';
+            btn.style.webkitBackdropFilter = btnBlur ? `blur(${btnBlur}px)` : '';
+            btn.style.border               = `1px solid rgba(${er},${eg},${eb},${brdOp})`;
+            btn.style.color                = text;
+            btn.style.borderRadius         = `${radius}px`;
+            btn.style.padding              = `${pad}px`;
+        });
+
+        // Active state overrides
+        activeBtns().forEach(btn => {
+            btn.style.background = `rgba(${ar},${ag},${ab},${actBgOp})`;
+            btn.style.color      = actText;
+        });
+
+        document.getElementById('btn-bg-val').textContent       = bgOp.toFixed(2);
+        document.getElementById('btn-blur-val').textContent     = btnBlur;
+        document.getElementById('btn-border-val').textContent   = brdOp.toFixed(2);
+        document.getElementById('btn-radius-val').textContent   = radius;
+        document.getElementById('btn-pad-val').textContent      = pad;
+        document.getElementById('btn-active-bg-val').textContent= actBgOp.toFixed(2);
+    }
+
+    document.querySelectorAll('#panel-bg input').forEach(s => s.addEventListener('input', updateBg));
+    document.querySelectorAll('#panel-btns input').forEach(s => s.addEventListener('input', updateBtns));
+
+    // Tab switching
+    document.querySelectorAll('.ctrl-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.ctrl-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+        });
+    });
+
+    // Copy
+    function flashCopy(btn, text) {
+        navigator.clipboard.writeText(text).catch(() => {});
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy Values'; btn.classList.remove('copied'); }, 1500);
+    }
+
+    document.getElementById('copy-btn-bg').addEventListener('click', e => {
+        const {r,g,b} = hexToRgb(document.getElementById('tint-color').value);
+        const tint   = +document.getElementById('tint').value;
+        const blur   = +document.getElementById('blur').value;
+        const sat    = +document.getElementById('sat').value;
+        const scrimV = +document.getElementById('scrim-slider').value;
+        const shadow = +document.getElementById('shadow-slider').value;
+        const border = +document.getElementById('border-slider').value;
+        const radius = +document.getElementById('radius-slider').value;
+        const text   = document.getElementById('text-color').value;
+        flashCopy(e.currentTarget, [
+            `background: rgba(${r}, ${g}, ${b}, ${tint.toFixed(2)})`,
+            `backdrop-filter: blur(${blur}px) saturate(${sat}%)`,
+            `scrim: rgba(0, 5, 20, ${scrimV.toFixed(2)})`,
+            `box-shadow: 0 8px 40px rgba(0,0,0,${shadow.toFixed(2)})`,
+            `border: 1px solid rgba(0, 200, 180, ${border.toFixed(2)})`,
+            `border-radius: ${radius}px`,
+            `color: ${text}`,
+        ].join('\n'));
+    });
+
+    document.getElementById('copy-btn-b').addEventListener('click', e => {
+        const {r:br,g:bg,b:bb} = hexToRgb(document.getElementById('btn-bg-color').value);
+        const bgOp   = +document.getElementById('btn-bg-opacity').value;
+        const btnBlur= +document.getElementById('btn-blur').value;
+        const {r:er,g:eg,b:eb} = hexToRgb(document.getElementById('btn-border-color').value);
+        const brdOp  = +document.getElementById('btn-border-opacity').value;
+        const text   = document.getElementById('btn-text-color').value;
+        const radius = +document.getElementById('btn-radius').value;
+        const pad    = +document.getElementById('btn-pad').value;
+        const {r:ar,g:ag,b:ab} = hexToRgb(document.getElementById('btn-active-bg-color').value);
+        const actBgOp = +document.getElementById('btn-active-bg-opacity').value;
+        const actText = document.getElementById('btn-active-text-color').value;
+        flashCopy(e.currentTarget, [
+            `/* Normal */`,
+            `background: rgba(${br},${bg},${bb},${bgOp.toFixed(2)})`,
+            btnBlur ? `backdrop-filter: blur(${btnBlur}px)` : null,
+            `border: 1px solid rgba(${er},${eg},${eb},${brdOp.toFixed(2)})`,
+            `color: ${text}`,
+            `border-radius: ${radius}px`,
+            `padding: ${pad}px`,
+            `/* Active */`,
+            `background: rgba(${ar},${ag},${ab},${actBgOp.toFixed(2)})`,
+            `color: ${actText}`,
+        ].filter(Boolean).join('\n'));
+    });
+</script>
+</body>
+</html>

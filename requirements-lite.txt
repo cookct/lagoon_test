@@ -1,0 +1,27 @@
+# Lagoon v1.3 — Lite dependencies (no sentence-transformers/PyTorch)
+# RAG memory will be disabled. Use for installer testing only.
+# Full install: pip install -r requirements.txt
+
+# ── Core framework ────────────────────────────────────────────────
+flask>=2.0.0
+flask-socketio>=5.3.0          # WebSocket support (threading mode — no eventlet needed)
+
+# ── HTTP clients ──────────────────────────────────────────────────
+httpx>=0.24.0                  # Venice API calls
+requests>=2.28.0               # Web search
+
+# ── Token counting ────────────────────────────────────────────────
+tiktoken>=0.5.0                # Context window management
+
+# ── Image processing ──────────────────────────────────────────────
+Pillow>=9.0.0                  # Avatar upload/resize
+
+# ── File parsing ──────────────────────────────────────────────────
+PyPDF2>=3.0.0                  # PDF attachment parsing
+
+# ── AI / ML ───────────────────────────────────────────────────────
+# sentence-transformers omitted — requires PyTorch (~2.5GB)
+google-genai>=1.0.0            # Gemini Live voice (WebSocket)
+
+# ── Cryptography ──────────────────────────────────────────────────
+cryptography>=41.0.0           # Venice E2EE (ECDH/HKDF/AES-GCM)

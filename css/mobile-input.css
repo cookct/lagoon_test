@@ -1,0 +1,403 @@
+/**
+ * Mobile Input Bar Styles
+ */
+
+.mobile-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: var(--bg-primary, #1a1a1a);
+  border-top: 1px solid var(--border-color, #333);
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+/* Text input wrapper */
+.mobile-input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+/* Text input */
+.mobile-text-input {
+  width: 100%;
+  min-height: 44px;
+  max-height: 150px;
+  padding: 11px 16px;
+  background: var(--bg-secondary, #0d0d0d);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 24px;
+  color: var(--text-primary, #fff);
+  font-size: 16px;
+  line-height: 20px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+  /* Vertically center text for single line (44px total height = 20px line-height + 22px padding + 2px border) */
+}
+
+.mobile-text-input:focus {
+  border-color: var(--accent-color, #4a9eff);
+}
+
+.mobile-text-input::placeholder {
+  color: var(--text-secondary, #888);
+}
+
+/* Send button */
+.mobile-send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  background: var(--accent-color, #4a9eff);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #fff;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+.mobile-send-btn:hover {
+  opacity: 0.9;
+}
+
+.mobile-send-btn:active {
+  transform: scale(0.95);
+}
+
+.mobile-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mobile-send-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* Model Selector */
+.mobile-model-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: var(--bg-secondary, #0d0d0d);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 12px;
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-model-selector:hover {
+  border-color: var(--accent-color, #4a9eff);
+}
+
+.mobile-model-selector.active {
+  border-color: var(--accent-color, #4a9eff);
+  background: var(--bg-tertiary, #1a1a1a);
+}
+
+.mobile-model-selector .model-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-model-selector .dropdown-arrow {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.mobile-model-selector.active .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Model Dropdown */
+.mobile-model-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary, #0d0d0d);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.mobile-model-dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-model-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobile-model-dropdown::-webkit-scrollbar-thumb {
+  background: var(--border-color, #333);
+  border-radius: 2px;
+}
+
+.mobile-model-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.mobile-model-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.mobile-model-dropdown-item:hover {
+  background: var(--bg-tertiary, #1a1a1a);
+}
+
+.mobile-model-dropdown-item.active {
+  background: var(--accent-color, #4a9eff);
+  color: white;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 375px) {
+  .mobile-model-selector {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .mobile-model-dropdown-item {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
+
+/* ==========================================
+   Voice Mode Styles
+   ========================================== */
+
+/* Mode toggle button */
+.mobile-mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  background: var(--bg-secondary, #0d0d0d);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-secondary, #888);
+  transition: all 0.2s ease;
+}
+
+.mobile-mode-toggle:hover {
+  border-color: var(--accent-color, #4a9eff);
+  color: var(--accent-color, #4a9eff);
+}
+
+.mobile-mode-toggle:active {
+  transform: scale(0.95);
+}
+
+.mobile-mode-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Mic button */
+.mobile-mic-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  background: var(--bg-secondary, #0d0d0d);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-secondary, #888);
+  transition: all 0.2s ease;
+}
+
+.mobile-mic-btn:hover {
+  border-color: var(--accent-color, #4a9eff);
+  color: var(--accent-color, #4a9eff);
+}
+
+.mobile-mic-btn:active {
+  transform: scale(0.95);
+}
+
+.mobile-mic-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Recording state */
+.mobile-mic-btn.recording {
+  background: linear-gradient(135deg, #ff4a4a 0%, #d22d2d 100%);
+  border-color: transparent;
+  color: #fff;
+  animation: pulse-recording 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-recording {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Connecting state */
+.mobile-mic-btn.connecting {
+  background: linear-gradient(135deg, #ffaa4a 0%, #d28a2d 100%);
+  border-color: transparent;
+  color: #fff;
+  animation: pulse-connecting 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse-connecting {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* AI speaking state */
+.mobile-mic-btn.ai-speaking {
+  background: linear-gradient(135deg, #4aff9f 0%, #2dd27d 100%);
+  border-color: transparent;
+  color: #fff;
+  animation: pulse-speaking 0.6s ease-in-out infinite;
+}
+
+@keyframes pulse-speaking {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+/* Voice status indicator */
+.mobile-voice-status {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 8px 16px;
+  color: var(--text-secondary, #888);
+  font-size: 14px;
+  text-align: center;
+}
+
+.mobile-voice-status .status-text {
+  animation: fade-in 0.3s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Voice mode layout */
+.mobile-input-bar.voice-mode {
+  justify-content: center;
+  padding: 16px;
+  gap: 16px;
+}
+
+.mobile-input-bar.voice-mode .mobile-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Voice waveform visualization (optional enhancement) */
+.mobile-voice-waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 32px;
+}
+
+.mobile-voice-waveform .bar {
+  width: 4px;
+  height: 8px;
+  background: var(--accent-color, #4a9eff);
+  border-radius: 2px;
+  animation: waveform 0.5s ease-in-out infinite;
+}
+
+.mobile-voice-waveform .bar:nth-child(1) { animation-delay: 0s; }
+.mobile-voice-waveform .bar:nth-child(2) { animation-delay: 0.1s; }
+.mobile-voice-waveform .bar:nth-child(3) { animation-delay: 0.2s; }
+.mobile-voice-waveform .bar:nth-child(4) { animation-delay: 0.3s; }
+.mobile-voice-waveform .bar:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes waveform {
+  0%, 100% {
+    height: 8px;
+  }
+  50% {
+    height: 24px;
+  }
+}
+
+/* Recording indicator dot */
+.mobile-mic-btn.recording::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-radius: 50%;
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}

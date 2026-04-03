@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lagoon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%230e639c%22/></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.0.0/dist/markdown-it.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <!-- Modular CSS -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/sidebar_toggle.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="css/modals.css">
+    <link rel="stylesheet" href="css/anchors.css">
+
+    <link rel="stylesheet" href="css/dual-model.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Mobile CSS -->
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/mobile-header.css">
+    <link rel="stylesheet" href="css/mobile-chat.css">
+    <link rel="stylesheet" href="css/mobile-input.css">
+    <link rel="stylesheet" href="css/mobile-menu.css">
+</head>
+<body>
+    <!-- Mobile Chat Container (injected by mobile.js) -->
+    
+    <div class="app-container desktop-ui" id="app-container">
+        <!-- Left Sidebar -->
+        <div class="sidebar-left" id="sidebar-left">
+            <div id="sidebar-header">
+                <button id="quick-chat-btn">New Chat</button>
+                <button id="create-char-btn" class="secondary-btn">Create Character</button>
+                <button id="import-chat-btn" class="secondary-btn">Import</button>
+            </div>
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" data-tab="characters">Characters</button>
+                <button class="tab-btn" data-tab="chats">Quick Chats</button>
+            </div>
+            <div id="sidebar-content">
+                <div class="tab-panel active" id="tab-characters">
+                    <div id="config-list" class="sidebar-list"></div>
+                </div>
+                <div class="tab-panel" id="tab-chats">
+                    <div id="chat-list" class="sidebar-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left Splitter -->
+        <div id="splitter-left" class="splitter-vertical"></div>
+
+        <!-- Main chat area -->
+        <div id="chat-wrapper" class="main-content">
+            <div id="chat-messages">
+                <div id="messages-container">
+                </div>
+            </div>
+            <button type="button" id="scroll-top-btn" class="scroll-nav-btn scroll-nav-top" title="Scroll to Top">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11l5-5 5 5M7 18l5-5 5 5"/></svg>
+            </button>
+            <button type="button" id="scroll-up-slow-btn" class="scroll-nav-btn scroll-nav-mid-top" title="Scroll Up (Slow)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+            </button>
+            <button type="button" id="scroll-down-slow-btn" class="scroll-nav-btn scroll-nav-mid-bottom" title="Scroll Down (Slow)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <button type="button" id="scroll-bottom-btn" class="scroll-nav-btn scroll-nav-bottom" title="Scroll to Bottom">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
+            </button>
+            <div id="chat-input-container">
+                <form id="chat-form">
+                    <div class="export-wrapper">
+                        <button type="button" id="export-btn" class="export-btn" title="Export kept messages" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span class="export-count" id="export-count"></span>
+                        </button>
+                    </div>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="context-file-input" accept=".pdf,.txt,.png,.jpg,.jpeg,.webp,.gif,.py,.js,.css,.html,.json,.md,.sh,.yaml,.yml,.toml,.xml,.sql,.c,.cpp,.h,.java,.go,.rs,.ts,.tsx,.jsx,.vue,.svelte,.rb,.php,.swift,.kt,.scala,.r,.lua,.pl,.ex,.exs,.hs,.clj,.lisp,.el,.vim,.conf,.ini,.env,.log,.csv" class="hidden">
+                        <button type="button" id="context-file-btn" class="file-upload-btn" title="Upload file (code, PDF, TXT)" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                            <span class="file-cancel-badge" id="file-cancel-btn">&times;</span>
+                        </button>
+                    </div>
+                    <div class="input-wrapper">
+                        <textarea id="message-input" placeholder="Type your message..." rows="1" disabled autocomplete="off"></textarea>
+                        <button type="submit" id="send-btn" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </button>
+                    </div>
+                    <div class="settings-wrapper">
+                        <button type="button" id="settings-btn" class="settings-btn" title="Settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Splitter -->
+        <div id="splitter-right" class="splitter-vertical"></div>
+
+        <!-- Right Sidebar -->
+        <div class="sidebar-right">
+            <div id="right-sidebar-header">
+                <div id="balance-display" class="balance-indicator" title="Account Balance (USD)">
+                    <span class="balance-label">$</span><span id="balance-usd">--</span>
+                </div>
+                <button type="button" id="view-context-btn" class="action-btn" title="View system context">Ctx</button>
+                <div class="model-control-group">
+                    <button type="button" id="change-model-btn" class="action-btn">Model</button>
+                    <label class="venice-toggle-wrapper" title="Toggle Venice System Prompt">
+                        <input type="checkbox" id="quick-venice-prompt-toggle" checked>
+                        <span class="venice-toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="sidebar-tabs right-tabs">
+                <button class="tab-btn hidden" data-tab="overseer">Overseer</button>
+                <button class="tab-btn active" data-tab="tools">Tools</button>
+                <button class="tab-btn" data-tab="prompt">Prompt</button>
+            </div>
+            <div id="right-sidebar-content">
+                <div class="tab-panel" id="tab-overseer">
+                    <div class="tool-section">
+                        <div class="tool-section-header">
+                            <span class="tool-section-title">Custom Rules</span>
+                            <button type="button" id="save-overseer-rules-btn" class="tool-btn-sm primary">Save</button>
+                        </div>
+                        <div class="tool-section-body">
+                            <div style="margin-bottom:10px;">
+                                <label style="display:block;font-size:0.75rem;color:var(--text-dim);margin-bottom:4px;">Model</label>
+                                <select id="overseer-model-select" class="model-select-ssot"></select>
+                            </div>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:10px;font-size:0.8rem;color:var(--text-main)">
+                                <input type="checkbox" id="overseer-builtin-rules" checked> Use built-in rules
+                            </label>
+                            <div class="overseer-presets">
+                                <span class="tool-hint" style="margin:0">Presets:</span>
+                                <button class="overseer-preset-btn" data-preset="glm">GLM</button>
+                                <button class="overseer-preset-btn" data-preset="deepseek">DeepSeek</button>
+                                <button class="overseer-preset-btn" data-preset="llama">Llama</button>
+                                <button class="overseer-preset-btn" data-preset="qwen">Qwen</button>
+                            </div>
+                            <textarea id="overseer-rules-input" rows="11" placeholder="One rule per line, e.g.&#10;No purple prose&#10;Maintain present tense&#10;No adverbs ending in -ly"></textarea>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:10px;font-size:0.8rem;color:var(--text-main)">
+                                <input type="checkbox" id="overseer-auto-accept"> Auto-accept corrections
+                            </label>
+                            <p class="tool-hint">Enable per character: Character Config → Style Overseer</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-panel active" id="tab-tools">
+                    <div class="sidebar-list">
+                        <!-- Cost Tracking -->
+                        <div class="tool-section" id="cost-tracking-panel">
+                            <div class="tool-section-header">
+                                <span class="tool-section-title">Cost</span>
+                                <button type="button" id="reset-session-cost-btn" class="tool-btn-sm" title="Reset session total">Reset</button>
+                            </div>
+                            <div class="tool-section-body cost-tracking-body">
+                                <div class="cost-row">
+                                    <span class="cost-label">Turn</span>
+                                    <span class="cost-value" id="turn-cost">—</span>
+                                </div>
+                                <div class="cost-row">
+                                    <span class="cost-label">Session</span>
+                                    <span class="cost-value cost-session" id="session-cost">$0.0000</span>
+                                </div>
+                                <div class="cost-tokens" id="cost-tokens"></div>
+                            </div>
+                        </div>
+                        <!-- Author's Note + Anchors (character chats only) -->
+                        <div id="writing-tools-panel" class="hidden">
+                            <div class="tool-section">
+                                <div class="tool-section-header">
+                                    <span class="tool-section-title">Author's Note</span>
+                                    <button type="button" id="open-anchors-btn" class="tool-btn-sm" title="Edit anchors entries">Anchors</button>
+                                </div>
+                                <div class="tool-section-body">
+                                    <textarea id="session-author-note" rows="4" placeholder="[Accent: British] [Tone: sardonic] [Scene state: rainy alley]" title="Re-injected before last N messages every turn. Overrides config for this session only."></textarea>
+                                    <div class="an-depth-row">
+                                        <label class="field-label-muted" for="session-author-note-depth">depth</label>
+                                        <input type="number" id="session-author-note-depth" min="1" max="20" value="4" class="input-small-num">
+                                        <button type="button" id="apply-session-an-btn" class="tool-btn-sm primary">Apply</button>
+                                        <button type="button" id="clear-session-an-btn" class="tool-btn-sm">Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Dual Chat Controls -->
+                        <div id="dual-tools-panel">
+                            <div class="tool-section">
+                                <div class="tool-section-header">
+                                    <span class="tool-section-title">Dual Character Chat</span>
+                                    <span id="dual-tool-status" class="tool-status">Inactive</span>
+                                </div>
+                                <div class="tool-section-body">
+                                    <div class="dual-info-row">
+                                        <span id="dual-tool-char-a" class="dual-char-badge char-a">Character A</span>
+                                        <span class="dual-vs">vs</span>
+                                        <span id="dual-tool-char-b" class="dual-char-badge char-b">Character B</span>
+                                    </div>
+                                    <div class="dual-progress-row">
+                                        <span id="dual-tool-turn-counter">Turn 0/10</span>
+                                    </div>
+                                    <div class="tool-buttons">
+                                        <button type="button" id="dual-tool-start-btn" class="tool-btn primary">Start New</button>
+                                        <button type="button" id="dual-tool-continue-btn" class="tool-btn success hidden">Continue</button>
+                                        <button type="button" id="dual-tool-pause-btn" class="tool-btn hidden">Pause</button>
+                                        <button type="button" id="dual-tool-resume-btn" class="tool-btn hidden">Resume</button>
+                                        <button type="button" id="dual-tool-stop-btn" class="tool-btn danger hidden">Stop</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prompt Monitor Tab -->
+                <div class="tab-panel" id="tab-prompt">
+                    <div id="prompt-monitor-header">
+                        <span id="prompt-token-count" class="prompt-token-count">—</span>
+                        <button type="button" id="prompt-expand-btn" class="tool-btn-sm" title="Expand sidebar">⤢</button>
+                    </div>
+                    <div id="prompt-monitor-body"></div>
+                </div>
+            </div>
+
+    <!-- Configuration Modal -->
+
+    </div><!-- /app-container -->
+    <div id="config-modal" class="modal-overlay hidden">
+        <div class="modal-content config-modal-wide">
+            <div class="config-header">
+                <h2>Character Configuration</h2>
+                <div class="modal-actions-top">
+                    <button type="button" id="cancel-config-btn" class="btn-cancel">Cancel</button>
+                    <button type="submit" id="save-config-btn" form="config-form" class="btn-save">Save</button>
+                </div>
+            </div>
+            <form id="config-form">
+                <div class="config-columns">
+                    <!-- Left Column: Identity -->
+                    <div class="config-col config-col-identity">
+                        <div class="avatar-section-horizontal">
+                            <img id="avatar-preview" src="/images/default-avatar-2.png" alt="">
+                            <input type="file" id="avatar-upload" accept="image/*" class="hidden">
+                            <div class="avatar-buttons-horizontal">
+                                <button type="button" id="avatar-upload-btn" class="btn-small">Upload</button>
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <label for="config-name">Name</label>
+                            <input type="text" id="config-name" required autocomplete="off" placeholder="Character name">
+                        </div>
+                        <div class="field-group">
+                            <label for="model">Model</label>
+                            <select id="model" class="model-select-ssot"><!-- populated by InstalledModels --></select>
+                        </div>
+                        <div class="field-group">
+                            <div class="label-row">
+                                <label for="intro_statement">Intro</label>
+                                <button type="button" class="btn-icon expand-textarea-btn" data-target="intro_statement" title="Expand">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                                </button>
+                            </div>
+                            <textarea id="intro_statement" rows="3" placeholder="Opening message..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Middle Column: Prompts -->
+                    <div class="config-col config-col-prompts">
+                        <div class="field-group flex-grow">
+                            <div class="label-row">
+                                <label for="character_card">Character Card</label>
+                                <button type="button" class="btn-icon expand-textarea-btn" data-target="character_card" title="Expand">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                                </button>
+                            </div>
+                            <textarea id="character_card" placeholder="Define personality, background, writing style..."></textarea>
+                        </div>
+                        <div class="field-group">
+                            <div class="label-row">
+                                <label for="system_prompt">System Prompt</label>
+                                <div class="row-actions" style="display:flex; gap: 5px; align-items:center;">
+                                    <button type="button" id="system-context-btn" class="btn-link">+ Context File</button>
+                                    <button type="button" class="btn-icon expand-textarea-btn" data-target="system_prompt" title="Expand">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                                    </button>
+                                </div>
+                                <input type="file" id="system-context-input" class="hidden">
+                            </div>
+                            <textarea id="system_prompt" rows="3" placeholder="e.g., You are a helpful assistant."></textarea>
+                            <div class="label-row" style="margin-top: 5px;">
+                                <label for="system_context" class="hidden" id="system_context_label">System Context</label>
+                                <button type="button" class="btn-icon expand-textarea-btn hidden" id="system_context_expand_btn" data-target="system_context" title="Expand">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                                </button>
+                            </div>
+                            <textarea id="system_context" rows="2" placeholder="Context from uploaded file..." readonly class="hidden"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Settings -->
+                    <div class="config-col config-col-settings">
+                        <div class="field-group">
+                            <label>Temperature: <span id="temp-value">0.7</span></label>
+                            <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7">
+                        </div>
+                        <div class="field-group">
+                            <label>Top P: <span id="top-p-value">1.0</span></label>
+                            <input type="range" id="top_p" min="0" max="1" step="0.05" value="1.0">
+                        </div>
+                        <div class="field-group">
+                            <label>Rep. Penalty: <span id="rep-pen-value">1.0</span></label>
+                            <input type="range" id="repetition_penalty" min="1.0" max="2.0" step="0.01" value="1.0">
+                        </div>
+                        <div class="field-group">
+                            <label for="max_tokens">Max Tokens</label>
+                            <input type="number" id="max_tokens" value="4096">
+                        </div>
+                        <div class="toggles-vertical">
+                            <label><input type="checkbox" id="enable_web_search"> Web Search</label>
+                            <label><input type="checkbox" id="include_venice_system_prompt" checked> Venice Prompt</label>
+                            <label><input type="checkbox" id="uncensored_mode"> Uncensored</label>
+                            <label><input type="checkbox" id="strip_thinking"> Strip Thinking</label>
+                            <label><input type="checkbox" id="style_overseer"> Style Overseer</label>
+                            <label><input type="checkbox" id="desktop_auto_read"> Auto Read</label>
+                        </div>
+                        <div class="field-group">
+                            <label>TTS Provider</label>
+                            <select id="desktop_tts_provider" class="select-input">
+                                <option value="venice">Venice</option>
+                                <option value="google">Google</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Voice</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <select id="desktop_tts_voice" class="select-input" style="flex: 1;"></select>
+                                <button id="desktop_test_voice_btn" class="action-btn" title="Test Voice" style="background: var(--accent); color: white; border: none; border-radius: 4px; width: 32px; height: 32px; cursor: pointer;">▶</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Context Viewer Modal -->
+    <div id="context-modal" class="modal-overlay hidden">
+        <div class="modal-content context-viewer">
+            <div class="modal-header">
+                <h2>System Context</h2>
+            </div>
+            <div id="context-list"></div>
+            <div class="modal-actions">
+                <button type="button" id="summarize-now-btn" class="action-btn" title="Generate a summary of the conversation to compress context">
+                    <span class="btn-label">Summarize Now</span>
+                    <div class="chase-right"></div>
+                    <div class="chase-bottom"></div>
+                    <div class="chase-left"></div>
+                </button>
+                <button type="button" id="close-context-btn" class="close-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Chat Modal -->
+<!-- Import Chat Modal -->
+    <div id="import-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Import Chat</h2>
+                <button type="button" id="cancel-import-btn" class="close-btn">Close</button>
+            </div>
+            <div class="field-group">
+                <label for="import-name">Chat Name</label>
+                <input type="text" id="import-name" placeholder="Imported Chat">
+            </div>
+            <div class="field-group">
+                <label for="import-character">Associate with Character (optional)</label>
+                <select id="import-character">
+                    <option value="">-- No Character --</option>
+                </select>
+            </div>
+            <div class="file-drop-zone" id="import-drop-zone">
+                <input type="file" id="import-file-input" accept=".json,.txt" style="display: none;">
+                <div class="drop-zone-content">
+                    <p id="import-file-name">Drag & drop a chat export file here</p>
+                    <p style="font-size: 0.8em; margin-top: 0.5rem;">or click to select</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="do-import-btn" class="primary-btn">Import</button>
+            </div>
+        </div>
+    </div>
+    <!-- Test Voice Message Modal -->
+    <div id="test-voice-modal" class="dialog-overlay hidden">
+        <div class="dialog-box">
+            <div class="dialog-header">
+                <h3 class="dialog-title">Edit Test Voice Message</h3>
+            </div>
+            <div class="dialog-body">
+                <p>Enter the text to speak when testing voice:</p>
+                <textarea id="test-voice-input" placeholder="This is a test of the audio system." style="width: 100%; height: 100px; margin-top: 12px; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-darker); color: var(--text-main); resize: vertical;"></textarea>
+            </div>
+            <div class="dialog-actions">
+                <button id="cancel-test-voice-btn" class="dialog-btn secondary">Cancel</button>
+                <button id="save-test-voice-btn" class="dialog-btn primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Dialog Modal -->
+    <div id="dialog-overlay" class="dialog-overlay hidden">
+        <div id="dialog-box" class="dialog-box">
+            <div class="dialog-header" id="dialog-header">
+                <span class="dialog-title">Lagoon</span>
+            </div>
+            <div class="dialog-body">
+                <p id="dialog-message"></p>
+                <input type="text" id="dialog-input" class="hidden" autocomplete="off">
+            </div>
+            <div class="dialog-actions">
+                <button id="dialog-cancel" class="dialog-btn secondary">Cancel</button>
+                <button id="dialog-ok" class="dialog-btn primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Macro Edit Modal -->
+
+    <!-- Anchors Modal -->
+    <div id="anchors-modal" class="modal-overlay hidden">
+        <div class="modal-content anchors-modal-content">
+            <div class="modal-header">
+                <h2>Anchors — <span id="anchors-char-name"></span></h2>
+                <button type="button" id="close-anchors-btn" class="close-btn">Close</button>
+            </div>
+            <p class="modal-subtitle">Keyword-triggered lore injected near the bottom of context when matched in recent messages.</p>
+            <div class="anchors-scroll-body">
+                <div id="anchors-entries" class="anchors-entries-list"></div>
+                <!-- Inline entry editor (shown when adding/editing) -->
+                <div id="lore-entry-editor" class="lore-entry-editor hidden">
+                <div class="field-group">
+                    <label>Keywords <span class="field-label-muted">(comma-separated, case-insensitive)</span></label>
+                    <input type="text" id="lore-keywords" placeholder="inspector thornton, thornton, the inspector">
+                </div>
+                <div class="field-group">
+                    <label>Content</label>
+                    <textarea id="lore-content" rows="4" placeholder="Inspector Thornton harbors guilt over the unsolved 1987 Whitechapel case. Never removes his hat indoors."></textarea>
+                </div>
+                <div class="field-group" style="display:flex;align-items:center;gap:10px;">
+                    <label style="margin:0;">Priority</label>
+                    <input type="number" id="lore-priority" value="0" min="0" max="100" style="width:70px;" title="Higher = injected first, survives token budget cuts">
+                    <span class="field-label-muted">0 = lowest, 10 = high, critical entries use 10</span>
+                </div>
+                <div class="field-group" style="display:flex;align-items:center;gap:10px;">
+                    <label style="margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="lore-not-aware">
+                        Character not yet aware of this
+                    </label>
+                    <span class="field-label-muted">Model will signal when the character learns it</span>
+                </div>
+                <div class="lore-editor-actions">
+                    <button type="button" id="save-lore-entry-btn" class="btn-save">Save</button>
+                    <button type="button" id="cancel-lore-entry-btn" class="btn-cancel">Cancel</button>
+                </div>
+            </div>
+            </div><!-- end anchors-scroll-body -->
+            <div class="modal-actions">
+                <button type="button" id="add-lore-entry-btn" class="action-btn">+ Add Entry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Writing Tools Settings Modal -->
+    <div id="writing-tools-modal" class="modal-overlay hidden">
+        <div class="modal-content writing-tools-settings">
+            <div class="modal-header">
+                <h2>Writing Tools</h2>
+                <button type="button" id="close-writing-tools-btn" class="close-btn">Close</button>
+            </div>
+            <p class="modal-subtitle">Customize the prompts for each writing tool. These are injected as instructions when you use the tools.</p>
+            <div id="writing-tools-list"></div>
+            <div class="modal-actions">
+                <button type="button" id="save-writing-tools-btn" class="primary-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memory System Settings Modal -->
+    <div id="memory-settings-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Memory &amp; Context Settings</h2>
+                <button type="button" id="close-memory-settings-btn" class="close-btn">Close</button>
+            </div>
+            <div class="mem-settings-body">
+                <!-- Context Summarization -->
+                <div class="mem-section">
+                    <div class="mem-section-title">Context Summarization</div>
+                    <div class="mem-grid">
+                        <div class="mem-field">
+                            <label for="ms-summarize-threshold">Trigger threshold</label>
+                            <div class="mem-field-range">
+                                <input type="range" id="ms-summarize-threshold" min="0.5" max="0.95" step="0.05">
+                                <span class="range-val" id="ms-summarize-threshold-val">75%</span>
+                            </div>
+                            <span class="field-note">Fraction of context window before auto-summarize fires</span>
+                        </div>
+                        <div class="mem-field">
+                            <label for="ms-recent-keep">Messages to keep after prune</label>
+                            <input type="number" id="ms-recent-keep" min="2" max="30" step="1">
+                            <span class="field-note">Message pairs retained when pruning old conversation</span>
+                        </div>
+                        <div class="mem-field">
+                            <label for="ms-summary-model">Summarization model</label>
+                            <select id="ms-summary-model" class="model-select-ssot"></select>
+                        </div>
+                        <div class="mem-field">
+                            <label for="ms-summary-max-tokens">Summary max tokens</label>
+                            <input type="number" id="ms-summary-max-tokens" min="1000" max="32000" step="500">
+                            <span class="field-note">Max tokens in summarization output</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RAG Semantic Memory -->
+                <div class="mem-section">
+                    <div class="mem-section-title">RAG Semantic Memory</div>
+                    <div class="mem-grid">
+                        <div class="mem-field">
+                            <div class="mem-toggle-row">
+                                <label for="ms-rag-enabled">Enabled</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ms-rag-enabled">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mem-field">
+                            <label for="ms-rag-top-k">Chunks retrieved (top-k)</label>
+                            <input type="number" id="ms-rag-top-k" min="1" max="10" step="1">
+                            <span class="field-note">Max past conversation chunks retrieved per query</span>
+                        </div>
+                        <div class="mem-field">
+                            <label for="ms-rag-min-similarity">Similarity threshold</label>
+                            <div class="mem-field-range">
+                                <input type="range" id="ms-rag-min-similarity" min="0.1" max="0.9" step="0.05">
+                                <span class="range-val" id="ms-rag-min-similarity-val">0.35</span>
+                            </div>
+                            <span class="field-note">Minimum cosine similarity to include a chunk</span>
+                        </div>
+                        <div class="mem-field">
+                            <label for="ms-rag-token-budget">Token budget</label>
+                            <input type="number" id="ms-rag-token-budget" min="100" max="4000" step="100">
+                            <span class="field-note">Max tokens injected from retrieved memory</span>
+                        </div>
+                        <div class="mem-field">
+                            <label for="ms-rag-chunk-size">Messages per chunk</label>
+                            <input type="number" id="ms-rag-chunk-size" min="1" max="20" step="1">
+                            <span class="field-note">Turn-pairs per chunk — only affects newly embedded messages</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lore / Anchors -->
+                <div class="mem-section">
+                    <div class="mem-section-title">Lore / Anchors</div>
+                    <div class="mem-grid">
+                        <div class="mem-field">
+                            <label for="ms-lore-scan-depth">Keyword scan depth</label>
+                            <input type="number" id="ms-lore-scan-depth" min="1" max="50" step="1">
+                            <span class="field-note">Recent messages scanned for keyword matches</span>
+                        </div>
+                        <div class="mem-field">
+                            <label for="ms-lore-token-budget">Token budget</label>
+                            <input type="number" id="ms-lore-token-budget" min="500" max="16000" step="500">
+                            <span class="field-note">Max tokens injected from matched lore entries</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mem-settings-footer">
+                <button type="button" id="reset-memory-settings-btn" class="close-btn">Reset Defaults</button>
+                <button type="button" id="save-memory-settings-btn" class="primary-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+
+<!-- Dual Model Configuration Modal -->
+    <div id="dual-model-modal" class="modal-overlay hidden">
+        <div class="modal-content dual-model-modal-content">
+            <div class="modal-header">
+                <h2>Dual Character Conversation</h2>
+                <button type="button" class="close-btn">Close</button>
+            </div>
+            <div class="dual-model-grid">
+                <!-- Character A Column -->
+                <div class="model-config-col model-a-col">
+                    <h3 class="model-col-title">Character A</h3>
+                    <div class="char-avatar-preview" id="char-a-avatar">
+                        <span class="char-avatar-placeholder">A</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="dual-char-a-select">Character</label>
+                        <select id="dual-char-a-select" class="character-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dual-model-a-override">Model Override</label>
+                        <select id="dual-model-a-override" class="model-override-select">
+                            <option value="">Use Character's Model</option>
+                        </select>
+                    </div>
+                    <div class="char-info" id="char-a-info">
+                        <span class="char-model">Select a character</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="dual-model-a-prompt">System Prompt</label>
+                        <textarea id="dual-model-a-prompt" rows="3" placeholder="Character's system prompt will appear here..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Temperature: <span id="dual-model-a-temp-value">0.7</span></label>
+                        <input type="range" id="dual-model-a-temp" min="0" max="2" step="0.1" value="0.7">
+                    </div>
+                </div>
+                <!-- Character B Column -->
+                <div class="model-config-col model-b-col">
+                    <h3 class="model-col-title">Character B</h3>
+                    <div class="char-avatar-preview" id="char-b-avatar">
+                        <span class="char-avatar-placeholder">B</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="dual-char-b-select">Character</label>
+                        <select id="dual-char-b-select" class="character-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dual-model-b-override">Model Override</label>
+                        <select id="dual-model-b-override" class="model-override-select">
+                            <option value="">Use Character's Model</option>
+                        </select>
+                    </div>
+                    <div class="char-info" id="char-b-info">
+                        <span class="char-model">Select a character</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="dual-model-b-prompt">System Prompt</label>
+                        <textarea id="dual-model-b-prompt" rows="3" placeholder="Character's system prompt will appear here..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Temperature: <span id="dual-model-b-temp-value">0.7</span></label>
+                        <input type="range" id="dual-model-b-temp" min="0" max="2" step="0.1" value="0.7">
+                    </div>
+                </div>
+            </div>
+            <div class="dual-model-settings">
+                <div class="form-group inline">
+                    <label for="dual-max-turns">Max Turns</label>
+                    <input type="number" id="dual-max-turns" value="10" min="1" max="100">
+                </div>
+                <div class="form-group inline">
+                    <label><input type="checkbox" id="dual-venice-prompt" checked> Venice Prompt</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="dual-initial-prompt">Initial Prompt</label>
+                <textarea id="dual-initial-prompt" rows="2" placeholder="Enter a topic or question to start the conversation..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="dual-start-btn" class="primary-btn">Start Conversation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expand Textarea Modal -->
+    <div id="expand-textarea-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 800px; width: 95vw;">
+            <div class="modal-header">
+                <h2 id="expand-modal-title">Edit Content</h2>
+                <button type="button" class="close-btn" id="expand-close-btn">Close</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="expand-textarea-input" style="width: 100%; height: 60vh; padding: 10px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border); color: var(--text-main); border-radius: 4px; font-family: inherit; resize: vertical; outline: none;"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn secondary" id="expand-cancel-btn">Cancel</button>
+                <button type="button" class="btn primary" id="expand-save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nudge Modal -->
+    <div id="nudge-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nudge & Regenerate</h2>
+                <button type="button" class="close-btn" id="nudge-close-btn">Close</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px;">Type a behind-the-scenes instruction (e.g., "No moralizing"). It will be secretly injected into the context before regenerating.</p>
+                <textarea id="nudge-input" rows="4" placeholder="Enter your nudge here..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn secondary" id="nudge-cancel-btn">Cancel</button>
+                <button type="button" class="btn primary" id="nudge-confirm-btn">Regenerate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox -->
+    <!-- Dual Continue Modal -->
+    <div id="dual-continue-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Continue Conversation</h2>
+                <button type="button" class="close-btn">Close</button>
+            </div>
+            <div class="form-group">
+                <label for="dual-continue-turns">Additional Turns</label>
+                <input type="number" id="dual-continue-turns" value="10" min="1" max="100">
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="dual-continue-cancel-btn" class="secondary-btn">Cancel</button>
+                <button type="button" id="dual-continue-confirm-btn" class="primary-btn">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Manager Modal -->
+    <div id="model-manager-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width:580px;width:95vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+            <div class="modal-header">
+                <h2>Manage Models</h2>
+            </div>
+            <div id="model-manager-list" style="flex:1;overflow-y:auto;padding:4px 0;min-height:0"></div>
+            <div class="modal-actions" style="flex-shrink:0">
+                <button type="button" class="close-btn" id="close-model-manager-btn">Close</button>
+                <button type="button" id="install-model-manager-btn" class="primary-btn hidden">Install Selected</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js?v=3"></script>
+    <script type="module" src="js/mobile.js?v=2"></script>
+</body>
+</html>

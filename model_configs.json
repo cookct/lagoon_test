@@ -1,0 +1,130 @@
+{
+    "_meta": {
+        "version": "1.0",
+        "description": "Single source of truth for all image generation models"
+    },
+    "providers": {
+        "venice": {
+            "base_url": "https://api.venice.ai/api/v1",
+            "auth_header": "Authorization",
+            "auth_prefix": "Bearer",
+            "api_key_name": "venice"
+        },
+        "google": {
+            "base_url": "https://generativelanguage.googleapis.com/v1beta/models",
+            "auth_header": "x-goog-api-key",
+            "auth_prefix": "",
+            "api_key_name": "google"
+        }
+    },
+    "models": {
+        "e2ee-gemma-3-27b-p": {
+            "provider": "venice",
+            "display_name": "Gemma 3 27B (E2EE)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "e2ee-glm-4-7-p": {
+            "provider": "venice",
+            "display_name": "GLM 4.7 (E2EE)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "e2ee-glm-4-7-flash-p": {
+            "provider": "venice",
+            "display_name": "GLM 4.7 Flash (E2EE)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "e2ee-gpt-oss-20b-p": {
+            "provider": "venice",
+            "display_name": "GPT OSS 20B (E2EE)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "e2ee-gpt-oss-120b-p": {
+            "provider": "venice",
+            "display_name": "GPT OSS 120B (E2EE)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "e2ee-qwen-2-5-7b-p": {
+            "provider": "venice",
+            "display_name": "Qwen 2.5 7B (E2EE)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "e2ee-qwen3-30b-a3b-p": {
+            "provider": "venice",
+            "display_name": "Qwen3 30B A3B (E2EE)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "e2ee-qwen3-vl-30b-a3b-p": {
+            "provider": "venice",
+            "display_name": "Qwen3 VL 30B A3B (E2EE)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "e2ee-glm-5": {
+            "provider": "venice",
+            "display_name": "GLM 5 (E2EE)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "e2ee-qwen3-5-122b-a10b": {
+            "provider": "venice",
+            "display_name": "Qwen3.5 122B A10B (E2EE)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "grok-4-20-beta": {
+            "provider": "venice",
+            "display_name": "Grok 4 20 Beta",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "grok-4-20-multi-agent-beta": {
+            "provider": "venice",
+            "display_name": "Grok 4.20 Multi-Agent",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "grok-41-fast": {
+            "provider": "venice",
+            "display_name": "Grok 41 Fast",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "deepseek-v3.2": {
+            "provider": "venice",
+            "display_name": "DeepSeek V3.2",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "kimi-k2-5": {
+            "provider": "venice",
+            "display_name": "Kimi K2.5",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "zai-org-glm-5": {
+            "provider": "venice",
+            "display_name": "GLM-5",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "venice-uncensored": {
+            "provider": "venice",
+            "display_name": "Venice Uncensored",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "venice-uncensored-role-play": {
+            "provider": "venice",
+            "display_name": "Venice Uncensored (Roleplay)",
+            "category": "chat",
+            "price_per_token": 0.0
+        }
+    }
+}

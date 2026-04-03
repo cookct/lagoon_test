@@ -1,0 +1,274 @@
+/**
+ * Session Manager Component
+ * Handles chat sessions, importing, and exporting.
+ */
+
+import { state, dom, getDefaultChatConfig } from '../state.js';
+import { importChatApi } from '../api.js';
+import { uiManager } from '../core/UIManager.js';
+import { lagoonAlert, lagoonPrompt } from '../ui/dialog.js';
+import { refreshSidebar } from '../ui/sidebar.js';
+
+export class SessionManager {
+    constructor() {
+        this.dom = {};
+        this.selectedFile = null;  // Store selected file directly
+    }
+
+    init() {
+        this.refreshDom();
+        this.bindEvents();
+        console.log('[SessionManager] Initialized');
+    }
+
+    refreshDom() {
+        this.dom = {
+            quickChatBtn: document.getElementById('quick-chat-btn'),
+            importChatBtn: document.getElementById('import-chat-btn'),
+            importModal: document.getElementById('import-modal'),
+            importName: document.getElementById('import-name'),
+            importCharacter: document.getElementById('import-character'),
+            importFileInput: document.getElementById('import-file-input'),
+            importDropZone: document.getElementById('import-drop-zone'),
+            importFileName: document.getElementById('import-file-name'),
+            cancelImportBtn: document.getElementById('cancel-import-btn'),
+            doImportBtn: document.getElementById('do-import-btn'),
+            exportBtn: document.getElementById('export-btn'),
+            exportCount: document.getElementById('export-count')
+        };
+    }
+
+    bindEvents() {
+        this.dom.quickChatBtn?.addEventListener('click', () => this.handleQuickChat());
+        
+        // Import
+        this.dom.importChatBtn?.addEventListener('click', async () => {
+            this.dom.importModal.classList.remove('hidden');
+            this.dom.importName.value = '';
+            this.dom.importFileInput.value = '';
+            this.selectedFile = null;  // Reset stored file
+            this.dom.importFileName.textContent = 'Click or drag file here';
+            this.dom.importDropZone?.classList.remove('has-file');
+            await this.populateCharacterDropdown();
+        });
+
+        this.dom.doImportBtn?.addEventListener('click', () => this.handleImportChat());
+        this.dom.cancelImportBtn?.addEventListener('click', () => this.dom.importModal.classList.add('hidden'));
+        this.dom.importDropZone?.addEventListener('click', () => this.dom.importFileInput.click());
+        
+        this.dom.importFileInput?.addEventListener('change', (e) => {
+            console.log('[IMPORT] File input change event', e.target.files);
+            if (e.target.files.length > 0) {
+                this.selectedFile = e.target.files[0];  // Store file directly
+                console.log('[IMPORT] Selected file:', this.selectedFile.name, this.selectedFile.size, 'bytes');
+                this.dom.importFileName.textContent = e.target.files[0].name;
+                this.dom.importDropZone?.classList.add('has-file');
+            }
+        });
+
+        this.dom.importDropZone?.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            this.dom.importDropZone.classList.add('drag-over');
+        });
+        this.dom.importDropZone?.addEventListener('dragleave', () => {
+            this.dom.importDropZone.classList.remove('drag-over');
+        });
+        this.dom.importDropZone?.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.dom.importDropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) {
+                this.selectedFile = e.dataTransfer.files[0];  // Store file directly
+                this.dom.importFileName.textContent = e.dataTransfer.files[0].name;
+                this.dom.importDropZone.classList.add('has-file');
+            }
+        });
+
+        // Export
+        this.dom.exportBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.showExportMenu(e.currentTarget);
+        });
+    }
+
+    async handleQuickChat() {
+        const { chatManager } = await import('./ChatManager.js');
+        chatManager.startNewChatSession(getDefaultChatConfig(), null);
+    }
+
+    async populateCharacterDropdown() {
+        const select = this.dom.importCharacter;
+        if (!select) return;
+        
+        // Clear existing options except the first
+        select.innerHTML = '<option value="">-- No Character --</option>';
+        
+        // Fetch list of config filenames
+        let configFiles = [];
+        try {
+            const { fetchConfigs } = await import('../api.js');
+            configFiles = await fetchConfigs();  // Returns array of filenames
+        } catch (e) {
+            console.error('Failed to load configs for dropdown:', e);
+            return;
+        }
+        
+        if (!configFiles || configFiles.length === 0) {
+            uiManager.updateCustomDropdown(select);
+            return;
+        }
+        
+        // Fetch each config to get character names
+        const { fetchConfig } = await import('../api.js');
+        for (const filename of configFiles) {
+            try {
+                const config = await fetchConfig(filename);
+                const option = document.createElement('option');
+                option.value = filename;
+                option.textContent = config.character_name || config.name || filename.replace('.json', '');
+                select.appendChild(option);
+            } catch (e) {
+                console.error(`Failed to load config ${filename}:`, e);
+            }
+        }
+        uiManager.updateCustomDropdown(select);
+    }
+
+    async handleImportChat() {
+        const displayName = this.dom.importName.value.trim() || 'Imported Chat';
+        const selectedCharacter = this.dom.importCharacter?.value || null;
+
+        console.log('[IMPORT] handleImportChat called');
+        console.log('[IMPORT] selectedFile:', this.selectedFile);
+
+        if (!this.selectedFile) {
+            await lagoonAlert('Please select a chat export file.');
+            return;
+        }
+
+        const file = this.selectedFile;
+        console.log('[IMPORT] Using file:', file.name, file.size, 'bytes');
+
+        try {
+            const rawText = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+
+            if (!rawText.trim()) {
+                await lagoonAlert('File is empty.');
+                return;
+            }
+
+            // Build config if character selected
+            let config = {};
+            if (selectedCharacter) {
+                // Fetch the character config directly
+                const { fetchConfig } = await import('../api.js');
+                const charConfig = await fetchConfig(selectedCharacter);
+                if (charConfig) {
+                    config = {
+                        parent_config: selectedCharacter,  // Link to character
+                        character_name: charConfig.character_name,
+                        model: charConfig.model,
+                        system_prompt: charConfig.system_prompt,
+                        character_card: charConfig.character_card,
+                        avatar_url: charConfig.avatar_url
+                    };
+                }
+            }
+
+            const result = await importChatApi(rawText, displayName, config);
+
+            console.log('[IMPORT] API result:', result);
+
+            if (result.success) {
+                this.dom.importModal.classList.add('hidden');
+                await refreshSidebar();
+                console.log('[IMPORT] Loading chat:', result.chat_id);
+                const { chatManager } = await import('./ChatManager.js');
+                await chatManager.loadChat(result.chat_id);
+                await lagoonAlert(`Imported ${result.message_count} messages as "${result.display_name}"`);
+            } else {
+                await lagoonAlert('Import failed: ' + (result.error || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Import error:', err);
+            await lagoonAlert('Import failed: ' + err.message);
+        }
+    }
+
+    showExportMenu(button) {
+        document.querySelectorAll('.context-menu').forEach(menu => menu.remove());
+        const menu = document.createElement('div');
+        menu.classList.add('context-menu');
+        const rect = button.getBoundingClientRect();
+        
+        ['Plain Text', 'Markdown', 'Prose', 'Word/Doc'].forEach((label, i) => {
+            const fmt = ['plain', 'markdown', 'prose', 'doc'][i];
+            const item = document.createElement('button');
+            item.textContent = label;
+            item.classList.add('context-menu-item');
+            item.onclick = () => {
+                this.exportKeptMessages(fmt);
+                menu.remove();
+            };
+            menu.appendChild(item);
+        });
+        
+        document.body.appendChild(menu);
+        menu.style.left = `${rect.left}px`;
+        menu.style.top = `${rect.top - menu.offsetHeight - 5}px`;
+    }
+
+    exportKeptMessages(format) {
+        if (state.keptMessages.size === 0) return;
+        const sortedIndices = Array.from(state.keptMessages).sort((a, b) => a - b);
+        const keptMsgs = sortedIndices.map(i => state.messages[i]).filter(m => m && m.role === 'assistant');
+        
+        let output = '';
+        let ext = 'txt';
+        let type = 'text/plain';
+        const charName = state.currentConfig.character_name || 'Assistant';
+        
+        if (format === 'markdown') {
+            output = keptMsgs.map(m => m.content).join('\n\n---\n\n');
+            ext = 'md';
+        } else if (format === 'prose') {
+            output = keptMsgs.map(m => m.content).join('\n\n');
+            ext = 'txt';
+        } else if (format === 'doc') {
+            output = keptMsgs.map(m => m.content).join('\n\n'); 
+            ext = 'rtf';
+        } else {
+            // Default plain text (clean prose)
+            output = keptMsgs.map(m => m.content).join('\n\n');
+        }
+        
+        const blob = new Blob([output], { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chat-export.${ext}`;
+        a.click();
+    }
+
+    updateExportButton() {
+        if (!this.dom.exportBtn || !this.dom.exportCount) return;
+        const count = state.keptMessages.size;
+        if (count > 0) {
+            this.dom.exportBtn.disabled = false;
+            this.dom.exportCount.textContent = count;
+            this.dom.exportCount.style.display = 'flex';
+        } else {
+            this.dom.exportBtn.disabled = true;
+            this.dom.exportCount.textContent = '';
+            this.dom.exportCount.style.display = 'none';
+        }
+    }
+}
+
+export const sessionManager = new SessionManager();
+// Global hook for legacy code
+window.updateExportButton = () => sessionManager.updateExportButton();

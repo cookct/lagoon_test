@@ -1,0 +1,938 @@
+/* --- Chat Area --- */
+.desktop-ui #chat-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: rgba(30, 30, 30, 0.6);
+    min-width: 0;
+    position: relative; /* Anchor for absolute positioned buttons */
+}
+
+.desktop-ui #chat-messages {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow-y: auto;
+    padding: 20px 20px 20px 10px;
+    position: relative;
+    background-color: transparent;
+    overflow-anchor: auto;
+}
+
+.desktop-ui #chat-messages::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../images/wallpaper.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.2;
+    z-index: -1;
+}
+
+.desktop-ui #chat-messages.smooth-scroll {
+    scroll-behavior: smooth;
+}
+
+/* Background removed */
+
+/* Hide scroll buttons in Chat Mode */
+body:not(.image-mode) .desktop-ui .scroll-nav-btn {
+    display: none !important;
+}
+
+.desktop-ui #messages-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Reduced from 28px */
+    position: relative;
+    padding-bottom: 100px; /* Increased from 60px to prevent overlap with input area (#4) */
+    margin: 0 auto;
+    max-width: 900px;
+
+    /* Typography settings (overridden by JS) */
+    --chat-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --chat-font-size: 16px;
+    --chat-line-height: 1.5;
+}
+
+.desktop-ui #messages-container .message {
+    font-family: var(--chat-font-family) !important;
+    font-size: var(--chat-font-size) !important;
+    line-height: var(--chat-line-height) !important;
+}
+
+.desktop-ui .welcome-message {
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.desktop-ui .welcome-message h1 {
+    font-size: 2em;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.desktop-ui .message-group {
+    display: flex;
+    gap: 12px;
+    max-width: 100%;
+    align-items: flex-start; /* Align avatar and bubble to top */
+    margin-bottom: 16px;
+}
+
+.desktop-ui .message-group.assistant {
+    margin-right: auto;
+}
+
+.desktop-ui .message-group.assistant .avatar {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    margin-top: 0;
+}
+
+@media (min-width: 769px) {
+    .desktop-ui .message-group.user {
+        flex-direction: row-reverse;
+        margin-left: auto;
+        align-items: flex-start;
+        margin-top: 8px; /* Reduced from 40px */
+    }
+}
+
+.desktop-ui .message-group.user .avatar {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.desktop-ui .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--secondary-color);
+    border: 1px solid var(--border-color);
+}
+
+.desktop-ui .avatar img, .desktop-ui .avatar svg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: smooth;
+}
+
+.desktop-ui .message-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.desktop-ui .message-group.user .message-content {
+    align-items: flex-end;
+}
+
+@media (min-width: 769px) {
+    .desktop-ui .message-group.user .message-content {
+        gap: 4px; /* Reduced from 20px */
+    }
+}
+
+.desktop-ui .message-group.assistant .message-content {
+    width: 100%;
+}
+
+.desktop-ui .message-group.assistant .assistant-actions {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.desktop-ui .message-bubble-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.desktop-ui .message-group.user .message-bubble-row {
+    flex-direction: row-reverse;
+}
+
+.desktop-ui .message-sender {
+    font-size: 0.8em;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-left: 12px;
+}
+
+.desktop-ui .thought-timer {
+    font-style: italic;
+    color: var(--text-color-light);
+    margin-left: 8px;
+}
+
+.desktop-ui .message-group.user .message-sender {
+    margin-left: 0;
+    margin-right: 12px;
+}
+
+.desktop-ui .message {
+    padding: 6px 15px; /* Reduced vertical padding from 10px */
+    border-radius: 6px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.desktop-ui .message.user {
+    background-color: rgba(14, 99, 156, 0.25);
+    color: var(--text-main);
+    border-radius: 4px;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+.desktop-ui .message-actions {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    margin-right: 2px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.desktop-ui .message-actions:hover {
+    opacity: 1;
+}
+
+.desktop-ui .message-actions button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 4px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.desktop-ui .message-actions button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+}
+
+.desktop-ui .message-actions button svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+}
+
+/* Assistant message actions - bottom right */
+.desktop-ui .assistant-actions {
+    justify-content: flex-start;
+    gap: 6px;
+    margin-top: 4px; /* Reduced from 10px */
+    opacity: 0.8;
+    padding-left: 2px;
+}
+
+.desktop-ui .assistant-actions:hover {
+    opacity: 1;
+}
+
+/* User message actions - on the left side */
+.desktop-ui .user-actions {
+    justify-content: flex-start;
+    margin-top: 4px;
+    opacity: 0.7;
+    width: 100%;
+}
+
+.desktop-ui .user-actions:hover {
+    opacity: 1;
+}
+
+/* User bubble stays right, actions go left */
+.desktop-ui .message-group.user .bubble-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: fit-content; /* Shrink to content width */
+    max-width: 100%;
+    margin-left: auto; /* Push to right */
+}
+
+.desktop-ui .message-group.user .bubble-wrapper .message {
+    align-self: flex-end;
+    margin-bottom: 0;
+}
+
+.desktop-ui .message-group.user .user-actions {
+    align-self: flex-start; /* Lock to LEFT edge of bubble wrapper */
+    display: flex;
+    justify-content: flex-start;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Global spinner - works everywhere */
+.generating-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--ansi-cyan);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+.desktop-ui .generating-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--ansi-cyan);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+.desktop-ui .stop-generation-btn {
+    width: 22px;
+    height: 22px;
+    background-color: rgba(220, 38, 38, 0.15);
+    border: 1px solid var(--ansi-red);
+    border-radius: 6px;
+    color: var(--ansi-red);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    margin-left: 12px;
+    transition: all 0.2s;
+}
+
+.desktop-ui .stop-generation-btn:hover {
+    background-color: var(--ansi-red);
+    color: #fff;
+}
+
+.desktop-ui .stop-generation-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.desktop-ui .bubble-wrapper {
+    display: inline-block;
+    max-width: 100%;
+}
+
+.desktop-ui .message-group.assistant .bubble-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.desktop-ui .speaker-btn.loading svg {
+    animation: spin 1s linear infinite;
+    color: var(--ansi-cyan);
+}
+
+.desktop-ui .speaker-btn.playing svg {
+    animation: spin 1s linear infinite;
+    color: var(--ansi-cyan);
+    cursor: pointer;
+}
+
+.desktop-ui .speaker-btn.playing {
+    cursor: pointer !important;
+}
+
+.desktop-ui .gen-image-btn.loading {
+    cursor: pointer !important;
+}
+
+.desktop-ui .gen-image-btn.loading svg {
+    animation: spin 1s linear infinite;
+    color: var(--ansi-magenta);
+}
+
+.desktop-ui .gen-image-btn.loading:hover svg {
+    color: var(--ansi-red);
+}
+
+/* Noted indicator for edit analysis */
+.desktop-ui .noted-indicator {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 6px;
+    margin-left: 4px;
+    position: relative;
+}
+
+.desktop-ui .noted-text {
+    font-size: 0.75em;
+    color: var(--ansi-green);
+    font-style: italic;
+    cursor: help;
+    opacity: 0;
+    animation: fadeInNoted 0.3s ease-out 0.5s forwards;
+}
+
+@keyframes fadeInNoted {
+    to { opacity: 0.7; }
+}
+
+.desktop-ui .noted-indicator:hover .noted-text {
+    opacity: 1;
+}
+
+/* Custom tooltip for noted indicator */
+.desktop-ui .noted-indicator .noted-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 6px;
+    padding: 10px 14px;
+    background: #0d0d0d;
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-style: normal;
+    color: #e0e0e0;
+    white-space: normal;
+    max-width: 350px;
+    min-width: 200px;
+    z-index: 10000;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.9);
+    opacity: 1 !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.desktop-ui .noted-indicator:hover .noted-tooltip {
+    display: block;
+}
+
+.desktop-ui .message.assistant {
+    background-color: rgba(0, 0, 0, 0.6);
+    color: var(--text-main);
+    border: none;
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    white-space: normal;
+    margin-top: 0;
+}
+
+.desktop-ui .message.assistant.streaming {
+    padding: 2px 15px; /* Reduced vertical padding */
+    margin-top: 0;
+}
+
+/* Collapsible Reasoning */
+.desktop-ui .think-container {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.desktop-ui .think-container summary {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.85em;
+    color: var(--text-dim);
+    font-style: italic;
+    user-select: none;
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.desktop-ui .think-container summary:hover {
+    color: var(--text-main);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.desktop-ui .think-content {
+    padding: 12px;
+    font-size: 0.9em;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+}
+
+.desktop-ui .think-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Markdown Styles for Messages */
+.desktop-ui .message p {
+    margin: 0 0 1em 0;
+}
+
+.desktop-ui .message p:last-child {
+    margin-bottom: 0;
+}
+
+.desktop-ui .message.assistant ul, .desktop-ui .message.assistant ol {
+    margin: 0.5em 0 1em 1.5em;
+    padding: 0;
+}
+
+.desktop-ui .message.assistant li {
+    margin-bottom: 0.25em;
+}
+
+.desktop-ui .message.assistant blockquote {
+    border-left: 3px solid var(--accent-color);
+    margin: 0.5em 0;
+    padding-left: 1em;
+    color: var(--text-color-light);
+    background-color: rgba(0,0,0,0.03);
+    padding: 0.5em 1em;
+    border-radius: 4px;
+}
+
+.desktop-ui .message.assistant strong {
+    font-weight: 700;
+}
+
+.desktop-ui .message.assistant em {
+    font-style: italic;
+    color: var(--text-dim);
+}
+
+.desktop-ui .message.assistant code {
+    background-color: rgba(0,0,0,0.08);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+}
+
+/* Code blocks with triple backticks */
+.desktop-ui .message.assistant pre {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    padding: 12px 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0.5em 0;
+    white-space: pre;
+}
+
+.desktop-ui .message.assistant pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.85em;
+    line-height: 1.5;
+}
+
+.desktop-ui .message.assistant h2, .desktop-ui .message.assistant h3, .desktop-ui .message.assistant h4 {
+    margin: 0.5em 0 0.25em 0;
+    line-height: 1.3;
+}
+
+.desktop-ui .message.assistant h2 { font-size: 1.2em; }
+.desktop-ui .message.assistant h3 { font-size: 1.1em; }
+.desktop-ui .message.assistant h4 { font-size: 1em; }
+
+.desktop-ui .message .bullet,
+.desktop-ui .message .list-num {
+    display: inline;
+    color: var(--text-color-light);
+    margin-left: 0.5em;
+}
+
+.desktop-ui .file-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #3b82f6;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    margin-bottom: 6px;
+}
+
+.desktop-ui .file-bubble svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.desktop-ui .file-bubble span {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.desktop-ui .message.system {
+    background-color: transparent;
+    align-self: center;
+    color: var(--text-color);
+    font-style: italic;
+    font-size: 0.9em;
+    text-align: center;
+    max-width: 100%;
+    opacity: 0.8;
+}
+
+/* --- Chat Input --- */
+.desktop-ui #chat-input-container {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border);
+    position: relative;
+    background-color: rgba(24, 24, 24, 0.6);
+    flex-shrink: 0;
+}
+
+.desktop-ui #chat-form {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.desktop-ui .file-upload-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.desktop-ui .file-upload-btn {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    position: relative;
+    color: var(--text-dim);
+    transition: all 0.2s;
+}
+
+.desktop-ui .file-upload-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--ansi-cyan);
+    color: var(--text-main);
+}
+
+.desktop-ui .file-upload-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.desktop-ui .file-upload-btn svg {
+    width: 18px;
+    height: 18px;
+    color: inherit;
+}
+
+.desktop-ui .file-upload-btn.has-file {
+    background-color: rgba(220, 38, 38, 0.1);
+    border-color: var(--ansi-red);
+}
+
+.desktop-ui .file-upload-btn.has-file:hover {
+    background-color: rgba(220, 38, 38, 0.2);
+}
+
+.desktop-ui .file-upload-btn.has-file svg {
+    color: var(--ansi-red);
+    animation: flash-red 1s infinite;
+}
+
+.desktop-ui .file-cancel-badge {
+    display: none;
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background-color: #1f2937;
+    color: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 0.75em;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.desktop-ui .file-cancel-badge:hover {
+    background-color: #000;
+}
+
+.desktop-ui .file-upload-btn.has-file .file-cancel-badge {
+    display: block;
+}
+
+.desktop-ui .input-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+}
+
+.desktop-ui .input-wrapper {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+}
+
+.desktop-ui #message-input {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0.3);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 53px 12px 12px;
+    font-size: 0.875em;
+    line-height: 1.4;
+    resize: none;
+    height: 44px;
+    min-height: 44px;
+    max-height: 30vh;
+    overflow-y: hidden;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.desktop-ui #message-input:focus {
+    border-color: var(--ansi-cyan);
+}
+
+.desktop-ui #message-input::placeholder {
+    color: var(--text-dim);
+}
+
+.desktop-ui #send-btn {
+    position: absolute;
+    bottom: 6px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.desktop-ui #send-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--ansi-cyan);
+    color: var(--ansi-cyan);
+}
+
+.desktop-ui #send-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.desktop-ui #send-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.desktop-ui #send-btn.has-text {
+    /* No special style needed for has-text in dark mode, hover handles it */
+}
+
+.desktop-ui #send-btn.stop-btn {
+    background-color: rgba(220, 38, 38, 0.2) !important;
+    color: var(--ansi-red) !important;
+    border-color: var(--ansi-red) !important;
+}
+
+.desktop-ui .action-btn {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0 10px;
+    font-size: 0.75em;
+    font-weight: bold;
+    cursor: pointer;
+    height: 37px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.desktop-ui .action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    border-color: var(--ansi-cyan);
+}
+
+.desktop-ui .action-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Light chase effect for Summarize Now button while summarizing */
+#summarize-now-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+#summarize-now-btn:disabled {
+    opacity: 1;
+    cursor: default;
+}
+#summarize-now-btn .btn-label {
+    position: relative;
+    z-index: 2;
+}
+
+#summarize-now-btn::before,
+#summarize-now-btn::after,
+#summarize-now-btn .chase-right,
+#summarize-now-btn .chase-bottom,
+#summarize-now-btn .chase-left {
+    content: '';
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.3s;
+}
+
+/* Top: left→right */
+#summarize-now-btn::before {
+    top: 0; left: -100%;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(14,99,156,0) 20%, rgba(14,99,156,0.8) 50%, rgba(14,99,156,1) 70%, rgba(14,99,156,0.8) 90%, transparent 100%);
+}
+
+/* Right: top→bottom */
+#summarize-now-btn::after {
+    top: -100%; right: 0;
+    width: 2px; height: 100%;
+    background: linear-gradient(180deg, transparent 0%, rgba(14,99,156,0) 20%, rgba(14,99,156,0.8) 50%, rgba(14,99,156,1) 70%, rgba(14,99,156,0.8) 90%, transparent 100%);
+}
+
+/* Right div not used — just bottom and left */
+#summarize-now-btn .chase-right { display: none; }
+
+/* Bottom: right→left */
+#summarize-now-btn .chase-bottom {
+    bottom: 0; right: -100%;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(14,99,156,0.8) 10%, rgba(14,99,156,1) 30%, rgba(14,99,156,0.8) 50%, transparent 100%);
+}
+
+/* Left: bottom→top */
+#summarize-now-btn .chase-left {
+    bottom: -100%; left: 0;
+    width: 2px; height: 100%;
+    background: linear-gradient(180deg, transparent 0%, rgba(14,99,156,0.8) 10%, rgba(14,99,156,1) 30%, rgba(14,99,156,0.8) 50%, transparent 100%);
+}
+
+#summarize-now-btn.summarizing::before,
+#summarize-now-btn.summarizing::after,
+#summarize-now-btn.summarizing .chase-bottom,
+#summarize-now-btn.summarizing .chase-left {
+    opacity: 1;
+}
+
+#summarize-now-btn.summarizing::before {
+    animation: chaseTop 2s linear infinite;
+}
+#summarize-now-btn.summarizing::after {
+    animation: chaseRight 2s linear infinite;
+    animation-delay: 0.5s;
+}
+#summarize-now-btn.summarizing .chase-bottom {
+    animation: chaseBottom 2s linear infinite;
+    animation-delay: 1s;
+}
+#summarize-now-btn.summarizing .chase-left {
+    animation: chaseLeft 2s linear infinite;
+    animation-delay: 1.5s;
+}
+
+@keyframes chaseTop    { 0% { left: -100%; }   50%, 100% { left: 100%; } }
+@keyframes chaseRight  { 0% { top: -100%; }    50%, 100% { top: 100%; } }
+@keyframes chaseBottom { 0% { right: -100%; }  50%, 100% { right: 100%; } }
+@keyframes chaseLeft   { 0% { bottom: -100%; } 50%, 100% { bottom: 100%; } }
+
+.desktop-ui #scroll-bottom-btn {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    z-index: 50;
+    color: var(--text-dim);
+    transition: all 0.3s;
+}
+
+.desktop-ui #scroll-bottom-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--ansi-cyan);
+    color: var(--text-main);
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.desktop-ui #scroll-bottom-btn.hidden {
+    display: none;
+}
