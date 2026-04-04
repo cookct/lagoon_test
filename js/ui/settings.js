@@ -1400,6 +1400,51 @@ export function showSettingsMenu(button) {
     };
     menu.appendChild(agentChatBtn);
 
+    // Design Tools section
+    const designSep = document.createElement('div');
+    designSep.style.cssText = 'height:1px;background:var(--border);margin:4px 0;';
+    menu.appendChild(designSep);
+
+    const designActive = localStorage.getItem('lagoon_design_mode') === 'true';
+    const designRow = document.createElement('div');
+    designRow.style.cssText = 'display:flex;align-items:center;padding:6px 12px;gap:8px;';
+    designRow.onclick = e => e.stopPropagation();
+
+    const designLabel = document.createElement('label');
+    designLabel.style.cssText = 'position:relative;display:inline-block;width:32px;height:18px;flex-shrink:0;cursor:pointer;';
+    const designInput = document.createElement('input');
+    designInput.type = 'checkbox';
+    designInput.id = 'design-mode-toggle';
+    designInput.checked = designActive;
+    designInput.style.cssText = 'opacity:0;width:0;height:0;position:absolute;';
+    const designSlider = document.createElement('span');
+    designSlider.style.cssText = `position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${designActive ? 'var(--accent)' : '#444'};transition:.2s;border-radius:18px;`;
+    const designKnob = document.createElement('span');
+    designKnob.style.cssText = `position:absolute;height:14px;width:14px;left:${designActive ? '16px' : '2px'};bottom:2px;background:white;transition:.2s;border-radius:50%;`;
+    designSlider.appendChild(designKnob);
+    designLabel.appendChild(designInput);
+    designLabel.appendChild(designSlider);
+    designInput.onchange = async (e) => {
+        e.stopPropagation();
+        const on = designInput.checked;
+        designSlider.style.background = on ? 'var(--accent)' : '#444';
+        designKnob.style.left = on ? '16px' : '2px';
+        const { designMode } = await import('../design_mode.js');
+        if (on) {
+            menu.remove();
+            designMode.enable();
+        } else {
+            designMode.disable();
+        }
+    };
+    designRow.appendChild(designLabel);
+
+    const designText = document.createElement('span');
+    designText.textContent = 'Design Mode';
+    designText.style.cssText = 'flex:1;color:var(--text);font-size:13px;';
+    designRow.appendChild(designText);
+    menu.appendChild(designRow);
+
     // Ollama section
     const ollamaSep = document.createElement('div');
     ollamaSep.style.cssText = 'height:1px;background:var(--border);margin:4px 0;';

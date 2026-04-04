@@ -1077,10 +1077,29 @@ export class ChatManager {
             userIndex--;
         }
 
+        let deleteStart, deleteCount;
         if (userIndex >= 0 && state.messages[userIndex].role === 'user') {
+            deleteStart = userIndex;
+            deleteCount = 2;
             state.messages.splice(userIndex, 2);
         } else {
+            deleteStart = assistantIndex;
+            deleteCount = 1;
             state.messages.splice(assistantIndex, 1);
+        }
+
+        // Remap kept message indices to account for the deleted range
+        if (state.keptMessages.size > 0) {
+            const updated = new Set();
+            for (const idx of state.keptMessages) {
+                if (idx < deleteStart) {
+                    updated.add(idx); // before deletion, unaffected
+                } else if (idx >= deleteStart + deleteCount) {
+                    updated.add(idx - deleteCount); // after deletion, shift down
+                }
+                // indices within the deleted range are dropped
+            }
+            state.keptMessages = updated;
         }
 
         this.renderMessages();

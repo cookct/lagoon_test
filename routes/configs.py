@@ -99,6 +99,7 @@ def copy_config():
 
     dest_path = os.path.join(CONFIG_DIR, candidate)
     try:
+        config_data['character_name'] = candidate.replace('.json', '')
         with open(dest_path, 'w') as f:
             json.dump(config_data, f, indent=4)
 

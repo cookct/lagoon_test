@@ -1,0 +1,1873 @@
+/* --- Themes --- */
+
+/* Hacker Console (Default) */
+.theme-hacker body,
+body.theme-hacker {
+    background-color: var(--bg-dark) !important;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../images/matrix1.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-attachment: fixed !important;
+}
+
+.theme-hacker #matrix-rain,
+body.theme-hacker #matrix-rain {
+    display: none;
+}
+
+/* Matrix Console - animated canvas */
+.theme-matrix body,
+body.theme-matrix {
+    background-color: #020812;
+    background-image: none;
+}
+
+.theme-matrix #matrix-rain,
+body.theme-matrix #matrix-rain {
+    display: block;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Dark Mode (Pure Black & Grey) */
+.theme-dark body,
+body.theme-dark {
+    background-color: #0a0a0a;
+    background-image: none;
+}
+
+.theme-dark #matrix-rain {
+    display: none;
+}
+
+/* 90s Retro Theme */
+.theme-90s body,
+body.theme-90s {
+    background-color: #000000;
+    background-image: url('../images/90s-background.png'), linear-gradient(45deg, #ff00ff, #00ffff, #ffff00);
+    background-size: 200px 200px, auto;
+    background-position: center;
+    background-attachment: fixed;
+    font-family: 'Comic Sans MS', 'Arial', sans-serif;
+}
+
+.theme-90s .sidebar-left,
+.theme-90s .sidebar-right,
+.theme-90s #chat-wrapper,
+.theme-90s #chat-input-container {
+    border: 4px solid #ff00ff;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    box-shadow: 0 0 10px #00ffff, 0 0 20px #ff00ff;
+    font-family: 'Comic Sans MS', 'Arial', sans-serif;
+}
+
+.theme-90s .message {
+    border: 3px dashed #ffff00;
+    border-radius: 0;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    font-family: var(--chat-font-family, 'Comic Sans MS', 'Arial', sans-serif);
+    font-size: var(--chat-font-size, 16px);
+    line-height: var(--chat-line-height, 1.5);
+}
+
+.theme-90s .message.user {
+    border-color: #00ffff;
+}
+
+.theme-90s .message.assistant {
+    border-color: #ff00ff;
+}
+
+.theme-90s button,
+.theme-90s .tab {
+    background: linear-gradient(45deg, #ff00ff, #00ffff);
+    color: #000000;
+    border: 3px solid #ffff00;
+    border-radius: 0;
+    font-weight: bold;
+    text-shadow: 2px 2px 0 #ff00ff;
+    font-family: 'Comic Sans MS', 'Arial', sans-serif;
+}
+
+.theme-90s button:hover,
+.theme-90s .tab:hover {
+    background: linear-gradient(45deg, #00ffff, #ff00ff);
+    box-shadow: 0 0 15px #ffff00;
+}
+
+.theme-90s #matrix-rain {
+    display: none;
+}
+
+.theme-90s .visitor-counter {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background-color: #000000;
+    color: #00ff00;
+    padding: 5px 10px;
+    border: 2px solid #00ff00;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    z-index: 1000;
+}
+
+.theme-90s .under-construction {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+}
+
+.theme-90s .best-viewed {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background-color: #000000;
+    color: #ff00ff;
+    padding: 5px 10px;
+    border: 2px solid #ff00ff;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    z-index: 1000;
+}
+
+/* Glassmorphism Theme - Ultimate Cutting Edge */
+.theme-glassmorphism body,
+body.theme-glassmorphism {
+    /* Deep, rich aurora background */
+    background: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+    background-color: #0f0f13;
+    background-attachment: fixed;
+    color: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    --accent-glow: 0 0 20px rgba(139, 92, 246, 0.5);
+    --text-main: #ffffff;
+    --text-dim: rgba(255, 255, 255, 0.6);
+}
+
+.theme-glassmorphism #matrix-rain {
+    display: none;
+}
+
+/* Glassmorphic Panel Base */
+.theme-glassmorphism .sidebar-left,
+.theme-glassmorphism .sidebar-right,
+.theme-glassmorphism .modal-content,
+.theme-glassmorphism .tab-panel {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important; /* Highlight top edge */
+    box-shadow: var(--glass-shadow) !important;
+}
+
+/* Specific border-radius control */
+.theme-glassmorphism .modal-content {
+    border-radius: 24px !important;
+}
+
+.theme-glassmorphism .sidebar-left,
+.theme-glassmorphism .sidebar-right,
+.theme-glassmorphism .tab-panel {
+    border-radius: 0 !important;
+}
+
+/* Sidebar Specifics */
+.theme-glassmorphism .sidebar-left,
+.theme-glassmorphism .sidebar-right {
+    margin: 10px !important;
+    height: calc(100vh - 20px) !important;
+    border-radius: 0 !important;
+}
+
+/* Chat Area */
+.theme-glassmorphism #chat-wrapper {
+    background: transparent !important; /* Let body gradient show through */
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.theme-glassmorphism #chat-input-container {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 20px !important;
+    margin: 0 20px 20px 20px !important;
+    box-shadow: var(--glass-shadow) !important;
+    padding: 8px 20px !important; /* Shrunk height */
+}
+
+.theme-glassmorphism #chat-form {
+    align-items: center !important;
+}
+
+.theme-glassmorphism #message-input {
+    height: 38px !important; /* Match sidebar items height */
+    min-height: 38px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    padding-right: 45px !important;
+    border-radius: 10px !important;
+}
+
+.theme-glassmorphism #send-btn {
+    bottom: 50% !important;
+    transform: translateY(50%) !important;
+    border-radius: 8px !important;
+    height: 28px !important;
+    width: 28px !important;
+    right: 10px !important;
+}
+
+/* Messages */
+.theme-glassmorphism .message {
+    background: rgba(20, 20, 25, 0.6) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 18px !important;
+    padding: 16px 20px !important;
+    margin-bottom: 16px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    color: #eeeeee !important;
+    font-size: var(--chat-font-size, 0.95rem);
+    line-height: var(--chat-line-height, 1.6);
+}
+
+.theme-glassmorphism .message.user {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%) !important;
+    border: 1px solid rgba(168, 85, 247, 0.3) !important;
+    border-bottom-right-radius: 4px !important;
+}
+
+.theme-glassmorphism .message.assistant {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-bottom-left-radius: 4px !important;
+    margin-right: 10% !important;
+}
+
+/* Inputs & Textareas */
+.theme-glassmorphism input,
+.theme-glassmorphism textarea,
+.theme-glassmorphism select {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: white !important;
+    padding: 12px 16px !important;
+    transition: all 0.2s ease !important;
+}
+
+.theme-glassmorphism input:focus,
+.theme-glassmorphism textarea:focus,
+.theme-glassmorphism select:focus {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-color: rgba(139, 92, 246, 0.5) !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+    outline: none !important;
+}
+
+/* Buttons */
+.theme-glassmorphism button,
+.theme-glassmorphism .tab-btn {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(4px) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.5px !important;
+}
+
+.theme-glassmorphism .tab-btn {
+    height: 35px !important;
+    margin: 10px 5px !important;
+}
+
+.theme-glassmorphism #send-btn {
+    border-radius: 8px !important;
+    height: 32px !important;
+    width: 32px !important;
+}
+
+.theme-glassmorphism .file-upload-btn,
+.theme-glassmorphism .settings-btn,
+.theme-glassmorphism .export-btn,
+.theme-glassmorphism .image-gen-btn {
+    height: 38px !important;
+    width: 38px !important;
+}
+
+.theme-glassmorphism .sidebar-tabs {
+    height: auto !important; /* Allow height to fit buttons with margin */
+    margin-bottom: 10px !important;
+}
+
+.theme-glassmorphism button:hover,
+.theme-glassmorphism .tab-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    text-shadow: 0 0 8px rgba(255,255,255,0.4) !important;
+}
+
+.theme-glassmorphism .tab-btn.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(168, 85, 247, 0.4) 100%) !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+    color: white !important;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Scrollbars */
+.theme-glassmorphism ::-webkit-scrollbar {
+    width: 8px;
+}
+.theme-glassmorphism ::-webkit-scrollbar-track {
+    background: transparent;
+}
+.theme-glassmorphism ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+.theme-glassmorphism ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Headers & Text */
+.theme-glassmorphism h1, 
+.theme-glassmorphism h2, 
+.theme-glassmorphism h3, 
+.theme-glassmorphism .section-header {
+    color: transparent !important;
+    background: linear-gradient(to right, #fff, #a5b4fc) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px !important;
+}
+
+/* Code Blocks */
+.theme-glassmorphism pre, 
+.theme-glassmorphism code {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 8px !important;
+    color: #e2e8f0 !important;
+}
+
+.theme-glassmorphism .options-btn {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 16px;
+    padding: 0 !important;
+    margin: 3px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.theme-glassmorphism .context-menu {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+    padding: 5px !important;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 12px !important;
+}
+
+.theme-glassmorphism .context-menu-item, .theme-glassmorphism .censor-mode-btns .mode-btn {
+    border-radius: 8px !important;
+    margin: 0 !important;
+    background: var(--glass-bg);
+    color: var(--text-main);
+}
+
+.theme-glassmorphism .context-menu-item:hover, .theme-glassmorphism .censor-mode-btns .mode-btn:hover {
+    background: var(--glass-hover);
+}
+
+.theme-glassmorphism .context-menu-item:active, .theme-glassmorphism .censor-mode-btns .mode-btn:active {
+    background: var(--glass-active);
+}
+
+.theme-glassmorphism .censor-mode-btns .mode-btn.active {
+    background: var(--glass-active);
+    color: var(--text-main);
+}
+
+.theme-glassmorphism .context-menu-item {
+    border-radius: 8px !important;
+    margin: 0 !important;
+}
+
+/* Cyberpunk Neon Theme */
+.theme-cyberpunk body,
+body.theme-cyberpunk {
+ /* Deep black with subtle purple undertone */
+ background-color: #0a0a0f;
+ background-image: 
+   repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 0, 255, 0.03) 2px, rgba(255, 0, 255, 0.03) 4px),
+   repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 255, 255, 0.03) 2px, rgba(0, 255, 255, 0.03) 4px),
+   linear-gradient(180deg, #0a0a0f 0%, #1a0a1f 50%, #0a0a0f 100%);
+ background-attachment: fixed;
+ color: #00ffff;
+ font-family: 'Courier New', 'Consolas', monospace;
+ 
+ /* Cyberpunk color variables */
+ --neon-pink: #ff0080;
+ --neon-cyan: #00ffff;
+ --neon-orange: #ff6600;
+ --neon-purple: #b300ff;
+ --neon-yellow: #ffff00;
+ 
+ --bg-dark: #0a0a0f;
+ --bg-darker: #050508;
+ --bg-panel: rgba(20, 10, 30, 0.8);
+ 
+ --text-main: #00ffff;
+ --text-dim: #8800ff;
+ --text-bright: #ffffff;
+ 
+ --border-glow: rgba(255, 0, 128, 0.6);
+ --shadow-neon: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink), 0 0 30px var(--neon-pink);
+}
+
+.theme-cyberpunk #matrix-rain {
+ display: none;
+}
+
+/* Sidebars - Neon bordered panels */
+.theme-cyberpunk .sidebar-left,
+.theme-cyberpunk .sidebar-right {
+ background: var(--bg-panel) !important;
+ border: 2px solid var(--neon-pink) !important;
+ box-shadow: 
+   inset 0 0 20px rgba(255, 0, 128, 0.1),
+   0 0 15px rgba(255, 0, 128, 0.4),
+   0 0 30px rgba(255, 0, 128, 0.2) !important;
+ border-radius: 0 !important;
+}
+
+.theme-cyberpunk .sidebar-left {
+ border-left: 4px solid var(--neon-cyan) !important;
+ box-shadow: 
+   inset 0 0 20px rgba(0, 255, 255, 0.1),
+   -5px 0 15px rgba(0, 255, 255, 0.3) !important;
+}
+
+.theme-cyberpunk .sidebar-right {
+ border-right: 4px solid var(--neon-orange) !important;
+ box-shadow: 
+   inset 0 0 20px rgba(255, 102, 0, 0.1),
+   5px 0 15px rgba(255, 102, 0, 0.3) !important;
+}
+
+/* Chat wrapper - transparent to show grid */
+.theme-cyberpunk #chat-wrapper {
+ background: transparent !important;
+ border: none !important;
+}
+
+/* Messages - Neon speech bubbles */
+.theme-cyberpunk .message {
+ background: rgba(10, 10, 20, 0.9) !important;
+ border: 1px solid var(--neon-cyan) !important;
+ border-left: 4px solid var(--neon-cyan) !important;
+ box-shadow: 
+   0 0 10px rgba(0, 255, 255, 0.3),
+   inset 0 0 10px rgba(0, 255, 255, 0.05) !important;
+ color: var(--text-main) !important;
+ padding: 16px 20px !important;
+ margin-bottom: 16px !important;
+ border-radius: 0 12px 12px 0 !important;
+ position: relative;
+}
+
+.theme-cyberpunk .message.user {
+ background: rgba(20, 0, 30, 0.9) !important;
+ border: 1px solid var(--neon-pink) !important;
+ border-right: 4px solid var(--neon-pink) !important;
+ border-left: 1px solid var(--neon-pink) !important;
+ box-shadow: 
+   0 0 10px rgba(255, 0, 128, 0.4),
+   inset 0 0 10px rgba(255, 0, 128, 0.05) !important;
+ color: var(--text-bright) !important;
+ border-radius: 12px 0 0 12px !important;
+ margin-left: 10% !important;
+}
+
+.theme-cyberpunk .message.assistant {
+ border-color: var(--neon-cyan) !important;
+ margin-right: 10% !important;
+}
+
+/* Glitch effect on message hover */
+.theme-cyberpunk .message:hover {
+ animation: glitch 0.3s ease-in-out;
+}
+
+ @keyframes glitch {
+ 0%, 100% { transform: translate(0); }
+ 25% { transform: translate(-2px, 2px); }
+ 50% { transform: translate(2px, -2px); }
+ 75% { transform: translate(-2px, -2px); }
+}
+
+/* Input container - Neon glow */
+.theme-cyberpunk #chat-input-container {
+ background: rgba(10, 10, 20, 0.95) !important;
+ border: 2px solid var(--neon-purple) !important;
+ border-radius: 0 !important;
+ box-shadow: 
+   0 -5px 30px rgba(179, 0, 255, 0.4),
+   inset 0 0 20px rgba(179, 0, 255, 0.1) !important;
+ padding: 12px 20px !important;
+}
+
+.theme-cyberpunk #message-input {
+ background: rgba(0, 0, 0, 0.6) !important;
+ border: 1px solid var(--neon-cyan) !important;
+ border-radius: 0 !important;
+ color: var(--neon-cyan) !important;
+ padding: 12px 16px !important;
+ font-family: 'Courier New', monospace !important;
+ text-shadow: 0 0 5px rgba(0, 255, 255, 0.5) !important;
+}
+
+.theme-cyberpunk #message-input:focus {
+ border-color: var(--neon-pink) !important;
+ box-shadow: 
+   0 0 10px var(--neon-pink),
+   inset 0 0 10px rgba(255, 0, 128, 0.1) !important;
+ outline: none !important;
+ text-shadow: 0 0 8px rgba(255, 0, 128, 0.6) !important;
+}
+
+/* Buttons - Neon outlined */
+.theme-cyberpunk button,
+.theme-cyberpunk .tab-btn {
+ background: rgba(0, 0, 0, 0.8) !important;
+ border: 2px solid var(--neon-pink) !important;
+ border-radius: 0 !important;
+ color: var(--neon-pink) !important;
+ text-transform: uppercase !important;
+ font-weight: bold !important;
+ letter-spacing: 1px !important;
+ transition: all 0.2s ease !important;
+ text-shadow: 0 0 5px var(--neon-pink) !important;
+ position: relative !important;
+ overflow: hidden !important;
+}
+
+.theme-cyberpunk button:before,
+.theme-cyberpunk .tab-btn:before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: -100%;
+ width: 100%;
+ height: 100%;
+ background: linear-gradient(90deg, transparent, rgba(255, 0, 128, 0.4), transparent);
+ transition: left 0.5s ease;
+}
+
+.theme-cyberpunk button:hover,
+.theme-cyberpunk .tab-btn:hover {
+ background: rgba(255, 0, 128, 0.2) !important;
+ box-shadow:
+   0 0 10px var(--neon-pink),
+   0 0 20px var(--neon-pink),
+   inset 0 0 10px rgba(255, 0, 128, 0.3) !important;
+ transform: translateY(-2px) !important;
+ text-shadow: 0 0 10px var(--neon-pink) !important;
+}
+
+/* ================================================
+   CYBERPUNK 2077 THEME
+   Based on: github.com/gwannon/Cyberpunk-2077-theme-css
+   Yellow background, black elements, subtle glitch
+   ================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Advent+Pro:wght@400;600;700&display=swap');
+
+.theme-cyberpunk2077 body,
+body.theme-cyberpunk2077 {
+  --cp-yellow: #f9f002;
+  --cp-black: #000000;
+  --cp-red: #ff003c;
+  --cp-cyan: #00f0ff;
+  --cp-border: #8ae66e;
+  --glitch-duration: 0.9s;
+
+  background-color: var(--cp-yellow) !important;
+  background-image: none !important;
+  color: var(--cp-black);
+  font-family: 'Advent Pro', -apple-system, sans-serif;
+}
+
+.theme-cyberpunk2077 #matrix-rain {
+  display: none;
+}
+
+/* Sidebars - Black panels */
+.theme-cyberpunk2077 .sidebar-left,
+.theme-cyberpunk2077 .sidebar-right {
+  background: var(--cp-black) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: var(--cp-yellow) !important;
+}
+
+.theme-cyberpunk2077 .sidebar-left {
+  border-right: 3px solid var(--cp-border) !important;
+}
+
+.theme-cyberpunk2077 .sidebar-right {
+  border-left: 3px solid var(--cp-border) !important;
+}
+
+/* Chat area - Yellow */
+.theme-cyberpunk2077 #chat-wrapper {
+  background: var(--cp-yellow) !important;
+  border: none !important;
+}
+
+.theme-cyberpunk2077 #chat-messages {
+  background: var(--cp-yellow) !important;
+}
+
+/* Messages - Clean black boxes */
+.theme-cyberpunk2077 .message {
+  background: var(--cp-black) !important;
+  border: none !important;
+  border-left: 4px solid var(--cp-border) !important;
+  border-radius: 0 !important;
+  color: var(--cp-yellow) !important;
+  padding: 16px 20px !important;
+  margin-bottom: 12px !important;
+}
+
+.theme-cyberpunk2077 .message.user {
+  background: var(--cp-red) !important;
+  border-left-color: var(--cp-yellow) !important;
+  color: #fff !important;
+}
+
+/* Glitch on hover */
+.theme-cyberpunk2077 .message:hover {
+  animation: cp2077glitch var(--glitch-duration) infinite linear;
+}
+
+@keyframes cp2077glitch {
+  0%, 59%, 71%, 100% { transform: none; }
+  60% { transform: skew(3deg) translateX(2px); }
+  70% { transform: skew(-2deg) translateX(-2px); }
+}
+
+/* Input container */
+.theme-cyberpunk2077 #chat-input-container {
+  background: var(--cp-black) !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.theme-cyberpunk2077 #message-input {
+  background: var(--cp-yellow) !important;
+  border: 2px solid var(--cp-black) !important;
+  border-radius: 0 !important;
+  color: var(--cp-black) !important;
+  font-family: 'Advent Pro', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.theme-cyberpunk2077 #message-input:focus {
+  border-color: var(--cp-red) !important;
+  outline: none !important;
+}
+
+/* Buttons - Red */
+.theme-cyberpunk2077 button,
+.theme-cyberpunk2077 .tab-btn {
+  background: var(--cp-red) !important;
+  border: none !important;
+  border-right: 2px solid var(--cp-border) !important;
+  border-radius: 0 !important;
+  color: #fff !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+  letter-spacing: 1px !important;
+  font-family: 'Advent Pro', sans-serif !important;
+}
+
+.theme-cyberpunk2077 button:hover,
+.theme-cyberpunk2077 .tab-btn:hover {
+  animation: cp2077glitch var(--glitch-duration) infinite linear;
+}
+
+.theme-cyberpunk2077 .tab-btn.active {
+  background: var(--cp-black) !important;
+  color: var(--cp-yellow) !important;
+}
+
+/* Section headers */
+.theme-cyberpunk2077 .section-header {
+  color: var(--cp-yellow) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid var(--cp-yellow) !important;
+  padding-bottom: 8px !important;
+}
+
+/* Scrollbars */
+.theme-cyberpunk2077 ::-webkit-scrollbar {
+  width: 10px;
+  background: var(--cp-yellow);
+}
+
+.theme-cyberpunk2077 ::-webkit-scrollbar-track {
+  background: var(--cp-yellow);
+}
+
+.theme-cyberpunk2077 ::-webkit-scrollbar-thumb {
+  background: var(--cp-red);
+  border-bottom: 2px solid var(--cp-border);
+  border-right: 2px solid var(--cp-border);
+}
+
+.theme-cyberpunk2077 ::-webkit-scrollbar-thumb:hover {
+  background: #ff6600;
+}
+
+/* Code blocks */
+.theme-cyberpunk2077 pre,
+.theme-cyberpunk2077 code {
+  background: var(--cp-black) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: var(--cp-cyan) !important;
+}
+
+/* Modal styling */
+.theme-cyberpunk2077 .modal-content {
+  background: var(--cp-black) !important;
+  border: 3px solid var(--cp-border) !important;
+  border-radius: 0 !important;
+  color: var(--cp-yellow) !important;
+}
+
+/* Links */
+.theme-cyberpunk2077 a {
+  color: var(--cp-cyan) !important;
+}
+
+/* Headings with blinking cursor */
+.theme-cyberpunk2077 h1,
+.theme-cyberpunk2077 h2,
+.theme-cyberpunk2077 h3,
+.theme-cyberpunk2077 h4 {
+  color: var(--cp-yellow) !important;
+  font-weight: 600 !important;
+}
+
+.theme-cyberpunk2077 h1::after,
+.theme-cyberpunk2077 h2::after {
+  content: '_';
+  animation: cp2077blink var(--glitch-duration) infinite linear;
+}
+
+@keyframes cp2077blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* Form inputs */
+.theme-cyberpunk2077 input,
+.theme-cyberpunk2077 textarea,
+.theme-cyberpunk2077 select {
+  background: var(--cp-yellow) !important;
+  border: 2px solid var(--cp-black) !important;
+  border-radius: 0 !important;
+  color: var(--cp-black) !important;
+}
+
+.theme-cyberpunk2077 input:focus,
+.theme-cyberpunk2077 textarea:focus,
+.theme-cyberpunk2077 select:focus {
+  border-color: var(--cp-red) !important;
+  outline: none !important;
+}
+
+.theme-cyberpunk2077 select option {
+  background: var(--cp-black);
+  color: var(--cp-yellow);
+}
+
+
+/* ============================================
+   ABYSS - Deep Ocean Bioluminescent Theme
+   ============================================ */
+
+.theme-abyss body,
+body.theme-abyss {
+    /* Deep ocean gradient - darkest depths */
+    background-color: #000510;
+    background-image: 
+        radial-gradient(ellipse at 20% 80%, rgba(0, 100, 150, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(0, 200, 180, 0.1) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 50%, rgba(0, 50, 100, 0.2) 0%, transparent 70%),
+        linear-gradient(180deg, #000510 0%, #000a1a 30%, #001020 60%, #000510 100%);
+    background-attachment: fixed;
+    color: #a0e0e0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.theme-abyss #matrix-rain {
+    display: none;
+}
+
+/* Sidebars - translucent deep sea panels */
+.theme-abyss .sidebar-left,
+.theme-abyss .sidebar-right {
+    background: rgba(0, 15, 30, 0.85) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(0, 200, 180, 0.2) !important;
+    box-shadow: 
+        inset 0 0 60px rgba(0, 100, 150, 0.1),
+        0 0 30px rgba(0, 200, 180, 0.1) !important;
+}
+
+.theme-abyss .sidebar-left {
+    border-right: 1px solid rgba(0, 200, 180, 0.25) !important;
+}
+
+.theme-abyss .sidebar-right {
+    border-left: 1px solid rgba(0, 200, 180, 0.25) !important;
+}
+
+/* Chat area - the abyss */
+.theme-abyss #chat-wrapper {
+    background: transparent !important;
+}
+
+/* Messages - bioluminescent bubbles */
+.theme-abyss .message {
+    background: rgba(0, 20, 40, 0.6) !important;
+    border: 1px solid rgba(0, 180, 160, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    margin: 12px 0 !important;
+    padding: 16px !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Glow effect on messages */
+.theme-abyss .message::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(0, 200, 180, 0.4) 20%, 
+        rgba(0, 255, 200, 0.6) 50%, 
+        rgba(0, 200, 180, 0.4) 80%, 
+        transparent 100%);
+}
+
+.theme-abyss .message.user {
+    background: rgba(0, 40, 60, 0.7) !important;
+    border-color: rgba(0, 150, 200, 0.4) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(0, 150, 200, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.theme-abyss .message.user::before {
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(0, 150, 220, 0.5) 20%, 
+        rgba(0, 200, 255, 0.7) 50%, 
+        rgba(0, 150, 220, 0.5) 80%, 
+        transparent 100%);
+}
+
+.theme-abyss .message.assistant {
+    background: rgba(0, 30, 50, 0.7) !important;
+    border-color: rgba(0, 200, 160, 0.4) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(0, 200, 160, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.theme-abyss .message.assistant::before {
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(0, 220, 180, 0.5) 20%, 
+        rgba(0, 255, 200, 0.7) 50%, 
+        rgba(0, 220, 180, 0.5) 80%, 
+        transparent 100%);
+}
+
+/* Input container - ocean floor */
+.theme-abyss #chat-input-container {
+    background: rgba(0, 10, 25, 0.95) !important;
+    border-top: 1px solid rgba(0, 200, 180, 0.3) !important;
+    box-shadow: 
+        0 -10px 40px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(0, 200, 180, 0.1) !important;
+}
+
+.theme-abyss #message-input {
+    background: rgba(0, 20, 40, 0.8) !important;
+    border: 1px solid rgba(0, 180, 160, 0.3) !important;
+    border-radius: 12px !important;
+    color: #c0f0f0 !important;
+    box-shadow: 
+        inset 0 2px 8px rgba(0, 0, 0, 0.3),
+        0 0 15px rgba(0, 200, 180, 0.1) !important;
+}
+
+.theme-abyss #message-input:focus {
+    border-color: rgba(0, 220, 200, 0.6) !important;
+    box-shadow: 
+        inset 0 2px 8px rgba(0, 0, 0, 0.3),
+        0 0 25px rgba(0, 220, 200, 0.2) !important;
+    outline: none !important;
+}
+
+.theme-abyss #message-input::placeholder {
+    color: rgba(100, 180, 180, 0.5) !important;
+}
+
+/* Buttons - bioluminescent organisms */
+.theme-abyss button,
+.theme-abyss .tab-btn {
+    background: linear-gradient(135deg, rgba(0, 60, 80, 0.9), rgba(0, 40, 60, 0.9)) !important;
+    border: 1px solid rgba(0, 200, 180, 0.4) !important;
+    color: #a0f0f0 !important;
+    border-radius: 10px !important;
+    text-shadow: 0 0 10px rgba(0, 255, 220, 0.5) !important;
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.3),
+        0 0 10px rgba(0, 200, 180, 0.1) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Sidebar tabs - match header button styling */
+.theme-abyss .sidebar-tabs {
+    display: flex !important;
+    height: auto !important;
+    padding: 12px !important;
+    gap: 8px !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+.theme-abyss .sidebar-tabs .tab-btn {
+    height: auto !important;
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    border-bottom: none !important;
+}
+
+.theme-abyss button:hover,
+.theme-abyss .tab-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 80, 100, 0.95), rgba(0, 50, 70, 0.95)) !important;
+    border-color: rgba(0, 255, 220, 0.6) !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(0, 255, 220, 0.2) !important;
+    transform: translateY(-1px);
+}
+
+.theme-abyss button:active,
+.theme-abyss .tab-btn:active {
+    transform: translateY(1px);
+    box-shadow: 
+        0 2px 10px rgba(0, 0, 0, 0.3),
+        0 0 15px rgba(0, 200, 180, 0.15) !important;
+}
+
+.theme-abyss .tab-btn.active {
+    background: linear-gradient(135deg, rgba(0, 100, 120, 0.95), rgba(0, 60, 80, 0.95)) !important;
+    border-color: rgba(0, 255, 200, 0.7) !important;
+    border-bottom: none !important;
+    box-shadow:
+        0 0 25px rgba(0, 255, 200, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Options buttons (hamburger) - remove oval styling, match both sidebars */
+.theme-abyss .options-btn {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    padding: 0 6px !important;
+    font-size: 22px !important;
+    line-height: 1 !important;
+    color: rgba(160, 240, 240, 0.6) !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: center !important;
+    height: 28px !important;
+    width: auto !important;
+    min-width: 28px !important;
+    margin: 0 !important;
+}
+
+.theme-abyss .options-btn:hover {
+    background: rgba(0, 200, 180, 0.15) !important;
+    color: rgba(0, 255, 220, 0.9) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Ensure macro-item options buttons match config-item ones */
+.theme-abyss .macro-item .options-btn,
+.theme-abyss .summary-content .options-btn {
+    opacity: 0.6;
+    font-size: 22px !important;
+    height: 28px !important;
+    width: auto !important;
+    min-width: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: center !important;
+    padding: 0 6px !important;
+    margin: 0 !important;
+}
+
+.theme-abyss .macro-item:hover .options-btn,
+.theme-abyss .summary-content:hover .options-btn {
+    opacity: 1;
+}
+
+/* Scrollbars - underwater currents */
+.theme-abyss ::-webkit-scrollbar {
+    width: 8px;
+}
+
+.theme-abyss ::-webkit-scrollbar-track {
+    background: rgba(0, 15, 30, 0.5);
+}
+
+.theme-abyss ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(0, 150, 180, 0.4), rgba(0, 200, 180, 0.6));
+    border-radius: 4px;
+}
+
+.theme-abyss ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(0, 180, 200, 0.5), rgba(0, 255, 220, 0.7));
+}
+
+/* Code blocks - sunken treasure */
+.theme-abyss pre,
+.theme-abyss code {
+    background: rgba(0, 10, 20, 0.9) !important;
+    border: 1px solid rgba(0, 150, 150, 0.3) !important;
+    border-radius: 8px !important;
+    color: #80e0e0 !important;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Links - bioluminescent trails */
+.theme-abyss a {
+    color: #00e0d0 !important;
+    text-shadow: 0 0 8px rgba(0, 224, 208, 0.4) !important;
+    transition: all 0.2s ease !important;
+}
+
+.theme-abyss a:hover {
+    color: #40ffff !important;
+    text-shadow: 0 0 15px rgba(64, 255, 255, 0.6) !important;
+}
+
+/* Context menu - jellyfish bell */
+.theme-abyss .context-menu {
+    background: rgba(0, 20, 35, 0.95) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(0, 200, 180, 0.3) !important;
+    border-radius: 12px !important;
+    box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(0, 200, 180, 0.1) !important;
+}
+
+.theme-abyss .context-menu-item {
+    background: transparent !important;
+    border-radius: 8px !important;
+    color: #a0e0e0 !important;
+}
+
+.theme-abyss .context-menu-item:hover {
+    background: rgba(0, 100, 120, 0.4) !important;
+    color: #c0ffff !important;
+}
+
+/* Modal - pressure chamber */
+.theme-abyss .modal-content {
+    background: rgba(0, 15, 30, 0.95) !important;
+    border: 1px solid rgba(0, 200, 180, 0.3) !important;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(0, 200, 180, 0.1) !important;
+}
+
+/* Headers - glowing from the depths */
+.theme-abyss h1,
+.theme-abyss h2,
+.theme-abyss h3,
+.theme-abyss .section-header {
+    color: #c0ffff !important;
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.3) !important;
+}
+
+/* Sidebar list items - match macro styling */
+.theme-abyss .sidebar-list-item {
+    background: rgba(0, 30, 50, 0.4) !important;
+    border: 1px solid rgba(0, 150, 150, 0.2) !important;
+    border-radius: 10px !important;
+    margin: 6px 0 !important;
+    transition: all 0.3s ease !important;
+}
+
+.theme-abyss .sidebar-list-item:hover {
+    background: rgba(0, 60, 90, 0.6) !important;
+    border-color: rgba(0, 200, 180, 0.4) !important;
+    box-shadow: 0 0 15px rgba(0, 200, 180, 0.15) !important;
+}
+
+.theme-abyss .sidebar-list-item.active {
+    background: rgba(0, 80, 110, 0.7) !important;
+    border-color: rgba(0, 255, 200, 0.5) !important;
+    box-shadow: 0 0 20px rgba(0, 255, 200, 0.2) !important;
+}
+
+/* Config items - transparent container, only summary-content is visible */
+.theme-abyss .config-item {
+    background: transparent !important;
+    border: none !important;
+    margin: 4px 0 !important;
+    padding: 0 !important;
+}
+
+/* Summary element - override default browser display (summary defaults to list-item) */
+.theme-abyss .config-item > summary {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+/* Hide default summary marker */
+.theme-abyss .config-item > summary::-webkit-details-marker {
+    display: none !important;
+}
+
+/* Summary row - ensure flex */
+.theme-abyss .summary-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+/* Summary left - arrow + name container */
+.theme-abyss .summary-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+/* Summary content (character buttons) - abyss styling */
+.theme-abyss .summary-content {
+    background: rgba(0, 30, 50, 0.6) !important;
+    border: 1px solid rgba(0, 150, 150, 0.3) !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    height: 32px !important;
+}
+
+.theme-abyss .summary-content:hover {
+    background: rgba(0, 60, 90, 0.8) !important;
+    border-color: rgba(0, 200, 180, 0.5) !important;
+    box-shadow: 0 0 15px rgba(0, 200, 180, 0.2) !important;
+}
+
+.theme-abyss .config-item[open] .summary-content {
+    background: rgba(0, 50, 80, 0.7) !important;
+    border-color: rgba(0, 255, 200, 0.4) !important;
+}
+
+/* Typing indicator - pulsing creature */
+.theme-abyss .typing-indicator {
+    color: rgba(0, 200, 180, 0.7) !important;
+}
+
+.theme-abyss .typing-indicator::after {
+    content: '';
+    animation: abyss-pulse 1.5s infinite;
+}
+
+@keyframes abyss-pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+/* Selection - bioluminescent highlight */
+.theme-abyss ::selection {
+    background: rgba(0, 200, 180, 0.3) !important;
+    color: #ffffff !important;
+}
+
+/* Macro items - bioluminescent buttons */
+.theme-abyss .macro-item {
+    background: rgba(0, 30, 50, 0.4) !important;
+    border: 1px solid rgba(0, 150, 150, 0.2) !important;
+    border-radius: 10px !important;
+    margin: 6px 0 !important;
+    transition: all 0.3s ease !important;
+}
+
+.theme-abyss .macro-item:hover {
+    background: rgba(0, 60, 90, 0.6) !important;
+    border-color: rgba(0, 200, 180, 0.4) !important;
+    box-shadow: 0 0 15px rgba(0, 200, 180, 0.15) !important;
+}
+
+.theme-abyss .macro-item.active {
+    background: rgba(0, 80, 110, 0.7) !important;
+    border-color: rgba(0, 255, 200, 0.5) !important;
+    box-shadow: 0 0 20px rgba(0, 255, 200, 0.2) !important;
+}
+
+.theme-abyss .macro-name {
+    color: #a0e0e0 !important;
+}
+
+/* ============================================
+   MILLENNIUM - Web 1.0 Nostalgia Theme
+   Ask Jeeves | Netscape | ICQ | GeoCities
+   ============================================ */
+
+.theme-millennium body,
+body.theme-millennium {
+    /* Classic Windows 98/2000 gray-beige */
+    background-color: #c0c0c0;
+    background-image: url('../images/90s-background.png'), 
+        linear-gradient(180deg, #c0c0c0 0%, #d4d0c8 50%, #c0c0c0 100%);
+    background-size: 100px 100px, auto;
+    color: #000000;
+    font-family: 'Times New Roman', Times, serif;
+}
+
+.theme-millennium #matrix-rain {
+    display: none;
+}
+
+/* Classic 3D beveled window look */
+.theme-millennium .sidebar-left,
+.theme-millennium .sidebar-right {
+    background: #c0c0c0 !important;
+    border: 2px solid !important;
+    border-color: #ffffff #808080 #808080 #ffffff !important;
+    box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px #000000 !important;
+    border-radius: 0 !important;
+    color: #000000 !important;
+}
+
+.theme-millennium .sidebar-left {
+    border-right: 2px solid #808080 !important;
+}
+
+.theme-millennium .sidebar-right {
+    border-left: 2px solid #ffffff !important;
+}
+
+/* Classic title bar look for headers */
+.theme-millennium #sidebar-header,
+.theme-millennium #right-sidebar-header,
+.theme-millennium .sidebar-tabs {
+    background: linear-gradient(90deg, #000080 0%, #1084d0 100%) !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    padding: 3px 5px !important;
+    border: 2px solid !important;
+    border-color: #ffffff #808080 #808080 #ffffff !important;
+}
+
+.theme-millennium #sidebar-header button,
+.theme-millennium #right-sidebar-header button {
+    background: #c0c0c0 !important;
+    color: #000000 !important;
+    border: 2px solid !important;
+    border-color: #ffffff #808080 #808080 #ffffff !important;
+}
+
+.theme-millennium #sidebar-header button:hover,
+.theme-millennium #right-sidebar-header button:hover {
+    background: #d4d0c8 !important;
+    color: #000000 !important;
+}
+
+/* Image panel header for Millennium theme */
+.theme-millennium .image-panel-header {
+    background: #c0c0c0 !important;
+    border-bottom: 2px solid #808080 !important;
+    padding: 4px 8px !important;
+}
+
+.theme-millennium .image-panel-header .clear-all-btn {
+    background: #c0c0c0 !important;
+    color: #000000 !important;
+    border: 2px solid !important;
+    border-color: #ffffff #808080 #808080 #ffffff !important;
+    border-radius: 0 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+}
+
+.theme-millennium .image-panel-header .clear-all-btn:hover {
+    background: #d4d0c8 !important;
+}
+
+/* Chat wrapper - classic window */
+.theme-millennium #chat-wrapper {
+    background: #ffffff !important;
+    border: 2px solid !important;
+    border-color: #dfdfdf #000000 #000000 #dfdfdf !important;
+    margin: 8px !important;
+    box-shadow: inset 1px 1px #ffffff, inset -1px -1px #808080 !important;
+}
+
+/* Messages - classic email/forum post style */
+.theme-millennium .message {
+    background: #ffffff !important;
+    border: 1px solid #808080 !important;
+    border-radius: 0 !important;
+    margin: 8px !important;
+    padding: 8px !important;
+    font-family: var(--chat-font-family, 'Times New Roman', Times, serif);
+    font-size: var(--chat-font-size, 16px);
+    line-height: var(--chat-line-height, 1.5);
+    box-shadow: 1px 1px 0 #c0c0c0 !important;
+}
+
+/* Horizontal rule between messages */
+.theme-millennium .message::after {
+    content: '';
+    display: block;
+    border-bottom: 1px solid #c0c0c0;
+    margin: 8px -8px -8px -8px;
+}
+
+.theme-millennium .message.user {
+    background: #f0f0f0 !important;
+    border-left: 4px solid #000080 !important;
+}
+
+.theme-millennium .message.assistant {
+    background: #ffffff !important;
+    border-left: 4px solid #008000 !important;
+}
+
+/* Input container - status bar style */
+.theme-millennium #chat-input-container {
+    background: #c0c0c0 !important;
+    border-top: 2px solid !important;
+    border-color: #dfdfdf #000000 #000000 #dfdfdf !important;
+    padding: 4px !important;
+}
+
+.theme-millennium #message-input {
+    background: #ffffff !important;
+    border: 2px solid !important;
+    border-color: #808080 #ffffff #ffffff #808080 !important;
+    border-radius: 0 !important;
+    color: #000000 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    box-shadow: inset 1px 1px #000000 !important;
+}
+
+.theme-millennium #message-input:focus {
+    border-color: #000080 !important;
+    outline: none !important;
+}
+
+/* Classic 3D buttons */
+.theme-millennium button,
+.theme-millennium .tab-btn {
+    background: #c0c0c0 !important;
+    border: 2px solid !important;
+    border-color: #ffffff #808080 #808080 #ffffff !important;
+    border-radius: 0 !important;
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: normal !important;
+    padding: 4px 12px !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    text-transform: none !important;
+}
+
+.theme-millennium button:hover,
+.theme-millennium .tab-btn:hover {
+    background: #d4d0c8 !important;
+    color: #000000 !important;
+}
+
+.theme-millennium button:active,
+.theme-millennium .tab-btn:active {
+    border-color: #808080 #ffffff #ffffff #808080 !important;
+    background: #b0b0b0 !important;
+    transform: translateY(0) !important;
+}
+
+.theme-millennium .tab-btn.active {
+    background: #d4d0c8 !important;
+    border-color: #808080 #ffffff #ffffff #808080 !important;
+    font-weight: bold !important;
+}
+
+/* Scrollbars - classic Windows style */
+.theme-millennium ::-webkit-scrollbar {
+    width: 16px;
+    background: #d4d0c8;
+}
+
+.theme-millennium ::-webkit-scrollbar-track {
+    background: #d4d0c8;
+    border: 1px solid #808080;
+}
+
+.theme-millennium ::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+}
+
+.theme-millennium ::-webkit-scrollbar-thumb:hover {
+    background: #d4d0c8;
+}
+
+.theme-millennium ::-webkit-scrollbar-button {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    height: 16px;
+}
+
+/* Code blocks - terminal style */
+.theme-millennium pre,
+.theme-millennium code {
+    background: #000000 !important;
+    border: 2px solid #c0c0c0 !important;
+    border-radius: 0 !important;
+    color: #00ff00 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 12px !important;
+}
+
+/* Links - classic blue underlined */
+.theme-millennium a {
+    color: #0000ff !important;
+    text-decoration: underline !important;
+}
+
+.theme-millennium a:hover {
+    color: #ff0000 !important;
+    text-decoration: underline !important;
+}
+
+.theme-millennium a:visited {
+    color: #800080 !important;
+}
+
+/* Context menu - classic start menu style */
+.theme-millennium .context-menu {
+    background: #c0c0c0 !important;
+    border: 2px solid !important;
+    border-color: #ffffff #000000 #000000 #ffffff !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 2px !important;
+}
+
+.theme-millennium .context-menu-item {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 0 !important;
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    padding: 4px 20px !important;
+}
+
+.theme-millennium .context-menu-item:hover {
+    background: #000080 !important;
+    color: #ffffff !important;
+    border: 1px dotted #c0c0c0 !important;
+}
+
+/* Modal - classic dialog box */
+.theme-millennium .modal-content {
+    background: #c0c0c0 !important;
+    border: 2px solid !important;
+    border-color: #ffffff #000000 #000000 #ffffff !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.theme-millennium .modal-header {
+    background: linear-gradient(90deg, #000080 0%, #1084d0 100%) !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    padding: 3px 5px !important;
+}
+
+/* Headers - classic style */
+.theme-millennium h1,
+.theme-millennium h2,
+.theme-millennium h3,
+.theme-millennium .section-header {
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-weight: bold !important;
+    text-shadow: none !important;
+}
+
+/* Sidebar list items - classic folder view */
+.theme-millennium .sidebar-list-item {
+    background: #ffffff !important;
+    border: 1px solid #808080 !important;
+    border-radius: 0 !important;
+    margin: 2px 4px !important;
+    padding: 4px 6px !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    color: #000000 !important;
+}
+
+.theme-millennium .sidebar-list-item:hover {
+    background: #000080 !important;
+    color: #ffffff !important;
+    color: #ffffff !important;
+}
+
+.theme-millennium .sidebar-list-item.active {
+    background: #000080 !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+}
+
+/* Config items (character groups) - classic folder tree */
+.theme-millennium .config-item {
+    background: transparent !important;
+    border: none !important;
+    margin: 2px 0 !important;
+}
+
+.theme-millennium .config-item summary {
+    background: #ffffff !important;
+    border: 1px solid #808080 !important;
+    padding: 4px 6px !important;
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+}
+
+.theme-millennium .config-item summary:hover {
+    background: #000080 !important;
+    color: #ffffff !important;
+}
+
+.theme-millennium .config-item[open] summary {
+    background: #d4d0c8 !important;
+    border-color: #808080 #ffffff #ffffff #808080 !important;
+}
+
+/* Sidebar avatars - classic icons */
+.theme-millennium .sidebar-avatar {
+    border: 1px solid #808080 !important;
+    border-radius: 0 !important;
+    box-shadow: inset 1px 1px #ffffff, inset -1px -1px #000000 !important;
+}
+
+/* Sub-chat list items */
+.theme-millennium .sub-chat-list {
+    background: #c0c0c0 !important;
+    border-left: 2px solid #808080 !important;
+    margin-left: 12px !important;
+}
+
+.theme-millennium .sub-chat-list .chat-item {
+    background: #ffffff !important;
+    border: 1px solid #808080 !important;
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    margin: 2px 0 !important;
+    padding: 3px 6px !important;
+}
+
+.theme-millennium .sub-chat-list .chat-item:hover {
+    background: #000080 !important;
+    color: #ffffff !important;
+}
+
+/* Right sidebar specific elements */
+.theme-millennium #balance-display {
+    background: #ffffff !important;
+    border: 1px solid #808080 !important;
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    padding: 2px 6px !important;
+}
+
+.theme-millennium .model-control-group {
+    background: transparent !important;
+}
+
+.theme-millennium .venice-toggle-wrapper {
+    background: #c0c0c0 !important;
+}
+
+.theme-millennium .venice-toggle-slider {
+    background: #c0c0c0 !important;
+    border: 2px solid !important;
+    border-color: #808080 #ffffff #ffffff #808080 !important;
+}
+
+.theme-millennium .venice-toggle-wrapper input:checked + .venice-toggle-slider {
+    background: #000080 !important;
+}
+
+/* Macro items */
+.theme-millennium .macro-item,
+.theme-millennium .list-item {
+    background: #ffffff !important;
+    border: 1px solid #808080 !important;
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    margin: 2px 4px !important;
+    padding: 4px 6px !important;
+}
+
+.theme-millennium .macro-item:hover,
+.theme-millennium .list-item:hover {
+    background: #000080 !important;
+    color: #ffffff !important;
+}
+
+.theme-millennium .macro-name {
+    color: inherit !important;
+}
+
+/* Right sidebar tabs */
+.theme-millennium .right-tabs {
+    background: #c0c0c0 !important;
+    border-bottom: 2px solid #808080 !important;
+}
+
+/* Source cards (Target/Reference) */
+.theme-millennium .source-card {
+    background: #c0c0c0 !important;
+    border: 2px solid !important;
+    border-color: #ffffff #808080 #808080 #ffffff !important;
+    border-radius: 0 !important;
+    margin: 8px !important;
+    padding: 4px !important;
+}
+
+.theme-millennium .source-card-header {
+    background: linear-gradient(90deg, #000080 0%, #1084d0 100%) !important;
+    color: #ffffff !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    padding: 3px 5px !important;
+    border: 2px solid !important;
+    border-color: #ffffff #808080 #808080 #ffffff !important;
+}
+
+.theme-millennium .source-card-title {
+    color: #ffffff !important;
+}
+
+.theme-millennium .source-card-body {
+    background: #c0c0c0 !important;
+    padding: 8px !important;
+}
+
+.theme-millennium .source-empty-state,
+.theme-millennium .source-filled-state {
+    background: #ffffff !important;
+    border: 1px solid #808080 !important;
+    padding: 8px !important;
+}
+
+.theme-millennium .source-add-btn {
+    background: #c0c0c0 !important;
+    border: 2px solid !important;
+    border-color: #ffffff #808080 #808080 #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    padding: 4px 12px !important;
+    margin: 2px !important;
+}
+
+.theme-millennium .source-add-btn:hover {
+    background: #d4d0c8 !important;
+}
+
+.theme-millennium .source-clear-btn,
+.theme-millennium .source-mask-btn {
+    background: #c0c0c0 !important;
+    border: 2px solid !important;
+    border-color: #ffffff #808080 #808080 #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+}
+
+.theme-millennium .source-filename {
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+}
+
+/* Image options panel */
+.theme-millennium #image-options-panel {
+    background: #c0c0c0 !important;
+}
+
+.theme-millennium .sidebar-label,
+.theme-millennium .option-label {
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    padding: 4px 8px !important;
+}
+
+.theme-millennium .image-options-content {
+    background: #c0c0c0 !important;
+    padding: 8px !important;
+}
+
+/* Dropdowns and selects */
+.theme-millennium select,
+.theme-millennium .image-model-dropdown,
+.theme-millennium .image-param-select {
+    background: #ffffff !important;
+    border: 2px solid !important;
+    border-color: #808080 #ffffff #ffffff #808080 !important;
+    border-radius: 0 !important;
+    color: #000000 !important;
+    font-family: 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+}
+
+.theme-millennium select:focus {
+    border-color: #000080 !important;
+    outline: none !important;
+}
+
+.theme-millennium select option {
+    background: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* Checkboxes */
+.theme-millennium input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    width: 13px !important;
+    height: 13px !important;
+    background: #ffffff !important;
+    border: 2px solid !important;
+    border-color: #808080 #ffffff #ffffff #808080 !important;
+    margin-right: 6px !important;
+}
+
+.theme-millennium input[type="checkbox"]:checked {
+    background: #000080 !important;
+    border-color: #808080 #ffffff #ffffff #808080 !important;
+}
+
+/* Image param groups */
+.theme-millennium .image-param-group {
+    background: #c0c0c0 !important;
+    border: 1px solid #808080 !important;
+    margin: 8px 0 !important;
+    padding: 8px !important;
+}
+
+/* Selection - classic blue */
+.theme-millennium ::selection {
+    background: #000080 !important;
+    color: #ffffff !important;
+}
+
+/* Add some classic "under construction" vibe with borders */
+.theme-millennium .message {
+    position: relative;
+}
+
+/* Classic "Best viewed in" badge style for fun */
+.theme-millennium body::after {
+    content: '';
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 88px;
+    height: 31px;
+    background: linear-gradient(180deg, #c0c0c0 0%, #808080 100%);
+    border: 2px outset #ffffff;
+    pointer-events: none;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Arial', sans-serif;
+    font-size: 9px;
+    color: #000000;
+}

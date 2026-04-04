@@ -19,6 +19,7 @@ import { dualModelManager } from './components/DualModelManager.js';
 import { AnchorsManager } from './components/AnchorsManager.js';
 import { saveConfigApi } from './api.js';
 import { settingsPersistence } from './utils/SettingsPersistence.js';
+import { initDesignMode } from './design_mode.js';
 
 // --- Legacy Imports (Still needed by some components/logic) ---
 import { state, dom, getDefaultChatConfig, loadPromptHistory, getDefaultSystemPrompt, setDefaultSystemPrompt } from './state.js';
@@ -83,6 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).catch(() => {});
 
     initModalDraggability();
+    initDesignMode();
 
     // 3. Restore Theme
     const savedTheme = localStorage.getItem('theme') || 'hacker';

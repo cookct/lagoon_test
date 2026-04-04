@@ -826,6 +826,64 @@ def force_summarize():
         return jsonify({"error": str(e)}), 500
 
 
+
+def _extract_overseer_json(raw_text):
+    """Extract and validate JSON from model response, trying multiple strategies."""
+    if not raw_text or not raw_text.strip():
+        return None
+
+    text = raw_text.strip()
+
+    def _try_parse(candidate):
+        candidate = candidate.strip()
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict) and 'violations' in parsed:
+                return parsed
+            if isinstance(parsed, list):
+                return {'violations': parsed}
+        except json.JSONDecodeError:
+            pass
+        return None
+
+    # Strategy 1: direct parse (model returned clean JSON)
+    result = _try_parse(text)
+    if result is not None:
+        return result
+
+    # Strategy 2: markdown code block ```json ... ``` or ``` ... ```
+    m = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', text)
+    if m:
+        result = _try_parse(m.group(1))
+        if result is not None:
+            return result
+
+    # Strategy 3: scan for any top-level JSON object with a 'violations' key
+    pos = 0
+    while True:
+        start = text.find('{', pos)
+        if start == -1:
+            break
+        depth = 0
+        end = start
+        for i, ch in enumerate(text[start:], start):
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+        else:
+            break  # unclosed brace, stop
+        result = _try_parse(text[start:end + 1])
+        if result is not None:
+            return result
+        pos = end + 1
+
+    return None
+
+
 @chat_bp.route('/api/overseer_check', methods=['POST'])
 def overseer_check():
     """
@@ -860,11 +918,10 @@ def overseer_check():
     overseer_prompt = (
         "You are a prose style editor. Read the TEXT below and flag every violation of the listed rules.\n\n"
         f"RULES:\n{rules_text}\n\n"
-        "STRUCTURAL rules (1-2) require paragraph-level rewrites. For these return:\n"
-        "  {\"rule\": N, \"scope\": \"paragraph\", \"excerpt\": \"the offending sentence ≤100 chars\", \"paragraph_rewrite\": \"your rewritten version of the whole paragraph as a single flowing paragraph\", \"suggestion\": \"one-line description\"}\n"
-        "LEXICAL rules (3+) can be fixed with a string swap. For these return:\n"
+        "For each violation return an object:\n"
         "  {\"rule\": N, \"scope\": \"local\", \"excerpt\": \"exact offending text ≤100 chars\", \"replacement\": \"corrected version\", \"suggestion\": \"one-line description\"}\n"
-        "Return ONLY valid JSON with no commentary:\n"
+        "For paragraph-level issues also include: \"paragraph_rewrite\": \"rewritten paragraph\"\n"
+        "Return ONLY valid JSON:\n"
         "{\"violations\": [...]}\n"
         "If there are no violations: {\"violations\": []}\n\n"
         f"TEXT:\n{text[:4000]}"
@@ -886,12 +943,10 @@ def overseer_check():
             logger.info(f"[Overseer] API status: {resp.status_code}")
             if resp.status_code == 200:
                 msg = resp.json()['choices'][0]['message']
-                raw = msg.get('content', '') or ''
+                raw = msg.get('content') or msg.get('reasoning_content') or ''
                 logger.info(f"[Overseer] Raw response: {raw[:500]}")
-                raw = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL).strip()
-                json_match = re.search(r'\{.*\}', raw, re.DOTALL)
-                if json_match:
-                    parsed = json.loads(json_match.group(0))
+                parsed = _extract_overseer_json(raw)
+                if parsed:
                     violations = parsed.get('violations', [])
                     logger.info(f"[Overseer] Violations found: {len(violations)}")
                 else:

@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lagoon — Feature Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ─── Reset ─────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ─── Abyss Base ─────────────────────────────────────────── */
+  :root {
+    --bg-gradient: linear-gradient(180deg, #000510 0%, #001020 30%, #001a30 60%, #002540 100%);
+    --text: #a0e0e0;
+    --text-dim: #5a9a9a;
+    --text-bright: #c8f0f0;
+    --accent: rgba(0, 200, 180, 0.9);
+    --accent-glow: rgba(0, 200, 180, 0.25);
+    --accent-border: rgba(0, 150, 150, 0.35);
+    --panel: rgba(0, 10, 20, 0.85);
+    --panel-hover: rgba(0, 30, 50, 0.9);
+    --hr: rgba(0, 150, 150, 0.25);
+    --code-bg: rgba(0, 5, 15, 0.8);
+    --tag-bg: rgba(0, 150, 130, 0.15);
+    --tag-border: rgba(0, 200, 180, 0.4);
+    --before-bg: rgba(80, 0, 0, 0.2);
+    --after-bg: rgba(0, 60, 40, 0.2);
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: 'Courier New', Courier, monospace;
+    --radius: 10px;
+    --max-w: 940px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text);
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ─────────────────────────────────────────────────── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(0, 5, 16, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--accent-border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    height: 52px;
+  }
+
+  .nav-logo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-shadow: 0 0 12px var(--accent-glow);
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Layout ─────────────────────────────────────────────── */
+  .container {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  section {
+    padding: 3.5rem 0;
+  }
+
+  section + section {
+    border-top: 1px solid var(--hr);
+  }
+
+  /* ─── Hero ───────────────────────────────────────────────── */
+  .hero {
+    text-align: center;
+    padding: 4rem 0 3rem;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--accent-glow);
+    margin-bottom: 1.2rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-weight: 700;
+    color: var(--text-bright);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  .hero h1 span {
+    color: var(--accent);
+    text-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  .hero-sub {
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+    font-weight: 300;
+  }
+
+  .hero-badges {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.3em 0.8em;
+    border-radius: 20px;
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    color: var(--accent);
+  }
+
+  .screenshot-placeholder {
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px dashed rgba(0, 150, 150, 0.4);
+    background: rgba(0, 8, 18, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: rgba(0, 150, 150, 0.5);
+    letter-spacing: 0.05em;
+    font-family: var(--mono);
+    aspect-ratio: 16/9;
+  }
+
+  .screenshot-placeholder.tall { aspect-ratio: 4/3; }
+  .screenshot-placeholder.wide { aspect-ratio: 21/9; }
+
+  .hero-screenshot {
+    margin-top: 3rem;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--accent-border);
+    box-shadow: 0 0 40px rgba(0, 150, 150, 0.15), 0 20px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  .hero-screenshot img, .hero-screenshot .screenshot-placeholder {
+    width: 100%;
+    display: block;
+    border-radius: 0;
+    border: none;
+  }
+
+  /* ─── Section heading ─────────────────────────────────────── */
+  .section-tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--tag-border);
+    background: var(--tag-bg);
+    padding: 0.25em 0.75em;
+    border-radius: 20px;
+    margin-bottom: 0.9rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.15rem, 2vw, 1.55rem);
+    font-weight: 700;
+    color: var(--text-bright);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.7rem;
+  }
+
+  .section-lead {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    max-width: 620px;
+    margin-bottom: 2rem;
+    font-weight: 400;
+  }
+
+  /* ─── Two-column feature layout ──────────────────────────── */
+  .feature-row {
+    display: flex;
+    flex-direction: row;
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  .feature-row.flip { flex-direction: row-reverse; }
+
+  .feature-text { flex: 1; min-width: 0; }
+
+  .feature-text h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 0.5rem;
+  }
+
+  .feature-text p {
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.75;
+  }
+
+  .feature-text p + p { margin-top: 0.7rem; }
+
+  .feature-screenshot {
+    flex: 1;
+    min-width: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--accent-border);
+    box-shadow: 0 0 20px rgba(0, 150, 150, 0.1), 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  .feature-screenshot img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* ─── Panel / card ───────────────────────────────────────── */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius);
+    padding: 1.5rem 1.8rem;
+    box-shadow: inset 0 0 20px rgba(0, 80, 100, 0.06);
+  }
+
+  .panel + .panel { margin-top: 1rem; }
+
+  /* ─── Memory layer cards ─────────────────────────────────── */
+  .memory-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .memory-card {
+    background: var(--panel);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius);
+    padding: 1.4rem 1.6rem;
+    position: relative;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+
+  .memory-card:hover {
+    border-color: rgba(0, 200, 180, 0.5);
+    box-shadow: 0 0 18px rgba(0, 200, 180, 0.12);
+  }
+
+  .memory-card-icon {
+    font-size: 1.4rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .memory-card h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 0.4rem;
+  }
+
+  .memory-card p {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+
+  .memory-card .depth-label {
+    margin-top: 0.7rem;
+    font-size: 0.72rem;
+    color: var(--accent);
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── Before/After ───────────────────────────────────────── */
+  .before-after {
+    margin-top: 2rem;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--accent-border);
+  }
+
+  .before-after-header {
+    background: rgba(0, 5, 15, 0.9);
+    padding: 0.6rem 1.2rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--accent-border);
+  }
+
+  .ba-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ba-before, .ba-after {
+    padding: 1.2rem 1.4rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+
+  .ba-before {
+    background: var(--before-bg);
+    border-right: 1px solid var(--accent-border);
+  }
+
+  .ba-after {
+    background: var(--after-bg);
+  }
+
+  .ba-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    display: block;
+  }
+
+  .ba-before .ba-label { color: #f47070; }
+  .ba-after .ba-label { color: #6acea0; }
+
+  .ba-before .ba-text { color: #d08080; }
+  .ba-after .ba-text { color: #80d0a8; }
+
+  /* ─── Writing tools grid ─────────────────────────────────── */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .tool-card {
+    background: var(--panel);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.3rem;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+
+  .tool-card:hover {
+    border-color: rgba(0, 200, 180, 0.5);
+    box-shadow: 0 0 14px rgba(0, 200, 180, 0.1);
+  }
+
+  .tool-icon {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .tool-card h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 0.3rem;
+  }
+
+  .tool-card p {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .tool-card code {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    background: var(--code-bg);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+  }
+
+  /* ─── Overseer violations display ───────────────────────── */
+  .violation-demo {
+    margin-top: 2rem;
+    background: var(--panel);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .violation-demo-header {
+    background: rgba(0, 5, 15, 0.9);
+    padding: 0.7rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-bottom: 1px solid var(--accent-border);
+  }
+
+  .violation-badge {
+    background: rgba(200, 80, 80, 0.2);
+    border: 1px solid rgba(200, 80, 80, 0.4);
+    color: #f08080;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2em 0.6em;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  .violation-item {
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid rgba(0, 150, 150, 0.1);
+  }
+
+  .violation-item:last-child { border-bottom: none; }
+
+  .violation-rule {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.4rem;
+  }
+
+  .violation-excerpt {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .violation-excerpt .bad { color: #f08080; text-decoration: line-through; opacity: 0.7; }
+  .violation-excerpt .good { color: #80d0a0; }
+
+  .violation-suggestion {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-bottom: 0.6rem;
+  }
+
+  .violation-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .btn-accept {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.25em 0.8em;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 180, 130, 0.5);
+    background: rgba(0, 180, 130, 0.12);
+    color: #80d0a0;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+
+  .btn-dismiss {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.25em 0.8em;
+    border-radius: 4px;
+    border: 1px solid rgba(150, 150, 150, 0.3);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── Pull quote ─────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent);
+    padding: 0.8rem 1.4rem;
+    margin: 2rem 0;
+    font-size: 1.05rem;
+    color: var(--text);
+    font-style: italic;
+    background: rgba(0, 150, 130, 0.05);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    box-shadow: inset 0 0 20px rgba(0, 150, 130, 0.04);
+  }
+
+  /* ─── Provider list ──────────────────────────────────────── */
+  .provider-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .provider-card {
+    background: var(--panel);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.4rem;
+  }
+
+  .provider-card h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 0.3rem;
+  }
+
+  .provider-card p {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .provider-card .no-key {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #6acea0;
+    border: 1px solid rgba(100, 200, 150, 0.3);
+    background: rgba(100, 200, 150, 0.08);
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+  }
+
+  /* ─── Inline code ────────────────────────────────────────── */
+  code {
+    font-family: var(--mono);
+    font-size: 0.82em;
+    color: var(--accent);
+    background: var(--code-bg);
+    padding: 0.12em 0.4em;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 150, 150, 0.2);
+  }
+
+  /* ─── HR ─────────────────────────────────────────────────── */
+  hr {
+    border: none;
+    border-top: 1px solid var(--hr);
+    margin: 0;
+  }
+
+  /* ─── Footer ─────────────────────────────────────────────── */
+  footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    border-top: 1px solid var(--hr);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ─── Responsive ─────────────────────────────────────────── */
+  @media (max-width: 720px) {
+    nav { gap: 1rem; padding: 0 1rem; }
+    .nav-links { display: none; }
+    .container { padding: 0 1.2rem; }
+    section { padding: 3rem 0; }
+    .feature-row, .feature-row.flip { grid-template-columns: 1fr; direction: ltr; gap: 1.5rem; }
+    .memory-grid { grid-template-columns: 1fr; }
+    .tools-grid { grid-template-columns: 1fr 1fr; }
+    .ba-row { grid-template-columns: 1fr; }
+    .ba-before { border-right: none; border-bottom: 1px solid var(--accent-border); }
+    .provider-list { grid-template-columns: 1fr; }
+    .hero { padding: 4rem 0 3rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Nav ────────────────────────────────────────────────────── -->
+<nav>
+  <a class="nav-logo" href="#">⬡ LAGOON</a>
+  <ul class="nav-links">
+    <li><a href="#characters">Characters</a></li>
+    <li><a href="#memory">Memory</a></li>
+    <li><a href="#writing-tools">Writing Tools</a></li>
+    <li><a href="#overseer">Overseer</a></li>
+    <li><a href="#dual-model">Dual Model</a></li>
+    <li><a href="#export">Export</a></li>
+    <li><a href="#providers">Providers</a></li>
+    <li><a href="#voice">Voice</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ───────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="container">
+    <p class="hero-eyebrow">AI Writing Workspace</p>
+    <h1>Write deeper.<br><span>Remember everything.</span></h1>
+    <p class="hero-sub">
+      Lagoon is a local-first AI writing workspace built for long-form collaborative fiction —
+      character-driven, context-aware, and designed around how writers actually work.
+    </p>
+    <div class="hero-badges">
+      <span class="badge">Flask · Vanilla JS</span>
+      <span class="badge">Venice · Ollama · Any OpenAI endpoint</span>
+      <span class="badge">Runs locally</span>
+      <span class="badge">No subscription</span>
+    </div>
+    <div class="hero-screenshot">
+      <img src="html_images/overview_hero.png" alt="Lagoon interface">
+    </div>
+  </div>
+</section>
+
+<!-- ── Characters ─────────────────────────────────────────────── -->
+<section id="characters">
+  <div class="container">
+    <span class="section-tag">Characters</span>
+    <h2 class="section-title">Every character is a full configuration</h2>
+    <p class="section-lead">
+      A character in Lagoon is a JSON config — system prompt, character card, model, sampler settings,
+      voice, and memory preferences, all in one place. Switch characters to switch contexts completely.
+    </p>
+
+    <div class="feature-row">
+      <div class="feature-text">
+        <h3>Character card + system prompt</h3>
+        <p>
+          The <strong>system prompt</strong> sets the model's role and rules.
+          The <strong>character card</strong> is the in-world identity — background, speech patterns,
+          relationships. Both stay separate so you can update one without touching the other.
+        </p>
+        <p>
+          You can also load a <strong>system context</strong> from a file — paste in a PDF chapter,
+          a wiki article, a code file — and it injects as context every turn.
+        </p>
+        <div class="pull-quote">
+          If you're coming from SillyTavern: character card maps directly. System prompt is your
+          persona instruction. Author's Note is in the Memory section.
+        </div>
+      </div>
+      <div class="feature-screenshot">
+        <img src="html_images/overview_config.png" alt="Character config modal">
+      </div>
+    </div>
+
+    <div style="margin-top: 2rem;">
+      <div class="panel">
+        <p style="font-size:0.88rem; color: var(--text-dim);">
+          <strong style="color:var(--text-bright);">Per-character settings:</strong>
+          &nbsp;Model &amp; provider &nbsp;·&nbsp; Temperature / Top-P / Rep. penalty / Max tokens
+          &nbsp;·&nbsp; Uncensored mode &nbsp;·&nbsp; Strip thinking &nbsp;·&nbsp;
+          Venice system prompt on/off &nbsp;·&nbsp; Web search &nbsp;·&nbsp;
+          Style Overseer on/off &nbsp;·&nbsp; TTS voice &nbsp;·&nbsp; E2EE &nbsp;·&nbsp; Avatar
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Memory ─────────────────────────────────────────────────── -->
+<section id="memory">
+  <div class="container">
+    <span class="section-tag">Memory</span>
+    <h2 class="section-title">Four memory layers. One coherent story.</h2>
+    <p class="section-lead">
+      Most AI chat apps give you a context window and a hard stop. Lagoon stacks four systems
+      so long conversations stay grounded, characters stay consistent, and nothing important gets lost.
+    </p>
+
+    <div class="memory-grid">
+
+      <div class="memory-card">
+        <div class="memory-card-icon">✍️</div>
+        <h4>Author's Note</h4>
+        <p>
+          Your real-time steering wheel. Write style instructions, POV reminders, scene direction —
+          anything you want the model to act on <em>right now</em>. Reinjects as a system message
+          at a configurable depth from the bottom of the conversation every single turn.
+        </p>
+        <p class="depth-label">Default depth: 4 messages from end · configurable per session</p>
+      </div>
+
+      <div class="memory-card">
+        <div class="memory-card-icon">📖</div>
+        <h4>Lorebook — Anchors</h4>
+        <p>
+          World info that injects only when it's relevant. Create entries with keywords —
+          when those words appear in the last 15 messages, the entry injects automatically.
+          Priority-sorted. Token-budgeted.
+        </p>
+        <p>
+          The <strong>reveal system</strong> is unique: mark an entry
+          <code>character_aware: false</code> and the character won't know that fact yet.
+          The moment they learn it in-scene, Lagoon flips the flag automatically.
+        </p>
+        <p class="depth-label">Scans last 15 messages · 4,000 token budget · priority-sorted</p>
+      </div>
+
+      <div class="memory-card">
+        <div class="memory-card-icon">🧠</div>
+        <h4>Semantic Memory — RAG</h4>
+        <p>
+          Lagoon embeds your entire conversation history locally using
+          <code>all-MiniLM-L6-v2</code> (no API, no external service). Each turn, it finds
+          the 3 most semantically similar past exchanges and injects them as context.
+        </p>
+        <p>
+          A scene from 200 messages ago surfaces automatically when the current conversation
+          touches the same themes — without you having to remember to reference it.
+        </p>
+        <p class="depth-label">Fully local · cosine similarity ≥ 0.35 · 800 token budget</p>
+      </div>
+
+      <div class="memory-card">
+        <div class="memory-card-icon">📋</div>
+        <h4>Context Summaries</h4>
+        <p>
+          When the conversation reaches 75% of the context window, Lagoon summarises
+          the oldest messages in a background thread. You review and approve before anything
+          is pruned. The summary stack grows with the conversation — previous summaries
+          are preserved and injected as <em>prior events</em>.
+        </p>
+        <p>
+          Always keeps the last 5 full exchange pairs in raw form for freshness.
+        </p>
+        <p class="depth-label">Triggers at 75% context · keeps last 5 pairs · approve before prune</p>
+      </div>
+
+    </div>
+
+    <div style="margin-top: 2rem; display: flex; gap: 2rem; align-items: flex-start;">
+      <div class="panel" style="flex:1;">
+        <h3 style="font-size:0.95rem; font-weight:600; color:var(--text-bright); margin-bottom:0.5rem;">Prompt Monitor</h3>
+        <p style="font-size:0.88rem; color:var(--text); line-height:1.75;">
+          The right sidebar shows you exactly what the model receives — every injected lore entry,
+          every RAG chunk, every summary layer, the Author's Note position — before you send.
+          No guessing what's in context.
+        </p>
+        <p style="font-size:0.88rem; color:var(--text); line-height:1.75; margin-top:0.6rem;">
+          Author's Note and depth are overridable per session without touching the character config.
+        </p>
+      </div>
+      <div style="flex-shrink:0; border-radius:var(--radius); overflow:hidden; border:1px solid var(--accent-border); box-shadow:0 0 20px rgba(0,150,150,0.1);">
+        <img src="html_images/overview_tools_sidebar.png" alt="Right sidebar — tools panel" style="display:block; width:160px; height:auto;">
+      </div>
+    </div>
+
+    <div style="margin-top: 2rem;">
+      <div class="panel">
+        <p style="font-size:0.88rem; color: var(--text-dim);">
+          <strong style="color:var(--text-bright);">Anchors modal:</strong>
+          &nbsp;Add / edit / delete lore entries &nbsp;·&nbsp;
+          Set keywords, content, priority &nbsp;·&nbsp; Toggle character awareness &nbsp;·&nbsp;
+          Enable/disable per entry
+        </p>
+      </div>
+    </div>
+    <div style="margin-top:1rem;">
+      <div class="feature-screenshot" style="max-width:600px;">
+        <img src="html_images/overview_anchors.png" alt="Anchors modal">
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Markdown ────────────────────────────────────────────────── -->
+<section id="markdown">
+  <div class="container">
+    <span class="section-tag">Chat Area</span>
+    <h2 class="section-title">Markdown in the chat area</h2>
+    <p class="section-lead">
+      Assistant responses render with full markdown — headers, bold, italics, lists,
+      code blocks, tables. If you're writing a character who produces structured output,
+      or a story with formatted sections, it renders cleanly in the conversation.
+    </p>
+    <div class="feature-row">
+      <div class="feature-text">
+        <h3>What renders</h3>
+        <p>
+          <code># Headings</code>, <code>**bold**</code>, <code>*italics*</code>,
+          <code>- lists</code>, <code>```code blocks```</code>, tables, horizontal rules.
+          Thinking tags (<code>&lt;think&gt;</code>) are stripped before display
+          when Strip Thinking is enabled — the reader sees only the response.
+        </p>
+        <p>
+          The raw text is always preserved in the message history exactly as the model
+          produced it — the markdown rendering is display-only.
+        </p>
+      </div>
+      <div class="feature-screenshot">
+        <img src="html_images/overview_hero.png" alt="Markdown rendered in chat">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Writing Tools ──────────────────────────────────────────── -->
+<section id="writing-tools">
+  <div class="container">
+    <span class="section-tag">Writing Tools</span>
+    <h2 class="section-title">Per-message tools for writers</h2>
+    <p class="section-lead">
+      Every assistant message has an action bar. These aren't generic chat features —
+      they're built around how collaborative fiction actually works.
+    </p>
+
+    <div class="feature-screenshot" style="margin-bottom: 2rem;">
+      <img src="html_images/overview_hero.png" alt="Message action bar">
+    </div>
+
+    <div class="tools-grid">
+
+      <div class="tool-card">
+        <div class="tool-icon">🍴</div>
+        <h4>Fork</h4>
+        <p>
+          Branch the story at any point. Fork creates a new chat with all messages
+          up to and including the selected response. The original is untouched.
+          Explore alternate paths without losing your main thread.
+        </p>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">✨</div>
+        <h4>Nudge &amp; Regenerate</h4>
+        <p>
+          Type a behind-the-scenes instruction — <code>(( more tension, she's scared ))</code> —
+          and regenerate. The instruction is injected into context for this generation only.
+          It doesn't appear in the chat history. The story doesn't know you interfered.
+        </p>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">✏️</div>
+        <h4>Edit in Place</h4>
+        <p>
+          Click any assistant message to edit it directly. After you save, Lagoon analyses
+          what you changed — word substitutions, deleted phrases, structural shifts —
+          and stores a style note tagged <em>(noted.)</em> on the message.
+          The model learns from your corrections.
+        </p>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">☰</div>
+        <h4>Writing Tools Menu</h4>
+        <p>
+          A context menu of custom rewrite prompts per message. Ships with:
+          Less Tell/More Show, More Sensory Detail, Less Sensory Detail, Add Inner Monologue.
+          Fully customisable — edit labels and prompts, add as many as you want.
+          Stored in your browser.
+        </p>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">🔄</div>
+        <h4>Regenerate</h4>
+        <p>
+          Retry any response from scratch. Discards the current assistant message
+          and re-runs the model from the same user input.
+          Combine with the Writing Tools menu for targeted regeneration.
+        </p>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">📌</div>
+        <h4>Keep for Export</h4>
+        <p>
+          Checkbox on every assistant message. Mark the responses you want to keep.
+          Export compiles only the marked messages. The export count shows in the toolbar.
+          Kept selections survive chat reloads and are saved with the chat file.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Style Overseer ─────────────────────────────────────────── -->
+<section id="overseer">
+  <div class="container">
+    <span class="section-tag">Style Overseer</span>
+    <h2 class="section-title">LLM-powered prose enforcement</h2>
+    <p class="section-lead">
+      The Overseer runs a second LLM after every response and flags violations of your style rules.
+      Accept a correction and it patches the text inline. Dismiss it and move on.
+      It's compounding — accepted corrections inject as notes into the next turn so the model adapts.
+    </p>
+
+    <div class="feature-row flip">
+      <div class="feature-text">
+        <h3>Your rules, your model</h3>
+        <p>
+          Six built-in rules ship with Lagoon (no isolated dramatic sentences,
+          strict 3rd person limited, no correction acknowledgment, no unattributed dialogue, etc.).
+          Add your own in the Overseer tab — one rule per line.
+        </p>
+        <p>
+          The Overseer model is configurable separately from your writing model.
+          Use a fast, cheap model for rules-checking. Use a powerful model for nuanced prose coaching.
+          Preset rule sets for GLM, DeepSeek, Llama, and Qwen are included.
+        </p>
+        <p>
+          <strong>Auto-accept mode:</strong> corrections apply automatically without review.
+          Good for absolute bans — banned words never make it to the page.
+        </p>
+      </div>
+      <div class="feature-screenshot">
+        <img src="html_images/overview_overseer.png" alt="Style Overseer violation panel">
+      </div>
+    </div>
+
+    <div class="before-after">
+      <div class="before-after-header">Style Overseer in action — metaphor ban rule</div>
+      <div class="ba-row">
+        <div class="ba-before">
+          <span class="ba-label">❌ Before</span>
+          <span class="ba-text">
+            The offer landed with the precision of a line of<br>
+            perfect code. The silence stretched between them.
+          </span>
+        </div>
+        <div class="ba-after">
+          <span class="ba-label">✓ After</span>
+          <span class="ba-text">
+            Kelly's fingers stopped mid-type.<br>
+            She read the message again. Then a third time.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 2rem;">
+      <div class="violation-demo">
+        <div class="violation-demo-header">
+          <span class="violation-badge">⚑ 2 violations</span>
+          <span style="font-size:0.78rem; color: var(--text-dim);">— hover a message to see this</span>
+        </div>
+        <div class="violation-item">
+          <div class="violation-rule">Rule 4 — Absolute Ban: Metaphors</div>
+          <div class="violation-excerpt">
+            <span class="bad">"landed"</span> → <span class="good">"settled"</span>
+          </div>
+          <div class="violation-suggestion">Replace the metaphor with a concrete verb.</div>
+          <div class="violation-actions">
+            <button class="btn-accept">✓ Accept</button>
+            <button class="btn-dismiss">Dismiss</button>
+          </div>
+        </div>
+        <div class="violation-item">
+          <div class="violation-rule">Rule 5 — Absolute Ban: Similes</div>
+          <div class="violation-excerpt">
+            <span class="bad">"like the wind"</span> → <span class="good">"with long strides"</span>
+          </div>
+          <div class="violation-suggestion">Replace the simile with a physical description of motion.</div>
+          <div class="violation-actions">
+            <button class="btn-accept">✓ Accept</button>
+            <button class="btn-dismiss">Dismiss</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Dual Model ─────────────────────────────────────────────── -->
+<section id="dual-model">
+  <div class="container">
+    <span class="section-tag">Dual Model</span>
+    <h2 class="section-title">Two characters. Automated conversation.</h2>
+    <p class="section-lead">
+      Pick two characters, write an opening line, hit start. Lagoon runs them in alternating turns —
+      each model fully configured with its own system prompt, sampler settings, and context.
+      They respond to each other. You watch it unfold, or step in at any point.
+    </p>
+
+    <div class="feature-row">
+      <div class="feature-screenshot">
+        <img src="html_images/overview_dual.png" alt="Dual Model setup">
+      </div>
+      <div class="feature-text">
+        <h3>How it works</h3>
+        <p>
+          Each character uses their full config — their own model, temperature, system prompt,
+          author's note, strip-thinking setting. Character A responds, then character B,
+          back and forth for up to a configurable number of turns.
+        </p>
+        <p>
+          <strong>Controls:</strong> Pause mid-conversation, resume, continue past the turn limit,
+          or stop and edit manually. Regenerate or delete any individual exchange.
+          The turn counter tracks where you are.
+        </p>
+        <p>
+          Good for: generating dialogue drafts, stress-testing character voices against each other,
+          automated back-and-forth RP scenes you can edit into shape afterward.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Export ─────────────────────────────────────────────────── -->
+<section id="export">
+  <div class="container">
+    <span class="section-tag">Export</span>
+    <h2 class="section-title">Get your writing out cleanly</h2>
+    <p class="section-lead">
+      Mark responses with the Keep checkbox. When you're ready, export compiles only
+      the marked messages — stripped of OOC instructions, system messages, and metadata.
+      Three output formats.
+    </p>
+
+    <div class="panel">
+      <p style="font-size:0.9rem; line-height:1.8;">
+        <strong style="color:var(--text-bright);">Markdown</strong> — clean, portable, <code>---</code> separators. Paste into Obsidian, a blog, anywhere.<br>
+        <strong style="color:var(--text-bright);">HTML</strong> — self-contained with inline CSS. User and assistant messages styled separately.<br>
+        <strong style="color:var(--text-bright);">Plain text</strong> — <code>[ROLE]: content</code> format with line separators.<br><br>
+        <code>(( OOC instructions ))</code> are stripped from user messages automatically. What exports is the story, not the scaffolding.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Providers ──────────────────────────────────────────────── -->
+<section id="providers">
+  <div class="container">
+    <span class="section-tag">Providers &amp; Models</span>
+    <h2 class="section-title">Any model, any endpoint</h2>
+    <p class="section-lead">
+      Lagoon routes to any OpenAI-compatible API. Add models through the interface —
+      provider is inferred automatically from the installed models list.
+    </p>
+
+    <div class="provider-list">
+      <div class="provider-card">
+        <h4>Venice.ai</h4>
+        <p>Full Venice feature support: uncensored models, web search, TEE models for E2EE,
+        model discovery modal, balance display. Primary supported provider.</p>
+      </div>
+      <div class="provider-card">
+        <h4>Ollama <span class="no-key">no key</span></h4>
+        <p>Local models at <code>localhost:11434</code>. No API key required. Add any model
+        you've pulled with Ollama — it auto-discovers via the install modal.</p>
+      </div>
+      <div class="provider-card">
+        <h4>Custom Endpoint</h4>
+        <p>Any OpenAI-compatible API: KoboldCpp, LM Studio, llama.cpp, text-generation-webui,
+        or any hosted endpoint. Set a base URL and optional API key per endpoint.</p>
+      </div>
+      <div class="provider-card">
+        <h4>Google Gemini</h4>
+        <p>Gemini Live for real-time voice sessions. Text models via the standard endpoint.
+        Requires a Google API key.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Voice ──────────────────────────────────────────────────── -->
+<section id="voice">
+  <div class="container">
+    <span class="section-tag">Voice</span>
+    <h2 class="section-title">TTS and Gemini Live</h2>
+    <p class="section-lead">
+      Read responses aloud with per-character voice settings, or go fully hands-free
+      with Gemini Live real-time voice sessions.
+    </p>
+
+    <div class="feature-row">
+      <div class="feature-text">
+        <h3>Text-to-Speech</h3>
+        <p>
+          Two TTS providers: <strong>Venice</strong> (23 voices including af_sky, af_alloy, am_adam)
+          and <strong>Google</strong> (30 voices including Aoede, Charon, Puck, Fenrir).
+          Set a default voice per character — it triggers automatically when auto-read is on,
+          or manually via the speaker button on any message.
+        </p>
+        <h3 style="margin-top: 1.5rem;">Gemini Live</h3>
+        <p>
+          Real-time bidirectional voice via Google's Gemini Live API. Speak to your character,
+          hear them respond in near real-time. Custom system prompt per session.
+          30 voice options. Enabled from the mobile drawer or desktop voice panel.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── E2EE ────────────────────────────────────────────────────── -->
+<section id="e2ee">
+  <div class="container">
+    <span class="section-tag">Privacy</span>
+    <h2 class="section-title">End-to-end encryption for sensitive RP</h2>
+    <p class="section-lead">
+      Venice TEE (Trusted Execution Environment) models run in hardware-isolated enclaves.
+      Lagoon's E2EE support encrypts your messages before they leave your machine.
+    </p>
+
+    <div class="panel">
+      <p style="font-size:0.9rem; line-height:1.75;">
+        When E2EE is enabled on a character config using a Venice TEE model, Lagoon performs a
+        <strong>secp256k1 ECDH key exchange</strong> with the TEE at session start,
+        derives a shared key via <strong>HKDF-SHA256</strong>, and encrypts all messages
+        with <strong>AES-256-GCM</strong> before transmission. The server never sees plaintext.
+        Attestation is verified (signed, non-debug, nonce-matched) before any keys are exchanged.
+        Venice's own infrastructure cannot read the conversation.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ── Footer ─────────────────────────────────────────────────── -->
+<footer>
+  <p>Lagoon — Local-first AI writing workspace</p>
+  <p style="margin-top:0.4rem;">
+    <a href="https://github.com/cookct/Lagoon_v2.0">GitHub</a>
+  </p>
+</footer>
+
+</body>
+</html>

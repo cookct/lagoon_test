@@ -56,15 +56,26 @@ async function renderSidebar(configs, chats) {
         const details = document.createElement('details');
         details.classList.add('config-item');
 
+        // Special styling for Dual Model section
+        if (configFile === 'dual-model') {
+            details.classList.add('dual-model-section');
+            details.style.borderBottom = '1px solid var(--accent-color)';
+            details.style.marginBottom = '10px';
+        }
+
         // Summary must be direct child of details for toggle to work
         const summary = document.createElement('summary');
         summary.classList.add('summary-row');
 
-        // Avatar inside summary but visually appears outside the button area
+        // Avatar inside summary
         const avatarImg = document.createElement('img');
-        avatarImg.src = (configData && configData.avatar_url)
-            ? configData.avatar_url
-            : DEFAULT_USER_AVATAR_IMAGE_PATH;
+        if (configFile === 'dual-model') {
+            avatarImg.src = 'data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE3IDIxaC0xMGEyIDIgMCAwIDEtMi0ydi0xMGEyIDIgMCAwIDEgMi0yaDEwYTIgMiAwIDAgMSAyIDJ2MTBhMiAyIDAgMCAxLTIgMnoiLz48cGF0aCBkPSJNOSA5bDEwIDEwIi8+PHBhdGggZD0iTTE5IDlsLTEwIDEwIi8+PC9zdmc+';
+        } else {
+            avatarImg.src = (configData && configData.avatar_url)
+                ? configData.avatar_url
+                : DEFAULT_USER_AVATAR_IMAGE_PATH;
+        }
         avatarImg.classList.add('sidebar-avatar');
         summary.appendChild(avatarImg);
 
@@ -82,17 +93,22 @@ async function renderSidebar(configs, chats) {
         summaryLeft.appendChild(arrowSvg);
 
         const nameSpan = document.createElement('span');
-        nameSpan.textContent = configName;
+        nameSpan.textContent = configFile === 'dual-model' ? 'Dual Conversations' : configName;
         summaryLeft.appendChild(nameSpan);
 
         const optionsBtn = document.createElement('button');
         optionsBtn.classList.add('options-btn');
         optionsBtn.innerHTML = '&#8801;';
-        optionsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showContextMenu(e.currentTarget, configFile);
-        });
+        
+        if (configFile !== 'dual-model') {
+            optionsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                showContextMenu(e.currentTarget, configFile);
+            });
+        } else {
+            optionsBtn.style.display = 'none';
+        }
 
         summaryContent.appendChild(summaryLeft);
         summaryContent.appendChild(optionsBtn);
@@ -105,7 +121,12 @@ async function renderSidebar(configs, chats) {
 
         details.appendChild(summary);
         details.appendChild(subChatList);
-        dom.configList.appendChild(details);
+        
+        if (configFile === 'dual-model') {
+            dom.configList.insertBefore(details, dom.configList.firstChild);
+        } else {
+            dom.configList.appendChild(details);
+        }
     }
 
     const standaloneChats = chatsByConfig['standalone'] || [];

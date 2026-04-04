@@ -292,6 +292,7 @@ export class ConfigManager {
                     if (newConfig) {
                         // Update the live config in-place — keep messages, just swap settings
                         state.currentConfig = { ...newConfig };
+                        window.updateOverseerTab?.();
                         const { chatManager } = await import('./ChatManager.js');
                         chatManager.updateModelButtonText();
                         chatManager.updateContextGauge();

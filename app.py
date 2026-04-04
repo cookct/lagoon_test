@@ -26,7 +26,7 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True  # Disable template caching
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # --- Register Blueprints ---
-from routes import configs_bp, chats_bp, system_prompts_bp, files_bp, chat_bp, macros_bp, models_bp, anchors_bp, custom_endpoints_bp
+from routes import configs_bp, chats_bp, system_prompts_bp, files_bp, chat_bp, macros_bp, models_bp, anchors_bp, custom_endpoints_bp, design_bp
 from services import installed_models as _im; _im.load()  # seed installed_models.json if missing
 
 app.register_blueprint(configs_bp)
@@ -38,6 +38,7 @@ app.register_blueprint(macros_bp)
 app.register_blueprint(models_bp)
 app.register_blueprint(anchors_bp)
 app.register_blueprint(custom_endpoints_bp)
+app.register_blueprint(design_bp)
 
 # --- Register Gemini Live Socket.IO handlers ---
 from routes.gemini_live import register_gemini_live

@@ -25,3 +25,6 @@ google-genai>=1.0.0            # Gemini Live voice (WebSocket)
 # ── Cryptography ──────────────────────────────────────────────────
 cryptography>=41.0.0           # Venice E2EE (ECDH/HKDF/AES-GCM)
 
+# ── Design Mode ───────────────────────────────────────────────────
+tinycss2>=1.2.0                # AST-based CSS parsing (design_mode branch only)
+

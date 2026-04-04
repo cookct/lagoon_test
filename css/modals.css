@@ -1,5 +1,269 @@
 /* --- Modal --- */
 
+/* =====================================================
+   Design Editor Panel (#design-editor-modal)
+   Floating panel — not a full overlay. Lives on the
+   design_mode branch only, never merges to main.
+   ===================================================== */
+#design-editor-modal {
+    position: fixed;
+    top: 60px;
+    right: 16px;
+    width: 300px;
+    max-height: calc(100vh - 80px);
+    z-index: 9000;
+    background: rgba(20, 20, 20, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--text-main);
+}
+
+.dm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: move;
+    user-select: none;
+    background: rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.dm-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.dm-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 2px;
+}
+.dm-close:hover { color: var(--text-main); }
+
+.dm-selector-area {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.dm-selector-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+}
+
+.dm-selector-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-main);
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    padding: 4px 8px;
+    box-sizing: border-box;
+    outline: none;
+}
+.dm-selector-input:focus { border-color: var(--accent); }
+
+.dm-scope-area {
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.dm-scope-label { color: var(--text-dim); flex-shrink: 0; }
+
+.dm-scope-area label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: var(--text-main);
+}
+
+.dm-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 4px 0 8px;
+}
+
+.dm-section-header {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    padding: 8px 12px 3px;
+}
+
+/* Single slider row */
+.dm-row {
+    display: flex;
+    align-items: center;
+    padding: 3px 12px;
+    gap: 8px;
+}
+
+.dm-row-label {
+    width: 80px;
+    flex-shrink: 0;
+    color: var(--text-dim);
+    font-size: 11px;
+}
+
+.dm-slider {
+    flex: 1;
+    accent-color: var(--accent);
+    cursor: pointer;
+    min-width: 0;
+}
+
+.dm-value {
+    width: 38px;
+    text-align: right;
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--text-main);
+    font-family: 'Courier New', monospace;
+}
+
+/* Per-side grid (margin/padding) */
+.dm-side-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px 10px;
+    padding: 3px 12px 4px;
+}
+
+.dm-side-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dm-side-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    width: 10px;
+    flex-shrink: 0;
+    font-weight: 600;
+}
+
+.dm-side-slider {
+    flex: 1;
+    accent-color: var(--accent);
+    cursor: pointer;
+    min-width: 0;
+}
+
+.dm-side-value {
+    width: 30px;
+    text-align: right;
+    font-size: 10px;
+    color: var(--text-main);
+    font-family: 'Courier New', monospace;
+    flex-shrink: 0;
+}
+
+/* Color rows */
+.dm-color-row {
+    display: flex;
+    align-items: center;
+    padding: 4px 12px;
+    gap: 8px;
+}
+
+.dm-color-label {
+    width: 80px;
+    flex-shrink: 0;
+    color: var(--text-dim);
+    font-size: 11px;
+}
+
+.dm-color-input {
+    width: 28px;
+    height: 22px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    padding: 1px;
+    background: none;
+    flex-shrink: 0;
+}
+
+.dm-color-hex {
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    color: var(--text-dim);
+    flex: 1;
+}
+
+.dm-dropper-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 2px 5px;
+    line-height: 1;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+.dm-dropper-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Footer */
+.dm-footer {
+    display: flex;
+    gap: 6px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.dm-btn {
+    flex: 1;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+}
+
+.dm-btn-cancel { background: transparent; color: var(--text-dim); }
+.dm-btn-cancel:hover { color: var(--text-main); }
+
+.dm-btn-reset { background: transparent; color: var(--ansi-red); border-color: var(--ansi-red); }
+.dm-btn-reset:hover { background: rgba(244, 71, 71, 0.12); }
+
+.dm-btn-save { background: var(--accent); color: white; border-color: var(--accent); flex: 1.5; }
+.dm-btn-save:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
 /* Generic modal header — shared across all modals */
 .modal-header {
     display: flex;

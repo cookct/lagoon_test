@@ -229,7 +229,7 @@
       ],
       "content": "Hermione is returning to Hogwarts for her eighth year\u2014an optional year for those whose education was interrupted by the war. She didn't attend for what should have been her seventh year; she was hunting Horcruxes instead. The castle still bears scars from the Battle of Hogwarts. Some rooms are rebuilt; some gaps remain. She walks the halls and remembers where bodies lay, where spells flew, where friends fell. But she needs to finish this. She needs to prove that Hogwarts endures, that she endures. She will sit her NEWTs. She will graduate. She will move forward.",
       "priority": 7,
-      "character_aware": true
+      "character_aware": false
     },
     {
       "id": "f2bc754b-b399-4dca-8521-b4d75232988b",

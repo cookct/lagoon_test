@@ -31,6 +31,8 @@
     <link rel="stylesheet" href="css/mobile-chat.css">
     <link rel="stylesheet" href="css/mobile-input.css">
     <link rel="stylesheet" href="css/mobile-menu.css">
+    <!-- User design overrides — loaded last, always wins -->
+    <link rel="stylesheet" href="css/user-overrides.css">
 </head>
 <body>
     <!-- Mobile Chat Container (injected by mobile.js) -->
@@ -219,6 +221,7 @@
                                     </div>
                                     <div class="tool-buttons">
                                         <button type="button" id="dual-tool-start-btn" class="tool-btn primary">Start New</button>
+                                        <button type="button" id="dual-tool-restart-btn" class="tool-btn hidden">Restart</button>
                                         <button type="button" id="dual-tool-continue-btn" class="tool-btn success hidden">Continue</button>
                                         <button type="button" id="dual-tool-pause-btn" class="tool-btn hidden">Pause</button>
                                         <button type="button" id="dual-tool-resume-btn" class="tool-btn hidden">Resume</button>
@@ -726,6 +729,24 @@
     </div>
 
     <!-- Image Lightbox -->
+    <!-- Dual Restart Modal -->
+    <div id="dual-restart-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Restart Conversation</h2>
+                <button type="button" class="close-btn" id="dual-restart-cancel-btn">Close</button>
+            </div>
+            <div class="form-group">
+                <label for="dual-restart-prompt">Opening Scenario</label>
+                <textarea id="dual-restart-prompt" rows="4" placeholder="Set the scene..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="dual-restart-cancel-btn2" class="secondary-btn">Cancel</button>
+                <button type="button" id="dual-restart-confirm-btn" class="primary-btn">Restart</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Dual Continue Modal -->
     <div id="dual-continue-modal" class="modal-overlay hidden">
         <div class="modal-content">

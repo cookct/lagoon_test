@@ -18,6 +18,8 @@ export class DualModelManager {
         this.timerInterval = null;
         this.delayBetweenTurns = 1500; // ms delay between model responses
         this.characters = []; // Loaded character configs
+        this._turnChainActive = false; // guard against concurrent chains
+        this._sessionId = 0; // incremented on restart to kill stale stream loops
     }
 
     init() {
@@ -41,10 +43,14 @@ export class DualModelManager {
 
         // Control buttons (in Tools panel)
         document.getElementById('dual-tool-start-btn')?.addEventListener('click', () => this.openModal());
+        document.getElementById('dual-tool-restart-btn')?.addEventListener('click', () => this.showRestartModal());
         document.getElementById('dual-tool-pause-btn')?.addEventListener('click', () => this.pause());
         document.getElementById('dual-tool-resume-btn')?.addEventListener('click', () => this.resume());
         document.getElementById('dual-tool-stop-btn')?.addEventListener('click', () => this.stop());
         document.getElementById('dual-tool-continue-btn')?.addEventListener('click', () => this.showContinueModal());
+        document.getElementById('dual-restart-confirm-btn')?.addEventListener('click', () => this.handleRestart());
+        document.getElementById('dual-restart-cancel-btn')?.addEventListener('click', () => this.hideRestartModal());
+        document.getElementById('dual-restart-cancel-btn2')?.addEventListener('click', () => this.hideRestartModal());
 
         // Continue modal events
         this.bindContinueModalEvents();
@@ -102,6 +108,10 @@ export class DualModelManager {
             return;
         }
 
+        // Increment session to kill any stale background loops
+        this._sessionId++;
+        const mySessionId = this._sessionId;
+
         // Increase max turns
         state.dualModelConfig.maxTurns += additionalTurns;
         state.dualModelRunning = true;
@@ -116,7 +126,7 @@ export class DualModelManager {
             nextModel = lastMsg.modelKey === 'A' ? 'B' : 'A';
         }
 
-        await this.runTurn(nextModel);
+        await this._runLoop(nextModel);
     }
 
     async openModal() {
@@ -345,6 +355,11 @@ export class DualModelManager {
     }
 
     async start(initialPrompt) {
+        if (this.abortController) {
+            this.abortController.abort();
+        }
+        this._sessionId++;
+        
         // Enter dual model mode
         state.dualModelMode = true;
         state.dualModelRunning = true;
@@ -369,18 +384,42 @@ export class DualModelManager {
         addMessageToUI('user', initialPrompt, {}, false, null, 0);
 
         // Model A responds first to the user prompt
-        await this.runTurn('A');
+        await this._runLoop('A');
+    }
+
+    async _runLoop(startKey) {
+        // Kill any previous loops by requiring a match with the current session ID
+        const mySessionId = this._sessionId;
+        let currentKey = startKey;
+        
+        try {
+            while (state.dualModelRunning && !state.dualModelPaused && this._sessionId === mySessionId) {
+                if (state.dualModelConfig.currentTurn >= state.dualModelConfig.maxTurns) {
+                    this.stop();
+                    break;
+                }
+                
+                const success = await this.runTurn(currentKey);
+                
+                // If session changed during the turn or it failed, stop this loop instance
+                if (this._sessionId !== mySessionId || !success) break;
+                
+                currentKey = currentKey === 'A' ? 'B' : 'A';
+                
+                // Final check before sleeping
+                if (state.dualModelRunning && !state.dualModelPaused && this._sessionId === mySessionId) {
+                    await this.sleep(this.delayBetweenTurns);
+                }
+            }
+        } finally {
+            // No lock to reset
+        }
     }
 
     async runTurn(modelKey) {
-        if (!state.dualModelRunning || state.dualModelPaused) return;
-        if (state.dualModelConfig.currentTurn >= state.dualModelConfig.maxTurns) {
-            this.stop();
-            return;
-        }
-
+        const mySessionId = this._sessionId;
         const config = state.dualModelConfig[`model${modelKey}`];
-        const otherKey = modelKey === 'A' ? 'B' : 'A';
+        if (!config) return false;
 
         this.updateControlBar();
 
@@ -400,9 +439,9 @@ export class DualModelManager {
         const messageDiv = messageGroup.querySelector('.message');
 
         // Setup abort controller
+        if (this.abortController) this.abortController.abort();
         this.abortController = new AbortController();
 
-        // Build config for this turn with full character settings
         const turnConfig = {
             model: config.id,
             system_prompt: config.systemPrompt || `You are ${config.name}. Engage thoughtfully in this conversation.`,
@@ -416,7 +455,6 @@ export class DualModelManager {
             strip_thinking: config.stripThinking
         };
 
-        // Build message history for API
         const apiMessages = this.buildApiMessages(modelKey);
 
         try {
@@ -428,12 +466,13 @@ export class DualModelManager {
                 this.abortController.signal
             );
 
+            if (this._sessionId !== mySessionId) throw new Error('AbortError');
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'API error');
             }
 
-            // Stream the response
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
@@ -442,6 +481,10 @@ export class DualModelManager {
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
+                if (this._sessionId !== mySessionId) { 
+                    reader.cancel(); 
+                    throw new Error('AbortError');
+                }
 
                 buffer += decoder.decode(value, { stream: true });
                 const lines = buffer.split('\n');
@@ -482,31 +525,25 @@ export class DualModelManager {
                 }
             }
 
-            // Save after each turn
+            if (this._sessionId !== mySessionId) throw new Error('AbortError');
+
             await this.saveChat();
-
-            state.dualModelConfig.currentTurn++;
-            this.updateControlBar();
-
-            // Check if we should continue
-            if (!state.dualModelRunning || state.dualModelPaused) return;
-            if (state.dualModelConfig.currentTurn >= state.dualModelConfig.maxTurns) {
-                this.stop();
-                return;
+            
+            if (this._sessionId === mySessionId) {
+                state.dualModelConfig.currentTurn++;
+                this.updateControlBar();
             }
-
-            // Wait, then trigger next model
-            await this.sleep(this.delayBetweenTurns);
-
-            if (state.dualModelRunning && !state.dualModelPaused) {
-                await this.runTurn(otherKey);
-            }
+            
+            return true;
 
         } catch (error) {
-            if (error.name === 'AbortError') {
+            if (error.name === 'AbortError' || error.message === 'AbortError') {
                 console.log('[DualModel] Turn aborted');
+                // Cleanup placeholder if we didn't get any content
                 if (assistantMessage.content === '...') {
-                    state.messages.pop();
+                    if (state.messages[msgIndex] === assistantMessage) {
+                        state.messages.splice(msgIndex, 1);
+                    }
                     messageGroup.remove();
                 }
             } else {
@@ -514,20 +551,20 @@ export class DualModelManager {
                 addMessageToUI('system', `Error: ${error.message}`);
                 this.stop();
             }
+            return false;
         } finally {
-            if (assistantMessage.content !== '...') {
+            if (this._sessionId === mySessionId && assistantMessage.content !== '...') {
                 const bubbleWrapper = messageGroup.querySelector('.bubble-wrapper');
                 if (bubbleWrapper && !bubbleWrapper.querySelector('.assistant-actions')) {
-                    // In Dual Chat, the isKept logic doesn't fully apply out of the box so we default to false
                     const actions = createAssistantMessageActions(
                         assistantMessage.content,
                         msgIndex,
                         (idx, instr, isNudge) => this.regenerateMessage(idx, instr, isNudge),
                         (idx) => this.deleteMessagePair(idx),
-                        null, // edit not strictly implemented for Dual Chat inline yet
-                        null, // toggleKeep
-                        false, // isKept
-                        true  // isDualMode
+                        null,
+                        null,
+                        false,
+                        true
                     );
                     bubbleWrapper.appendChild(actions);
                 }
@@ -621,6 +658,7 @@ export class DualModelManager {
         const charBEl = document.getElementById('dual-tool-char-b');
         const turnCounterEl = document.getElementById('dual-tool-turn-counter');
         const startBtn = document.getElementById('dual-tool-start-btn');
+        const restartBtn = document.getElementById('dual-tool-restart-btn');
         const pauseBtn = document.getElementById('dual-tool-pause-btn');
         const resumeBtn = document.getElementById('dual-tool-resume-btn');
         const stopBtn = document.getElementById('dual-tool-stop-btn');
@@ -663,6 +701,7 @@ export class DualModelManager {
         const atMaxTurns = state.dualModelConfig?.currentTurn >= state.dualModelConfig?.maxTurns;
 
         if (startBtn) startBtn.classList.toggle('hidden', !isStopped);
+        if (restartBtn) restartBtn.classList.toggle('hidden', !state.dualModelMode);
         if (pauseBtn) pauseBtn.classList.toggle('hidden', !isRunning);
         
         const canResume = isPaused || (isStopped && !atMaxTurns && state.dualModelMode);
@@ -674,14 +713,58 @@ export class DualModelManager {
         if (continueBtn) continueBtn.classList.toggle('hidden', !canContinue);
     }
 
+    showRestartModal() {
+        const modal = document.getElementById('dual-restart-modal');
+        const input = document.getElementById('dual-restart-prompt');
+        if (input) input.value = '';
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    hideRestartModal() {
+        document.getElementById('dual-restart-modal')?.classList.add('hidden');
+    }
+
+    handleRestart() {
+        const input = document.getElementById('dual-restart-prompt');
+        const prompt = input?.value?.trim();
+        if (!prompt) {
+            lagoonAlert('Please enter an opening scenario');
+            return;
+        }
+        this.hideRestartModal();
+        if (this.abortController) this.abortController.abort();
+        this._sessionId++;
+        state.dualModelRunning = false;
+        state.dualModelPaused = false;
+        this._turnChainActive = false;
+        this.start(prompt);
+    }
+
     pause() {
         state.dualModelPaused = true;
         this.updateControlBar();
     }
 
-    resume() {
+    async resume() {
         if (!state.dualModelMode) return;
 
+        // Force reload of the chat configuration from server to pick up any manual edits (like model swaps)
+        if (state.currentChatId) {
+            try {
+                const response = await fetch(`/api/chat/${state.currentChatId}`);
+                if (response.ok) {
+                    const chatData = await response.json();
+                    if (chatData.config?.dual_config) {
+                        state.dualModelConfig = chatData.config.dual_config;
+                        console.log('[DualModel] Reloaded config from server (model A: ' + state.dualModelConfig.modelA.id + ')');
+                    }
+                }
+            } catch (e) {
+                console.warn('[DualModel] Failed to sync config on resume:', e);
+            }
+        }
+
+        this._sessionId++;
         state.dualModelPaused = false;
         state.dualModelRunning = true;
         this.updateControlBar();
@@ -694,10 +777,11 @@ export class DualModelManager {
             nextModel = lastMsg.modelKey === 'A' ? 'B' : 'A';
         }
 
-        this.runTurn(nextModel);
+        await this._runLoop(nextModel);
     }
 
     stop() {
+        this._sessionId++;
         state.dualModelRunning = false;
         state.dualModelPaused = false;
 
@@ -731,10 +815,10 @@ export class DualModelManager {
                     model: 'dual-model',
                     dual_config: state.dualModelConfig
                 },
-                null,
+                'dual-model', // parent_config tag for sidebar grouping
                 displayName
             );
-            await refreshSidebar();
+            // Intentionally not refreshing sidebar here to avoid heavy API spam on every turn
         } catch (error) {
             console.error('[DualModel] Save failed:', error);
         }
@@ -746,6 +830,10 @@ export class DualModelManager {
 
     // Exit dual model mode (called when user starts normal chat)
     exitDualMode() {
+        if (this.abortController) {
+            this.abortController.abort();
+        }
+        this._sessionId++;
         state.dualModelMode = false;
         state.dualModelRunning = false;
         state.dualModelPaused = false;
@@ -754,7 +842,7 @@ export class DualModelManager {
 
     // Check if a loaded chat is a dual chat and restore state
     restoreFromChat(chatData) {
-        if (!chatData?.config?.model === 'dual-model' && !chatData?.config?.dual_config) {
+        if (chatData?.config?.model !== 'dual-model' && !chatData?.config?.dual_config) {
             return false;
         }
 
@@ -766,7 +854,7 @@ export class DualModelManager {
         // Restore dual model state
         state.dualModelMode = true;
         state.dualModelRunning = false;
-        state.dualModelPaused = false;
+        state.dualModelPaused = true; // Start paused when loading from disk
         state.dualModelConfig = dualConfig;
 
         // Calculate current turn from messages
@@ -786,6 +874,22 @@ export class DualModelManager {
     async regenerateMessage(msgIndex, instruction = null, isNudge = false) {
         if (!state.dualModelMode) return;
         
+        // Force reload of the chat configuration from server to pick up any manual edits (like model swaps)
+        if (state.currentChatId) {
+            try {
+                const response = await fetch(`/api/chat/${state.currentChatId}`);
+                if (response.ok) {
+                    const chatData = await response.json();
+                    if (chatData.config?.dual_config) {
+                        state.dualModelConfig = chatData.config.dual_config;
+                        console.log('[DualModel] Reloaded config for regeneration (model A: ' + state.dualModelConfig.modelA.id + ')');
+                    }
+                }
+            } catch (e) {
+                console.warn('[DualModel] Failed to sync config on regeneration:', e);
+            }
+        }
+
         const msg = state.messages[msgIndex];
         if (!msg || msg.role !== 'assistant' || !msg.modelKey) return;
         
@@ -819,15 +923,22 @@ export class DualModelManager {
         const assistantMsgs = state.messages.filter(m => m.role === 'assistant' && m.modelKey);
         state.dualModelConfig.currentTurn = assistantMsgs.length;
         
-        // Pause the automated loop and trigger just this one turn
-        state.dualModelPaused = true;
+        // Abort any current streams
+        if (this.abortController) {
+            this.abortController.abort();
+        }
+        this._sessionId++;
+        
+        // DO NOT PAUSE! Keep the automated loop running
+        state.dualModelRunning = true;
+        state.dualModelPaused = false;
         this.updateControlBar();
         
         // Re-render the chat
         this.renderDualMessages(state.messages);
         
-        // Run the turn
-        await this.runTurn(targetModelKey);
+        // Start the loop from the target model
+        await this._runLoop(targetModelKey);
     }
 
     async deleteMessagePair(msgIndex) {
