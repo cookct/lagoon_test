@@ -73,16 +73,20 @@ class UIManager {
             'mono': '"Courier New", Courier, monospace'
         };
 
-        // Apply directly to all message elements
-        const messages = document.querySelectorAll('.message');
-        messages.forEach(msg => {
-            msg.style.fontFamily = fontMap[font] || fontMap['system'];
-            msg.style.fontSize = `${textSize}px`;
-            msg.style.lineHeight = lineSpacing;
-        });
+        const fontFamily = fontMap[font] || fontMap['system'];
+        const fontSize = `${textSize}px`;
+        const lineHeight = lineSpacing;
 
-        // Store for new messages
-        this.typographySettings = { font: fontMap[font] || fontMap['system'], size: `${textSize}px`, lineHeight: lineSpacing };
+        // Apply via CSS variables on the container for efficiency and robustness
+        const container = this.dom.messagesContainer || document.getElementById('messages-container');
+        if (container) {
+            container.style.setProperty('--chat-font-family', fontFamily);
+            container.style.setProperty('--chat-font-size', fontSize);
+            container.style.setProperty('--chat-line-height', lineHeight);
+        }
+
+        // Store for components that might still need direct access
+        this.typographySettings = { font: fontFamily, size: fontSize, lineHeight: lineHeight };
     }
 
     /**

@@ -8,6 +8,7 @@ import { DEFAULT_USER_AVATAR_IMAGE_PATH } from '../core/Constants.js';
 import { saveConfigApi, uploadAvatarApi, fetchConfig, parseFileApi, deleteConfigApi, reparentChatsApi } from '../api.js';
 import { lagoonAlert, lagoonConfirm } from '../ui/dialog.js';
 import { refreshSidebar } from '../ui/sidebar.js';
+import { updateMessageAvatars } from '../ui/messages.js';
 import { CODE_EXTENSIONS } from '../utils.js';
 
 export class ConfigManager {
@@ -299,6 +300,8 @@ export class ConfigManager {
                         if (chatManager.dom?.veniceToggle) {
                             chatManager.dom.veniceToggle.checked = !!newConfig.include_venice_system_prompt;
                         }
+                        // Update avatar and name in existing messages
+                        updateMessageAvatars(newConfig);
                         // Persist the updated config to the chat file
                         if (state.currentChatId) {
                             const { saveChatApi } = await import('../api.js');

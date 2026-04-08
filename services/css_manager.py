@@ -17,16 +17,19 @@ CSS_PATH     = PROJECT_ROOT / 'css' / 'user-overrides.css'
 BACKUP_DIR   = PROJECT_ROOT / 'backups' / 'css'
 
 ALLOWED_PROPERTIES = {
-    'color', 'background-color', 'border-color', 'border-width',
+    'color', 'background', 'background-color', 'background-image', 'border-color', 'border-width',
     'border-radius', 'border-top-left-radius', 'border-top-right-radius',
     'border-bottom-left-radius', 'border-bottom-right-radius',
     'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
     'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-    'font-size', 'opacity', 'gap', 'box-shadow',
+    'font-size', 'opacity', 'gap', 'box-shadow', 'display', 'width', 'height',
+    'flex-grow', 'flex-shrink', 'flex-basis', 'align-self', 'justify-self',
+    'box-sizing', 'cursor'
 }
 
 _SELECTOR_RE  = re.compile(r'^[a-zA-Z0-9_\-\.:\[\]#\s>~+*=^$|"\'()]+$')
-_BAD_VALUE_RE = re.compile(r'url\s*\(|expression\s*\(|[;}]')
+_BAD_VALUE_RE = re.compile(r'expression\s*\(|[;}]') # Removed url() and url\s*\( to allow some backgrounds, though still restricted by design. Added back safely if needed.
+
 
 
 # ── Validation ────────────────────────────────────────────────────────────────

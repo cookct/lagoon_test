@@ -445,7 +445,7 @@ function populateLegacyDom() {
         'system-context-btn', 'system-context-input',
         'change-model-btn', 'view-context-btn', 'context-modal', 'context-list', 'close-context-btn', 'summarize-now-btn',
         'scroll-bottom-btn', 'scroll-top-btn', 'send-btn', 
-        'splitter-left', 'splitter-right', 'sidebar-left', 
+        'splitter-left', 'splitter-right', 'sidebar-left', 'messages-container',
         'export-btn', 'export-count',
         'settings-btn', 'app-container'
     ];

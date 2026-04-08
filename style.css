@@ -1,8 +1,1 @@
-/* Lagoon V1.3 - Modular CSS */
-
-@import 'css/variables.css';
-@import 'css/base.css';
-@import 'css/sidebar.css';
-@import 'css/chat.css';
-@import 'css/modals.css';
-@import 'css/themes.css';
+/* Lagoon V1.3 - This file is now redirected to css/main.css for Cascade Layers support. */

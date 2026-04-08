@@ -3,11 +3,13 @@
  * Handles chat sessions, importing, and exporting.
  */
 
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { state, dom, getDefaultChatConfig } from '../state.js';
 import { importChatApi } from '../api.js';
 import { uiManager } from '../core/UIManager.js';
 import { lagoonAlert, lagoonPrompt } from '../ui/dialog.js';
 import { refreshSidebar } from '../ui/sidebar.js';
+import { cleanThinking, stripMarkdown } from '../utils.js';
 
 export class SessionManager {
     constructor() {
@@ -205,8 +207,8 @@ export class SessionManager {
         menu.classList.add('context-menu');
         const rect = button.getBoundingClientRect();
         
-        ['Plain Text', 'Markdown', 'Prose', 'Word/Doc'].forEach((label, i) => {
-            const fmt = ['plain', 'markdown', 'prose', 'doc'][i];
+        ['Plain Text', 'Markdown', 'Prose', 'Word (DOCX)'].forEach((label, i) => {
+            const fmt = ['plain', 'markdown', 'prose', 'docx'][i];
             const item = document.createElement('button');
             item.textContent = label;
             item.classList.add('context-menu-item');
@@ -222,36 +224,113 @@ export class SessionManager {
         menu.style.top = `${rect.top - menu.offsetHeight - 5}px`;
     }
 
-    exportKeptMessages(format) {
+    async exportKeptMessages(format) {
         if (state.keptMessages.size === 0) return;
         const sortedIndices = Array.from(state.keptMessages).sort((a, b) => a - b);
-        const keptMsgs = sortedIndices.map(i => state.messages[i]).filter(m => m && m.role === 'assistant');
+        const keptMsgs = sortedIndices.map(i => {
+            const m = state.messages[i];
+            if (!m || m.role !== 'assistant') return null;
+            return {
+                ...m,
+                content: cleanThinking(m.content)
+            };
+        }).filter(m => m !== null);
         
+        const charName = state.currentConfig.character_name || 'Assistant';
+        
+        if (format === 'docx') {
+            const markdownToRuns = (text) => {
+                const runs = [];
+                let lastIndex = 0;
+                // Regex for basic markdown: bold (***, **, __) and italics (*, _)
+                // We're handling the nested 3-star (bold+italic) case as well
+                const regex = /(\*\*\*|__\*|\*__|__|__|\*\*|\*|_)(.*?)\1/g;
+                let match;
+
+                while ((match = regex.exec(text)) !== null) {
+                    if (match.index > lastIndex) {
+                        runs.push(new TextRun(text.substring(lastIndex, match.index)));
+                    }
+
+                    const marker = match[1];
+                    const content = match[2];
+                    const runOpts = { text: content };
+
+                    if (marker === '***') { runOpts.bold = true; runOpts.italics = true; }
+                    else if (marker === '**' || marker === '__') { runOpts.bold = true; }
+                    else if (marker === '*' || marker === '_') { runOpts.italics = true; }
+
+                    runs.push(new TextRun(runOpts));
+                    lastIndex = regex.lastIndex;
+                }
+                if (lastIndex < text.length) {
+                    runs.push(new TextRun(text.substring(lastIndex)));
+                }
+                return runs;
+            };
+
+            const doc = new Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new Paragraph({
+                            text: charName,
+                            heading: HeadingLevel.HEADING_1,
+                        }),
+                        new Paragraph({
+                            children: [new TextRun({ text: `Exported on ${new Date().toLocaleDateString()}`, italics: true })],
+                        }),
+                        new Paragraph({ text: "" }), // Spacer
+...keptMsgs.flatMap((m, idx) => {
+                            // Normalize line endings and split into paragraphs
+                            const normalized = m.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                            const paragraphs = normalized.split(/\n\n+/).filter(p => p.trim());
+                            return paragraphs.map(para => {
+                                // Convert single newlines within paragraphs to spaces (or could use break)
+                                const text = para.trim().replace(/\n/g, ' ');
+                                return new Paragraph({
+                                    children: markdownToRuns(text),
+                                    spacing: { after: 200 },
+                                });
+                            });
+                        }),
+                    ],
+                }],
+            });
+            
+            const blob = await Packer.toBlob(doc);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${charName.replace(/[^a-z0-9]/gi, '_')}-export.docx`;
+            a.click();
+            URL.revokeObjectURL(url);
+            return;
+        }
+        
+        // Other formats (plain, markdown, prose)
         let output = '';
         let ext = 'txt';
         let type = 'text/plain';
-        const charName = state.currentConfig.character_name || 'Assistant';
         
         if (format === 'markdown') {
             output = keptMsgs.map(m => m.content).join('\n\n---\n\n');
             ext = 'md';
         } else if (format === 'prose') {
-            output = keptMsgs.map(m => m.content).join('\n\n');
+            output = keptMsgs.map(m => stripMarkdown(m.content)).join('\n\n');
             ext = 'txt';
-        } else if (format === 'doc') {
-            output = keptMsgs.map(m => m.content).join('\n\n'); 
-            ext = 'rtf';
         } else {
             // Default plain text (clean prose)
-            output = keptMsgs.map(m => m.content).join('\n\n');
+            output = keptMsgs.map(m => stripMarkdown(m.content)).join('\n\n');
         }
         
         const blob = new Blob([output], { type });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `chat-export.${ext}`;
+        a.download = `${charName.replace(/[^a-z0-9]/gi, '_')}-export.${ext}`;
         a.click();
+        URL.revokeObjectURL(url);
     }
 
     updateExportButton() {

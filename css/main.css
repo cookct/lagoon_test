@@ -1,0 +1,39 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap");
+
+/* Layer Architecture:
+   1. reset    - CSS resets/normalizations (not used, native reset)
+   2. base     - Foundation styles, variables
+   3. components - UI components (sidebar, chat, modals)
+   4. themes   - Theme-specific overrides
+   5. overrides - User customizations (Design Mode)
+   
+   Later layers win specificity battles automatically.
+   No !important needed for Design Mode overrides.
+*/
+
+/* 2. Base Layer */
+@import url("variables.css");
+@import url("base.css") layer(base);
+
+/* 3. Components Layer */
+@import url("sidebar.css") layer(components);
+@import url("sidebar_toggle.css") layer(components);
+@import url("chat.css") layer(components);
+@import url("modals.css") layer(components);
+@import url("anchors.css") layer(components);
+@import url("dual-model.css") layer(components);
+@import url("mobile.css") layer(components);
+@import url("mobile-header.css") layer(components);
+@import url("mobile-chat.css") layer(components);
+@import url("mobile-input.css") layer(components);
+@import url("mobile-menu.css") layer(components);
+@import url("glassmorphism.css") layer(components);
+
+/* 4. Themes Layer */
+@import url("themes.css") layer(themes);
+@import url("themes_no_abyss.css") layer(themes);
+@import url("themes_abyss_only.css") layer(themes);
+@import url("themes_abyss_minimal.css") layer(themes);
+
+/* 5. Overrides Layer - Highest priority, wins all specificity battles */
+@import url("user-overrides.css") layer(overrides);

@@ -3,11 +3,11 @@
 /* Hacker Console (Default) */
 .theme-hacker body,
 body.theme-hacker {
-    background-color: var(--bg-dark) !important;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../images/matrix1.png') !important;
-    background-size: cover !important;
-    background-position: center !important;
-    background-attachment: fixed !important;
+    background-color: var(--bg-dark);
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../images/matrix1.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
 }
 
 .theme-hacker #matrix-rain,
@@ -163,172 +163,172 @@ body.theme-glassmorphism {
 .theme-glassmorphism .sidebar-right,
 .theme-glassmorphism .modal-content,
 .theme-glassmorphism .tab-panel {
-    background: var(--glass-bg) !important;
-    backdrop-filter: blur(16px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.15) !important; /* Highlight top edge */
-    box-shadow: var(--glass-shadow) !important;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.15); /* Highlight top edge */
+    box-shadow: var(--glass-shadow);
 }
 
 /* Specific border-radius control */
 .theme-glassmorphism .modal-content {
-    border-radius: 24px !important;
+    border-radius: 24px;
 }
 
 .theme-glassmorphism .sidebar-left,
 .theme-glassmorphism .sidebar-right,
 .theme-glassmorphism .tab-panel {
-    border-radius: 0 !important;
+    border-radius: 0;
 }
 
 /* Sidebar Specifics */
 .theme-glassmorphism .sidebar-left,
 .theme-glassmorphism .sidebar-right {
-    margin: 10px !important;
-    height: calc(100vh - 20px) !important;
-    border-radius: 0 !important;
+    margin: 10px;
+    height: calc(100vh - 20px);
+    border-radius: 0;
 }
 
 /* Chat Area */
 .theme-glassmorphism #chat-wrapper {
-    background: transparent !important; /* Let body gradient show through */
-    box-shadow: none !important;
-    border: none !important;
+    background: transparent; /* Let body gradient show through */
+    box-shadow: none;
+    border: none;
 }
 
 .theme-glassmorphism #chat-input-container {
-    background: var(--glass-bg) !important;
-    backdrop-filter: blur(16px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 20px !important;
-    margin: 0 20px 20px 20px !important;
-    box-shadow: var(--glass-shadow) !important;
-    padding: 8px 20px !important; /* Shrunk height */
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    margin: 0 20px 20px 20px;
+    box-shadow: var(--glass-shadow);
+    padding: 8px 20px; /* Shrunk height */
 }
 
 .theme-glassmorphism #chat-form {
-    align-items: center !important;
+    align-items: center;
 }
 
 .theme-glassmorphism #message-input {
-    height: 38px !important; /* Match sidebar items height */
-    min-height: 38px !important;
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
-    padding-right: 45px !important;
-    border-radius: 10px !important;
+    height: 38px; /* Match sidebar items height */
+    min-height: 38px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-right: 45px;
+    border-radius: 10px;
 }
 
 .theme-glassmorphism #send-btn {
-    bottom: 50% !important;
-    transform: translateY(50%) !important;
-    border-radius: 8px !important;
-    height: 28px !important;
-    width: 28px !important;
-    right: 10px !important;
+    bottom: 50%;
+    transform: translateY(50%);
+    border-radius: 8px;
+    height: 28px;
+    width: 28px;
+    right: 10px;
 }
 
 /* Messages */
 .theme-glassmorphism .message {
-    background: rgba(20, 20, 25, 0.6) !important;
-    backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    border-radius: 18px !important;
-    padding: 16px 20px !important;
-    margin-bottom: 16px !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-    color: #eeeeee !important;
+    background: rgba(20, 20, 25, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 18px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: #eeeeee;
     font-size: var(--chat-font-size, 0.95rem);
     line-height: var(--chat-line-height, 1.6);
 }
 
 .theme-glassmorphism .message.user {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%) !important;
-    border: 1px solid rgba(168, 85, 247, 0.3) !important;
-    border-bottom-right-radius: 4px !important;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-bottom-right-radius: 4px;
 }
 
 .theme-glassmorphism .message.assistant {
-    background: rgba(255, 255, 255, 0.03) !important;
-    border-bottom-left-radius: 4px !important;
-    margin-right: 10% !important;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom-left-radius: 4px;
+    margin-right: 10%;
 }
 
 /* Inputs & Textareas */
 .theme-glassmorphism input,
 .theme-glassmorphism textarea,
 .theme-glassmorphism select {
-    background: rgba(0, 0, 0, 0.2) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 12px !important;
-    color: white !important;
-    padding: 12px 16px !important;
-    transition: all 0.2s ease !important;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: white;
+    padding: 12px 16px;
+    transition: all 0.2s ease;
 }
 
 .theme-glassmorphism input:focus,
 .theme-glassmorphism textarea:focus,
 .theme-glassmorphism select:focus {
-    background: rgba(0, 0, 0, 0.4) !important;
-    border-color: rgba(139, 92, 246, 0.5) !important;
-    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
-    outline: none !important;
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    outline: none;
 }
 
 /* Buttons */
 .theme-glassmorphism button,
 .theme-glassmorphism .tab-btn {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 12px !important;
-    color: rgba(255, 255, 255, 0.9) !important;
-    backdrop-filter: blur(4px) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    font-weight: 500 !important;
-    letter-spacing: 0.5px !important;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
+    letter-spacing: 0.5px;
 }
 
 .theme-glassmorphism .tab-btn {
-    height: 35px !important;
-    margin: 10px 5px !important;
+    height: 35px;
+    margin: 10px 5px;
 }
 
 .theme-glassmorphism #send-btn {
-    border-radius: 8px !important;
-    height: 32px !important;
-    width: 32px !important;
+    border-radius: 8px;
+    height: 32px;
+    width: 32px;
 }
 
 .theme-glassmorphism .file-upload-btn,
 .theme-glassmorphism .settings-btn,
 .theme-glassmorphism .export-btn,
 .theme-glassmorphism .image-gen-btn {
-    height: 38px !important;
-    width: 38px !important;
+    height: 38px;
+    width: 38px;
 }
 
 .theme-glassmorphism .sidebar-tabs {
-    height: auto !important; /* Allow height to fit buttons with margin */
-    margin-bottom: 10px !important;
+    height: auto; /* Allow height to fit buttons with margin */
+    margin-bottom: 10px;
 }
 
 .theme-glassmorphism button:hover,
 .theme-glassmorphism .tab-btn:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
-    text-shadow: 0 0 8px rgba(255,255,255,0.4) !important;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    text-shadow: 0 0 8px rgba(255,255,255,0.4);
 }
 
 .theme-glassmorphism .tab-btn.active {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(168, 85, 247, 0.4) 100%) !important;
-    border-color: rgba(168, 85, 247, 0.5) !important;
-    color: white !important;
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3) !important;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(168, 85, 247, 0.4) 100%);
+    border-color: rgba(168, 85, 247, 0.5);
+    color: white;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
 }
 
 /* Scrollbars */
@@ -351,49 +351,49 @@ body.theme-glassmorphism {
 .theme-glassmorphism h2, 
 .theme-glassmorphism h3, 
 .theme-glassmorphism .section-header {
-    color: transparent !important;
-    background: linear-gradient(to right, #fff, #a5b4fc) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.5px !important;
+    color: transparent;
+    background: linear-gradient(to right, #fff, #a5b4fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 /* Code Blocks */
 .theme-glassmorphism pre, 
 .theme-glassmorphism code {
-    background: rgba(0, 0, 0, 0.4) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    border-radius: 8px !important;
-    color: #e2e8f0 !important;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    color: #e2e8f0;
 }
 
 .theme-glassmorphism .options-btn {
-    width: 22px !important;
-    height: 22px !important;
+    width: 22px;
+    height: 22px;
     font-size: 16px;
-    padding: 0 !important;
-    margin: 3px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    padding: 0;
+    margin: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .theme-glassmorphism .context-menu {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 5px !important;
-    padding: 5px !important;
-    background: var(--glass-bg) !important;
-    backdrop-filter: blur(16px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: 12px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 5px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
 }
 
 .theme-glassmorphism .context-menu-item, .theme-glassmorphism .censor-mode-btns .mode-btn {
-    border-radius: 8px !important;
-    margin: 0 !important;
+    border-radius: 8px;
+    margin: 0;
     background: var(--glass-bg);
     color: var(--text-main);
 }
@@ -412,8 +412,8 @@ body.theme-glassmorphism {
 }
 
 .theme-glassmorphism .context-menu-item {
-    border-radius: 8px !important;
-    margin: 0 !important;
+    border-radius: 8px;
+    margin: 0;
 }
 
 /* Cyberpunk Neon Theme */
@@ -455,66 +455,66 @@ body.theme-cyberpunk {
 /* Sidebars - Neon bordered panels */
 .theme-cyberpunk .sidebar-left,
 .theme-cyberpunk .sidebar-right {
- background: var(--bg-panel) !important;
- border: 2px solid var(--neon-pink) !important;
+ background: var(--bg-panel);
+ border: 2px solid var(--neon-pink);
  box-shadow: 
    inset 0 0 20px rgba(255, 0, 128, 0.1),
    0 0 15px rgba(255, 0, 128, 0.4),
-   0 0 30px rgba(255, 0, 128, 0.2) !important;
- border-radius: 0 !important;
+   0 0 30px rgba(255, 0, 128, 0.2);
+ border-radius: 0;
 }
 
 .theme-cyberpunk .sidebar-left {
- border-left: 4px solid var(--neon-cyan) !important;
+ border-left: 4px solid var(--neon-cyan);
  box-shadow: 
    inset 0 0 20px rgba(0, 255, 255, 0.1),
-   -5px 0 15px rgba(0, 255, 255, 0.3) !important;
+   -5px 0 15px rgba(0, 255, 255, 0.3);
 }
 
 .theme-cyberpunk .sidebar-right {
- border-right: 4px solid var(--neon-orange) !important;
+ border-right: 4px solid var(--neon-orange);
  box-shadow: 
    inset 0 0 20px rgba(255, 102, 0, 0.1),
-   5px 0 15px rgba(255, 102, 0, 0.3) !important;
+   5px 0 15px rgba(255, 102, 0, 0.3);
 }
 
 /* Chat wrapper - transparent to show grid */
 .theme-cyberpunk #chat-wrapper {
- background: transparent !important;
- border: none !important;
+ background: transparent;
+ border: none;
 }
 
 /* Messages - Neon speech bubbles */
 .theme-cyberpunk .message {
- background: rgba(10, 10, 20, 0.9) !important;
- border: 1px solid var(--neon-cyan) !important;
- border-left: 4px solid var(--neon-cyan) !important;
+ background: rgba(10, 10, 20, 0.9);
+ border: 1px solid var(--neon-cyan);
+ border-left: 4px solid var(--neon-cyan);
  box-shadow: 
    0 0 10px rgba(0, 255, 255, 0.3),
-   inset 0 0 10px rgba(0, 255, 255, 0.05) !important;
- color: var(--text-main) !important;
- padding: 16px 20px !important;
- margin-bottom: 16px !important;
- border-radius: 0 12px 12px 0 !important;
+   inset 0 0 10px rgba(0, 255, 255, 0.05);
+ color: var(--text-main);
+ padding: 16px 20px;
+ margin-bottom: 16px;
+ border-radius: 0 12px 12px 0;
  position: relative;
 }
 
 .theme-cyberpunk .message.user {
- background: rgba(20, 0, 30, 0.9) !important;
- border: 1px solid var(--neon-pink) !important;
- border-right: 4px solid var(--neon-pink) !important;
- border-left: 1px solid var(--neon-pink) !important;
+ background: rgba(20, 0, 30, 0.9);
+ border: 1px solid var(--neon-pink);
+ border-right: 4px solid var(--neon-pink);
+ border-left: 1px solid var(--neon-pink);
  box-shadow: 
    0 0 10px rgba(255, 0, 128, 0.4),
-   inset 0 0 10px rgba(255, 0, 128, 0.05) !important;
- color: var(--text-bright) !important;
- border-radius: 12px 0 0 12px !important;
- margin-left: 10% !important;
+   inset 0 0 10px rgba(255, 0, 128, 0.05);
+ color: var(--text-bright);
+ border-radius: 12px 0 0 12px;
+ margin-left: 10%;
 }
 
 .theme-cyberpunk .message.assistant {
- border-color: var(--neon-cyan) !important;
- margin-right: 10% !important;
+ border-color: var(--neon-cyan);
+ margin-right: 10%;
 }
 
 /* Glitch effect on message hover */
@@ -531,48 +531,48 @@ body.theme-cyberpunk {
 
 /* Input container - Neon glow */
 .theme-cyberpunk #chat-input-container {
- background: rgba(10, 10, 20, 0.95) !important;
- border: 2px solid var(--neon-purple) !important;
- border-radius: 0 !important;
+ background: rgba(10, 10, 20, 0.95);
+ border: 2px solid var(--neon-purple);
+ border-radius: 0;
  box-shadow: 
    0 -5px 30px rgba(179, 0, 255, 0.4),
-   inset 0 0 20px rgba(179, 0, 255, 0.1) !important;
- padding: 12px 20px !important;
+   inset 0 0 20px rgba(179, 0, 255, 0.1);
+ padding: 12px 20px;
 }
 
 .theme-cyberpunk #message-input {
- background: rgba(0, 0, 0, 0.6) !important;
- border: 1px solid var(--neon-cyan) !important;
- border-radius: 0 !important;
- color: var(--neon-cyan) !important;
- padding: 12px 16px !important;
- font-family: 'Courier New', monospace !important;
- text-shadow: 0 0 5px rgba(0, 255, 255, 0.5) !important;
+ background: rgba(0, 0, 0, 0.6);
+ border: 1px solid var(--neon-cyan);
+ border-radius: 0;
+ color: var(--neon-cyan);
+ padding: 12px 16px;
+ font-family: 'Courier New', monospace;
+ text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
 }
 
 .theme-cyberpunk #message-input:focus {
- border-color: var(--neon-pink) !important;
+ border-color: var(--neon-pink);
  box-shadow: 
    0 0 10px var(--neon-pink),
-   inset 0 0 10px rgba(255, 0, 128, 0.1) !important;
- outline: none !important;
- text-shadow: 0 0 8px rgba(255, 0, 128, 0.6) !important;
+   inset 0 0 10px rgba(255, 0, 128, 0.1);
+ outline: none;
+ text-shadow: 0 0 8px rgba(255, 0, 128, 0.6);
 }
 
 /* Buttons - Neon outlined */
 .theme-cyberpunk button,
 .theme-cyberpunk .tab-btn {
- background: rgba(0, 0, 0, 0.8) !important;
- border: 2px solid var(--neon-pink) !important;
- border-radius: 0 !important;
- color: var(--neon-pink) !important;
- text-transform: uppercase !important;
- font-weight: bold !important;
- letter-spacing: 1px !important;
- transition: all 0.2s ease !important;
- text-shadow: 0 0 5px var(--neon-pink) !important;
- position: relative !important;
- overflow: hidden !important;
+ background: rgba(0, 0, 0, 0.8);
+ border: 2px solid var(--neon-pink);
+ border-radius: 0;
+ color: var(--neon-pink);
+ text-transform: uppercase;
+ font-weight: bold;
+ letter-spacing: 1px;
+ transition: all 0.2s ease;
+ text-shadow: 0 0 5px var(--neon-pink);
+ position: relative;
+ overflow: hidden;
 }
 
 .theme-cyberpunk button:before,
@@ -589,13 +589,13 @@ body.theme-cyberpunk {
 
 .theme-cyberpunk button:hover,
 .theme-cyberpunk .tab-btn:hover {
- background: rgba(255, 0, 128, 0.2) !important;
+ background: rgba(255, 0, 128, 0.2);
  box-shadow:
    0 0 10px var(--neon-pink),
    0 0 20px var(--neon-pink),
-   inset 0 0 10px rgba(255, 0, 128, 0.3) !important;
- transform: translateY(-2px) !important;
- text-shadow: 0 0 10px var(--neon-pink) !important;
+   inset 0 0 10px rgba(255, 0, 128, 0.3);
+ transform: translateY(-2px);
+ text-shadow: 0 0 10px var(--neon-pink);
 }
 
 /* ================================================
@@ -615,8 +615,8 @@ body.theme-cyberpunk2077 {
   --cp-border: #8ae66e;
   --glitch-duration: 0.9s;
 
-  background-color: var(--cp-yellow) !important;
-  background-image: none !important;
+  background-color: var(--cp-yellow);
+  background-image: none;
   color: var(--cp-black);
   font-family: 'Advent Pro', -apple-system, sans-serif;
 }
@@ -628,45 +628,45 @@ body.theme-cyberpunk2077 {
 /* Sidebars - Black panels */
 .theme-cyberpunk2077 .sidebar-left,
 .theme-cyberpunk2077 .sidebar-right {
-  background: var(--cp-black) !important;
-  border: none !important;
-  border-radius: 0 !important;
-  color: var(--cp-yellow) !important;
+  background: var(--cp-black);
+  border: none;
+  border-radius: 0;
+  color: var(--cp-yellow);
 }
 
 .theme-cyberpunk2077 .sidebar-left {
-  border-right: 3px solid var(--cp-border) !important;
+  border-right: 3px solid var(--cp-border);
 }
 
 .theme-cyberpunk2077 .sidebar-right {
-  border-left: 3px solid var(--cp-border) !important;
+  border-left: 3px solid var(--cp-border);
 }
 
 /* Chat area - Yellow */
 .theme-cyberpunk2077 #chat-wrapper {
-  background: var(--cp-yellow) !important;
-  border: none !important;
+  background: var(--cp-yellow);
+  border: none;
 }
 
 .theme-cyberpunk2077 #chat-messages {
-  background: var(--cp-yellow) !important;
+  background: var(--cp-yellow);
 }
 
 /* Messages - Clean black boxes */
 .theme-cyberpunk2077 .message {
-  background: var(--cp-black) !important;
-  border: none !important;
-  border-left: 4px solid var(--cp-border) !important;
-  border-radius: 0 !important;
-  color: var(--cp-yellow) !important;
-  padding: 16px 20px !important;
-  margin-bottom: 12px !important;
+  background: var(--cp-black);
+  border: none;
+  border-left: 4px solid var(--cp-border);
+  border-radius: 0;
+  color: var(--cp-yellow);
+  padding: 16px 20px;
+  margin-bottom: 12px;
 }
 
 .theme-cyberpunk2077 .message.user {
-  background: var(--cp-red) !important;
-  border-left-color: var(--cp-yellow) !important;
-  color: #fff !important;
+  background: var(--cp-red);
+  border-left-color: var(--cp-yellow);
+  color: #fff;
 }
 
 /* Glitch on hover */
@@ -682,37 +682,37 @@ body.theme-cyberpunk2077 {
 
 /* Input container */
 .theme-cyberpunk2077 #chat-input-container {
-  background: var(--cp-black) !important;
-  border: none !important;
-  border-radius: 0 !important;
+  background: var(--cp-black);
+  border: none;
+  border-radius: 0;
 }
 
 .theme-cyberpunk2077 #message-input {
-  background: var(--cp-yellow) !important;
-  border: 2px solid var(--cp-black) !important;
-  border-radius: 0 !important;
-  color: var(--cp-black) !important;
-  font-family: 'Advent Pro', sans-serif !important;
-  font-weight: 600 !important;
+  background: var(--cp-yellow);
+  border: 2px solid var(--cp-black);
+  border-radius: 0;
+  color: var(--cp-black);
+  font-family: 'Advent Pro', sans-serif;
+  font-weight: 600;
 }
 
 .theme-cyberpunk2077 #message-input:focus {
-  border-color: var(--cp-red) !important;
-  outline: none !important;
+  border-color: var(--cp-red);
+  outline: none;
 }
 
 /* Buttons - Red */
 .theme-cyberpunk2077 button,
 .theme-cyberpunk2077 .tab-btn {
-  background: var(--cp-red) !important;
-  border: none !important;
-  border-right: 2px solid var(--cp-border) !important;
-  border-radius: 0 !important;
-  color: #fff !important;
-  text-transform: uppercase !important;
-  font-weight: 600 !important;
-  letter-spacing: 1px !important;
-  font-family: 'Advent Pro', sans-serif !important;
+  background: var(--cp-red);
+  border: none;
+  border-right: 2px solid var(--cp-border);
+  border-radius: 0;
+  color: #fff;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 1px;
+  font-family: 'Advent Pro', sans-serif;
 }
 
 .theme-cyberpunk2077 button:hover,
@@ -721,18 +721,18 @@ body.theme-cyberpunk2077 {
 }
 
 .theme-cyberpunk2077 .tab-btn.active {
-  background: var(--cp-black) !important;
-  color: var(--cp-yellow) !important;
+  background: var(--cp-black);
+  color: var(--cp-yellow);
 }
 
 /* Section headers */
 .theme-cyberpunk2077 .section-header {
-  color: var(--cp-yellow) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 2px !important;
-  font-weight: 600 !important;
-  border-bottom: 2px solid var(--cp-yellow) !important;
-  padding-bottom: 8px !important;
+  color: var(--cp-yellow);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+  border-bottom: 2px solid var(--cp-yellow);
+  padding-bottom: 8px;
 }
 
 /* Scrollbars */
@@ -758,23 +758,23 @@ body.theme-cyberpunk2077 {
 /* Code blocks */
 .theme-cyberpunk2077 pre,
 .theme-cyberpunk2077 code {
-  background: var(--cp-black) !important;
-  border: none !important;
-  border-radius: 0 !important;
-  color: var(--cp-cyan) !important;
+  background: var(--cp-black);
+  border: none;
+  border-radius: 0;
+  color: var(--cp-cyan);
 }
 
 /* Modal styling */
 .theme-cyberpunk2077 .modal-content {
-  background: var(--cp-black) !important;
-  border: 3px solid var(--cp-border) !important;
-  border-radius: 0 !important;
-  color: var(--cp-yellow) !important;
+  background: var(--cp-black);
+  border: 3px solid var(--cp-border);
+  border-radius: 0;
+  color: var(--cp-yellow);
 }
 
 /* Links */
 .theme-cyberpunk2077 a {
-  color: var(--cp-cyan) !important;
+  color: var(--cp-cyan);
 }
 
 /* Headings with blinking cursor */
@@ -782,8 +782,8 @@ body.theme-cyberpunk2077 {
 .theme-cyberpunk2077 h2,
 .theme-cyberpunk2077 h3,
 .theme-cyberpunk2077 h4 {
-  color: var(--cp-yellow) !important;
-  font-weight: 600 !important;
+  color: var(--cp-yellow);
+  font-weight: 600;
 }
 
 .theme-cyberpunk2077 h1::after,
@@ -801,22 +801,20 @@ body.theme-cyberpunk2077 {
 .theme-cyberpunk2077 input,
 .theme-cyberpunk2077 textarea,
 .theme-cyberpunk2077 select {
-  background: var(--cp-yellow) !important;
-  border: 2px solid var(--cp-black) !important;
-  border-radius: 0 !important;
-  color: var(--cp-black) !important;
+  background: var(--cp-yellow);
+  border: 2px solid var(--cp-black);
+  border-radius: 0;
+  color: var(--cp-black);
 }
 
 .theme-cyberpunk2077 input:focus,
 .theme-cyberpunk2077 textarea:focus,
 .theme-cyberpunk2077 select:focus {
-  border-color: var(--cp-red) !important;
-  outline: none !important;
+  border-color: var(--cp-red);
+  outline: none;
 }
 
 .theme-cyberpunk2077 select option {
   background: var(--cp-black);
   color: var(--cp-yellow);
 }
-
-

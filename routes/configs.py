@@ -4,9 +4,12 @@ Handles character configuration CRUD operations.
 """
 import os
 import json
+import logging
 from flask import Blueprint, request, jsonify
 
 from config import CONFIG_DIR
+
+logger = logging.getLogger(__name__)
 from services import memory_settings
 from services.storage import get_api_key, get_google_api_key, get_together_api_key
 
@@ -104,16 +107,21 @@ def copy_config():
             json.dump(config_data, f, indent=4)
 
         # Copy lore file if it exists
-        src_lore = os.path.join(CONFIG_DIR, '.lore', f"{base.rstrip()}.lore.json")
-        # Try original source name too (e.g. "Kelly Thompson 2")
-        src_lore_orig = os.path.join(CONFIG_DIR, '.lore', f"{source.replace('.json', '')}.lore.json")
-        for lore_src in [src_lore_orig, src_lore]:
+        # First try the exact source name (e.g., "Hermione Granger 2.lore.json")
+        # Then try the base name without number suffix (e.g., "Hermione Granger.lore.json")
+        source_lore_name = source.replace('.json', '')
+        lore_candidates = [
+            os.path.join(CONFIG_DIR, '.lore', f"{source_lore_name}.lore.json"),  # Exact source name
+            os.path.join(CONFIG_DIR, '.lore', f"{base.rstrip()}.lore.json")      # Base name (stripped of number)
+        ]
+        for lore_src in lore_candidates:
             if os.path.exists(lore_src):
                 dest_lore_dir = os.path.join(CONFIG_DIR, '.lore')
                 os.makedirs(dest_lore_dir, exist_ok=True)
                 dest_lore = os.path.join(dest_lore_dir, f"{candidate.replace('.json', '')}.lore.json")
                 import shutil as _shutil
                 _shutil.copy2(lore_src, dest_lore)
+                logger.info(f"[Configs] Copied lore file: {lore_src} -> {dest_lore}")
                 break
 
         return jsonify({"success": True, "new_config": candidate})

@@ -71,6 +71,27 @@ export function parseMarkdown(text, searchResults = []) {
     return html;
 }
 
+/**
+ * Strips <think> tags and their content from text for clean export.
+ */
+export function cleanThinking(text) {
+    if (!text) return '';
+    return text.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, '').trim();
+}
+
+/**
+ * Strips basic markdown markers (*, **, _, __) for clean text export.
+ */
+export function stripMarkdown(text) {
+    if (!text) return '';
+    return text
+        .replace(/(\*\*|__)(.*?)\1/g, '$2') // Bold
+        .replace(/(\*|_)(.*?)\1/g, '$2')   // Italics
+        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Links
+        .replace(/^#+\s+/gm, '')           // Headers
+        .trim();
+}
+
 export function estimateTokens(text) {
     if (!text) return 0;
     return Math.ceil(text.length / 4);

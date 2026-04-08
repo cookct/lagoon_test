@@ -425,12 +425,12 @@ export class ChatManager {
 
     renderMessages() {
         renderMessagesUI(
-            (idx, instr) => this.regenerateFromIndex(idx, instr), 
-            (idx) => this.deleteMessagePair(idx), 
-            () => this.updateContextGauge(), 
-            (idx) => this.editAssistantMessage(idx), 
+            (idx, instr) => this.regenerateFromIndex(idx, instr),
+            (idx) => this.deleteSingleMessage(idx),
+            () => this.updateContextGauge(),
+            (idx) => this.editAssistantMessage(idx),
             toggleKeepMessage,
-            (idx) => this.forkFromMessage(idx)
+            (idx) => this.forkFromIndex(idx)
         );
     }
 
@@ -1071,33 +1071,21 @@ export class ChatManager {
         });
     }
 
-    async deleteMessagePair(assistantIndex) {
-        let userIndex = assistantIndex - 1;
-        while (userIndex >= 0 && state.messages[userIndex].role === 'system') {
-            userIndex--;
-        }
+    async deleteSingleMessage(index) {
+        if (index < 0 || index >= state.messages.length) return;
 
-        let deleteStart, deleteCount;
-        if (userIndex >= 0 && state.messages[userIndex].role === 'user') {
-            deleteStart = userIndex;
-            deleteCount = 2;
-            state.messages.splice(userIndex, 2);
-        } else {
-            deleteStart = assistantIndex;
-            deleteCount = 1;
-            state.messages.splice(assistantIndex, 1);
-        }
+        state.messages.splice(index, 1);
 
-        // Remap kept message indices to account for the deleted range
+        // Remap kept message indices to account for the deleted message
         if (state.keptMessages.size > 0) {
             const updated = new Set();
             for (const idx of state.keptMessages) {
-                if (idx < deleteStart) {
+                if (idx < index) {
                     updated.add(idx); // before deletion, unaffected
-                } else if (idx >= deleteStart + deleteCount) {
-                    updated.add(idx - deleteCount); // after deletion, shift down
+                } else if (idx > index) {
+                    updated.add(idx - 1); // after deletion, shift down
                 }
-                // indices within the deleted range are dropped
+                // index of the deleted message is dropped
             }
             state.keptMessages = updated;
         }

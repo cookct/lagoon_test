@@ -54,16 +54,13 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
     margin: 0 auto;
     max-width: 900px;
 
-    /* Typography settings (overridden by JS) */
-    --chat-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --chat-font-size: 16px;
-    --chat-line-height: 1.5;
+    /* Typography settings (inherited from :root, can be overridden by JS on this container) */
 }
 
 .desktop-ui #messages-container .message {
-    font-family: var(--chat-font-family) !important;
-    font-size: var(--chat-font-size) !important;
-    line-height: var(--chat-line-height) !important;
+    font-family: var(--chat-font-family);
+    font-size: var(--chat-font-size);
+    line-height: var(--chat-line-height);
 }
 
 .desktop-ui .welcome-message {
@@ -375,11 +372,11 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
 }
 
 .desktop-ui .speaker-btn.playing {
-    cursor: pointer !important;
+    cursor: pointer;
 }
 
 .desktop-ui .gen-image-btn.loading {
-    cursor: pointer !important;
+    cursor: pointer;
 }
 
 .desktop-ui .gen-image-btn.loading svg {
@@ -436,7 +433,7 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
     min-width: 200px;
     z-index: 10000;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.9);
-    opacity: 1 !important;
+    opacity: 1;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }
@@ -786,9 +783,9 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
 }
 
 .desktop-ui #send-btn.stop-btn {
-    background-color: rgba(220, 38, 38, 0.2) !important;
-    color: var(--ansi-red) !important;
-    border-color: var(--ansi-red) !important;
+    background-color: rgba(220, 38, 38, 0.2);
+    color: var(--ansi-red);
+    border-color: var(--ansi-red);
 }
 
 .desktop-ui .action-btn {

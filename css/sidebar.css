@@ -1,7 +1,7 @@
 /* --- Sidebar & Resizer --- */
 .sidebar-left {
     width: 260px;
-    background-color: transparent;
+    background-color: rgba(10, 14, 22, 0);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -19,7 +19,7 @@
 
 .sidebar-right {
     width: 260px;
-    background-color: transparent;
+    background-color: rgba(10, 14, 22, 0);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -221,7 +221,7 @@
     flex-direction: column;
     flex-grow: 1;
     overflow: hidden;
-    border-radius: 0 !important;
+    border-radius: 0;
 }
 
 .tab-panel.active {
@@ -238,7 +238,7 @@
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
-    border-radius: 0 !important; /* Removed corner radius */
+    border-radius: 0; /* Removed corner radius */
 }
 
 .sidebar-list {

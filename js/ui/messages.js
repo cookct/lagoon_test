@@ -45,7 +45,7 @@ export function getWritingToolsAsObject() {
     return obj;
 }
 
-export function addMessageToUI(role, content, config, isStreaming = false, attachedFile = null, msgIndex = null, skipScroll = false, onToggleKeep = null, isKept = false, msgData = null) {
+export function addMessageToUI(role, content, config, isStreaming = false, attachedFile = null, msgIndex = null, skipScroll = false, onToggleKeep = null, isKept = false, msgData = null, onDeleteMessage = null) {
     if (role === 'system') return null;
     // Hide context file messages from display (they're role:'user' for AI prioritization but shouldn't show)
     if (role === 'user' && content && content.startsWith('[ATTACHED FILE:')) return null;
@@ -184,7 +184,7 @@ export function addMessageToUI(role, content, config, isStreaming = false, attac
     bubbleWrapper.appendChild(messageDiv);
 
     if (role === 'user') {
-        const actions = createUserMessageActions(content, msgIndex);
+        const actions = createUserMessageActions(content, msgIndex, onDeleteMessage);
         bubbleWrapper.appendChild(actions);
     }
 
@@ -245,7 +245,7 @@ export function renderCitations(results) {
     return container;
 }
 
-export function renderMessages(onRegenerate, onDeletePair, onUpdateGauge, onEdit, onToggleKeep, onFork = null) {
+export function renderMessages(onRegenerate, onDeleteMessage, onUpdateGauge, onEdit, onToggleKeep, onFork = null) {
     if (!dom.chatMessages) return;
     dom.chatMessages.innerHTML = '';
     state.messages.forEach((msg, index) => {
@@ -256,7 +256,7 @@ export function renderMessages(onRegenerate, onDeletePair, onUpdateGauge, onEdit
         }
         const isKept = state.keptMessages && state.keptMessages.has(index);
         // Pass full message data for dual model support
-        const group = addMessageToUI(msg.role, msg.content, config, false, null, index, false, onToggleKeep, isKept, msg);
+        const group = addMessageToUI(msg.role, msg.content, config, false, null, index, false, onToggleKeep, isKept, msg, onDeleteMessage);
 
         // Add actions to assistant messages (not just the last one)
         if (msg.role === 'assistant' && group) {
@@ -267,7 +267,7 @@ export function renderMessages(onRegenerate, onDeletePair, onUpdateGauge, onEdit
                     msg.content,
                     index,
                     onRegenerate,
-                    onDeletePair,
+                    onDeleteMessage,
                     onEdit,
                     onToggleKeep,
                     isKept,
@@ -290,7 +290,7 @@ export function renderMessages(onRegenerate, onDeletePair, onUpdateGauge, onEdit
     if (onUpdateGauge) onUpdateGauge();
 }
 
-export function createUserMessageActions(content, msgIndex) {
+export function createUserMessageActions(content, msgIndex, onDeleteMessage = null) {
     const actions = document.createElement('div');
     actions.classList.add('message-actions', 'user-actions');
     actions.innerHTML = `
@@ -317,12 +317,14 @@ export function createUserMessageActions(content, msgIndex) {
         dom.messageInput.classList.add('editing');
     });
 
-    actions.querySelector('.delete-msg-btn').addEventListener('click', (e) => {
-        // Delete just this user message from state and DOM
-        if (msgIndex !== null && state.messages[msgIndex]) {
+    actions.querySelector('.delete-msg-btn').addEventListener('click', () => {
+        // Delete ONLY this user message
+        if (onDeleteMessage && msgIndex !== null) {
+            onDeleteMessage(msgIndex);
+        } else if (msgIndex !== null && state.messages[msgIndex]) {
+            // Fallback for isolated use
             state.messages.splice(msgIndex, 1);
-            // Remove from DOM
-            const group = e.target.closest('.message-group');
+            const group = actions.closest('.message-group');
             if (group) group.remove();
         }
     });
@@ -350,7 +352,7 @@ export function createAssistantMessageActions(content, msgIndex, onRegenerate, o
         <button class="regen-btn" title="Regenerate">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         </button>
-        <button class="delete-pair-btn" title="Delete this exchange">
+        <button class="delete-msg-btn" title="Delete this message">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
         ${!isDualMode ? `
@@ -502,7 +504,7 @@ export function createAssistantMessageActions(content, msgIndex, onRegenerate, o
         });
     });
 
-    actions.querySelector('.delete-pair-btn')?.addEventListener('click', () => {
+    actions.querySelector('.delete-msg-btn')?.addEventListener('click', () => {
         if (onDeletePair) onDeletePair(msgIndex);
     });
 
@@ -558,4 +560,70 @@ export function showSummarizedNotification() {
         notification.classList.remove('show');
         setTimeout(() => notification.remove(), 300);
     }, 4000);
+}
+
+/**
+ * Update avatar images in existing assistant messages when config changes
+ * @param {Object} config - The new config with updated avatar_url and character_name
+ */
+export function updateMessageAvatars(config) {
+    const messagesContainer = dom.chatMessages;
+    if (!messagesContainer) return;
+    
+    // Find all assistant message groups
+    const assistantMessages = messagesContainer.querySelectorAll('.message-group.assistant');
+    
+    assistantMessages.forEach(msgGroup => {
+        const avatarDiv = msgGroup.querySelector('.avatar');
+        const senderDiv = msgGroup.querySelector('.message-sender');
+        
+        if (avatarDiv && config) {
+            if (config.avatar_url) {
+                // Update with new avatar URL
+                let avatarImg = avatarDiv.querySelector('img');
+                if (avatarImg) {
+                    avatarImg.src = config.avatar_url;
+                } else {
+                    avatarDiv.innerHTML = `<img src="${config.avatar_url}" alt="Avatar">`;
+                }
+            } else {
+                // Use model logo or default
+                const modelInUse = config.model || 'default';
+                let logoHtml = MODEL_LOGOS[modelInUse];
+                
+                // Prefix walk: try progressively shorter dash-segments
+                if (!logoHtml) {
+                    const parts = modelInUse.split('-');
+                    for (let i = parts.length - 1; i >= 1; i--) {
+                        const prefix = parts.slice(0, i).join('-');
+                        if (MODEL_LOGOS[prefix]) { logoHtml = MODEL_LOGOS[prefix]; break; }
+                    }
+                }
+                
+                // Fallback: org/model format
+                if (!logoHtml && modelInUse.includes('/')) {
+                    const org = modelInUse.split('/')[0].toLowerCase();
+                    const match = Object.keys(MODEL_LOGOS).find(key =>
+                        org.includes(key) || key.includes(org)
+                    );
+                    logoHtml = match ? MODEL_LOGOS[match] : MODEL_LOGOS['together'];
+                }
+                
+                avatarDiv.innerHTML = logoHtml || `<img src="${DEFAULT_USER_AVATAR_IMAGE_PATH}" alt="Avatar">`;
+            }
+        }
+        
+        // Update sender name
+        if (senderDiv && config) {
+            let senderName = 'AI';
+            if (config.character_name) {
+                senderName = config.character_name;
+            } else if (config.model === 'venice-uncensored') {
+                senderName = 'Venice Uncensored';
+            } else if (config.model) {
+                senderName = config.model.split('/').pop().split(':')[0];
+            }
+            senderDiv.textContent = senderName;
+        }
+    });
 }

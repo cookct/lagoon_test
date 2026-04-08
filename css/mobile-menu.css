@@ -532,39 +532,6 @@ input:checked + .mobile-toggle-slider:before {
 }
 
 /* API Key row */
-.mobile-api-key-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.mobile-api-key-row .mobile-text-input-field {
-  flex: 1;
-}
-
-/* Save key button */
-.mobile-save-key-btn {
-  width: 100%;
-  padding: 10px 16px;
-  background: var(--accent-color, #007AFF);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.mobile-save-key-btn:hover {
-  opacity: 0.9;
-}
-
-.mobile-save-key-btn:active {
-  opacity: 0.8;
-}
-
-/* API key status */
 .mobile-api-key-status {
   font-size: 12px;
   text-align: center;
