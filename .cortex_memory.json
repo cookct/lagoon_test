@@ -22,6 +22,11 @@
       "summary": "Clarified that strip_thinking toggle should control API request parameters (enable/disable chain of thought at the source), not just strip tags after the fact. Current implementation only does backend tag stripping.",
       "files": [],
       "timestamp": "2026-04-10T20:25:50.824357"
+    },
+    {
+      "summary": "Added z.ai thinking parameter to API request. When strip_thinking is true, sends thinking: {type: disabled}. When false, sends thinking: {type: enabled}. Committed, awaiting testing before push.",
+      "files": [],
+      "timestamp": "2026-04-10T20:28:29.068911"
     }
   ],
   "key_files": [

@@ -423,6 +423,23 @@ export class ChatManager {
         }
     }
 
+    applyCharacterConfig(newConfig) {
+        // Overlay live character config fields onto state.currentConfig
+        // Used when editing the active character - changes apply immediately
+        const liveFields = [
+            'system_prompt', 'system_context', 'character_card',
+            'author_note', 'author_note_depth',
+            'uncensored_mode', 'strip_thinking', 'style_overseer',
+            'fiction_prompt_text', 'include_venice_system_prompt',
+            'character_name', 'avatar'
+        ];
+        for (const field of liveFields) {
+            if (newConfig[field] !== undefined) {
+                state.currentConfig[field] = newConfig[field];
+            }
+        }
+    }
+
     renderMessages() {
         renderMessagesUI(
             (idx, instr) => this.regenerateFromIndex(idx, instr),
