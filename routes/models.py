@@ -4,7 +4,7 @@ Serves model configuration and installed model SSOT to frontend.
 """
 from flask import Blueprint, jsonify, request
 from services import model_registry, installed_models
-from services.storage import get_api_key, get_together_api_key
+from services.storage import get_api_key, get_together_api_key, get_zai_api_key
 import httpx
 
 models_bp = Blueprint('models', __name__)
@@ -232,3 +232,38 @@ def get_together_models():
         return jsonify({"models": models})
     except Exception as e:
         return jsonify({"error": str(e)}), 502
+
+
+# --- Z.AI Model Discovery (Static for now) ---
+
+@models_bp.route('/api/zai/models', methods=['GET'])
+def get_zai_models():
+    """Returns static Z.AI models with pricing."""
+    api_key = get_zai_api_key()
+    if not api_key:
+        return jsonify({"error": "no_key"}), 403
+        
+    # User requested specific models with pricing
+    models = [
+        {
+            "id": "glm-4.6v-flash",
+            "name": "GLM-4.6V-Flash",
+            "pricing": {"input": 0, "cache": 0, "output": 0}
+        },
+        {
+            "id": "glm-4.6v-flashx",
+            "name": "GLM-4.6V-FlashX",
+            "pricing": {"input": 0.04, "cache": 0.004, "output": 0.4}
+        },
+        {
+            "id": "glm-4.6",
+            "name": "GLM-4.6",
+            "pricing": {"input": 0.6, "cache": 0.11, "output": 2.2}
+        },
+        {
+            "id": "glm-4.7",
+            "name": "GLM-4.7",
+            "pricing": {"input": 0.6, "cache": 0.1, "output": 2.2}
+        }
+    ]
+    return jsonify({"models": models})

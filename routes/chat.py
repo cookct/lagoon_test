@@ -11,7 +11,7 @@ import httpx
 from flask import Blueprint, request, jsonify, Response
 
 from config import CHATS_DIR, VENICE_API_BASE, DEFAULT_MODEL, CONTEXT_WINDOWS, DEFAULT_CONTEXT_WINDOW, RECENT_MESSAGES_TO_KEEP, CREATIVE_FICTION_SYSTEM_PROMPT
-from services.storage import get_api_key, get_together_api_key, get_chat_display_name
+from services.storage import get_api_key, get_together_api_key, get_zai_api_key, get_chat_display_name
 from services.installed_models import load as load_installed_models
 from services.context import (
     manage_context, trigger_background_summarization, load_cached_summary, count_message_tokens,
@@ -95,7 +95,7 @@ def stream_chat():
     api_key = get_api_key()
     model_name = config.get('model', DEFAULT_MODEL)
     provider = _infer_provider(model_name, config)
-    if not api_key and provider not in ('ollama', 'custom', 'together'):
+    if not api_key and provider not in ('ollama', 'custom', 'together', 'zai'):
         return Response("data: {\"error\": \"Venice API key not configured.\"}\n\n", mimetype='text/event-stream')
     logger.info(f"[Chat] {model_name} | chat={chat_id or 'NEW'} | {len(messages)} messages")
     
@@ -183,7 +183,8 @@ def stream_chat():
     is_ollama = provider == 'ollama'
     is_custom = provider == 'custom'
     is_together = provider == 'together'
-    is_venice = not is_ollama and not is_custom and not is_together
+    is_zai = provider == 'zai'
+    is_venice = not is_ollama and not is_custom and not is_together and not is_zai
     is_e2ee = is_venice and model_name.startswith('e2ee-') and config.get('enable_e2ee', False)
     target_api_base = VENICE_API_BASE
     target_api_key = api_key
@@ -198,6 +199,12 @@ def stream_chat():
         if not together_key:
             return Response("data: {\"error\": \"Together.ai API key not configured.\"}\n\n", mimetype='text/event-stream')
         target_api_key = together_key
+    elif is_zai:
+        target_api_base = 'https://api.z.ai/api/paas/v4'
+        zai_key = get_zai_api_key()
+        if not zai_key:
+            return Response("data: {\"error\": \"Z.AI API key not configured.\"}\n\n", mimetype='text/event-stream')
+        target_api_key = zai_key
     elif is_custom:
         target_api_base = data.get('custom_base_url', '').rstrip('/')
         custom_key = data.get('custom_api_key', '')
@@ -828,59 +835,78 @@ def force_summarize():
 
 
 def _extract_overseer_json(raw_text):
-    """Extract and validate JSON from model response, trying multiple strategies."""
-    if not raw_text or not raw_text.strip():
+    """Bulletproof JSON extraction from chatty model responses."""
+    if not raw_text:
         return None
-
+    
     text = raw_text.strip()
+    logger.debug(f"[OverseerParser] Input head: {text[:100]}...")
 
     def _try_parse(candidate):
-        candidate = candidate.strip()
         try:
             parsed = json.loads(candidate)
             if isinstance(parsed, dict) and 'violations' in parsed:
                 return parsed
             if isinstance(parsed, list):
                 return {'violations': parsed}
-        except json.JSONDecodeError:
+        except:
             pass
         return None
 
-    # Strategy 1: direct parse (model returned clean JSON)
-    result = _try_parse(text)
-    if result is not None:
-        return result
+    # 1. Look for JSON blocks in markdown or braces
+    # Search for anything between the first { and the last }
+    first_brace = text.find('{')
+    last_brace = text.rfind('}')
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        candidate = text[first_brace:last_brace+1]
+        result = _try_parse(candidate)
+        if result: return result
 
-    # Strategy 2: markdown code block ```json ... ``` or ``` ... ```
-    m = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', text)
-    if m:
-        result = _try_parse(m.group(1))
-        if result is not None:
-            return result
-
-    # Strategy 3: scan for any top-level JSON object with a 'violations' key
-    pos = 0
-    while True:
-        start = text.find('{', pos)
-        if start == -1:
-            break
-        depth = 0
-        end = start
-        for i, ch in enumerate(text[start:], start):
-            if ch == '{':
-                depth += 1
-            elif ch == '}':
-                depth -= 1
+    # 2. Try middle-out extraction (finding the 'violations' key and expanding)
+    v_idx = text.find('"violations"')
+    if v_idx != -1:
+        # Look backwards for the opening {
+        start = text.rfind('{', 0, v_idx)
+        if start != -1:
+            # Look forwards for the closing }
+            # Use brace counting to be sure
+            depth = 0
+            for i in range(start, len(text)):
+                if text[i] == '{': depth += 1
+                elif text[i] == '}': depth -= 1
                 if depth == 0:
-                    end = i
-                    break
-        else:
-            break  # unclosed brace, stop
-        result = _try_parse(text[start:end + 1])
-        if result is not None:
-            return result
-        pos = end + 1
+                    result = _try_parse(text[start:i+1])
+                    if result: return result
 
+    # 3. Fallback: Model is providing a verbal list but no JSON
+    logger.warning("[OverseerParser] No JSON structure found. Attempting advanced prose extraction.")
+    verbal_violations = []
+    
+    # Strategy 3a: Look for "offending" -> "correction" or "offending" should be "correction"
+    matches = re.findall(r'["\'](.*?)["\']\s*(?:->|should be|to|=>)\s*["\'](.*?)["\']', text)
+    for i, (offending, correction) in enumerate(matches):
+        verbal_violations.append({
+            "rule": i + 1, "scope": "local", "excerpt": offending[:100],
+            "replacement": correction, "suggestion": "Extracted from correction pair"
+        })
+    
+    # Strategy 3b: Look for "text" - [TYPE] VIOLATION (as seen in your logs)
+    if not verbal_violations:
+        # Match: - "Amy looks at me." - PRESENT TENSE VIOLATION
+        violation_matches = re.findall(r'[-*]?\s*["\'](.*?)["\']\s*[-–]\s*(?:.*?)VIOLATION', text, re.IGNORECASE)
+        for i, offending in enumerate(violation_matches):
+            # Simple heuristic for past-tense correction if not provided
+            correction = offending.replace("looks", "looked").replace("says", "said").replace("moves", "moved").replace("is ", "was ").replace("are ", "were ")
+            verbal_violations.append({
+                "rule": i + 1, "scope": "local", "excerpt": offending[:100],
+                "replacement": correction, "suggestion": "Prose violation flagged"
+            })
+
+    if verbal_violations:
+        logger.info(f"[OverseerParser] Regex fallback succeeded: found {len(verbal_violations)} issues")
+        return {"violations": verbal_violations}
+
+    logger.error(f"[OverseerParser] FAILED ALL EXTRACTION. Content: {text[:500]}")
     return None
 
 
@@ -896,7 +922,7 @@ def overseer_check():
     custom_rules = [r.strip() for r in (data.get('custom_rules') or []) if isinstance(r, str) and r.strip()]
     use_builtin_rules = data.get('use_builtin_rules', True)
     overseer_model = data.get('overseer_model') or 'grok-4-20-beta'
-    logger.info(f"[Overseer] Text length: {len(text)}, custom rules: {len(custom_rules)}, builtin: {use_builtin_rules}")
+    logger.info(f"[Overseer] Model: {overseer_model}, Text length: {len(text)}, custom rules: {len(custom_rules)}, builtin: {use_builtin_rules}")
     if not text:
         return jsonify({"violations": []})
 
@@ -915,16 +941,25 @@ def overseer_check():
     ]
     all_rules = (builtin_rules if use_builtin_rules else []) + custom_rules
     rules_text = "\n".join(f"RULE {i+1} — {r}" for i, r in enumerate(all_rules))
-    overseer_prompt = (
-        "You are a prose style editor. Read the TEXT below and flag every violation of the listed rules.\n\n"
-        f"RULES:\n{rules_text}\n\n"
-        "For each violation return an object:\n"
-        "  {\"rule\": N, \"scope\": \"local\", \"excerpt\": \"exact offending text ≤100 chars\", \"replacement\": \"corrected version\", \"suggestion\": \"one-line description\"}\n"
-        "For paragraph-level issues also include: \"paragraph_rewrite\": \"rewritten paragraph\"\n"
-        "Return ONLY valid JSON:\n"
-        "{\"violations\": [...]}\n"
-        "If there are no violations: {\"violations\": []}\n\n"
-        f"TEXT:\n{text[:4000]}"
+    
+    overseer_system = (
+        "### ROLE: SILENT PROSE VALIDATOR\n"
+        "You return ONLY valid JSON. You never explain your process. You never say 'I found'.\n\n"
+        f"### RULES TO ENFORCE:\n{rules_text}\n\n"
+        "### OUTPUT FORMAT:\n"
+        "Return exactly this structure:\n"
+        "{\n"
+        "  \"violations\": [\n"
+        "    { \"rule\": N, \"scope\": \"local\", \"excerpt\": \"exact offending text\", \"replacement\": \"corrected version\", \"suggestion\": \"...\" }\n"
+        "  ]\n"
+        "}"
+    )
+
+    overseer_user = (
+        "### TASK: Flag all rule violations in the TEXT below.\n"
+        "### RESPONSE MANDATE: Output JSON only. If zero violations, return {\"violations\": []}.\n\n"
+        f"TEXT:\n{text[:4000]}\n\n"
+        "### JSON OUTPUT:"
     )
 
     violations = []
@@ -935,16 +970,23 @@ def overseer_check():
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 json={
                     "model": overseer_model,
-                    "messages": [{"role": "user", "content": overseer_prompt}],
-                    "temperature": 0.1, "max_tokens": 2000, "stream": False,
-                    "venice_parameters": {"include_venice_system_prompt": False}
+                    "messages": [
+                        {"role": "system", "content": overseer_system},
+                        {"role": "user", "content": overseer_user}
+                    ],
+                    "temperature": 0.1, "max_tokens": 4000, "stream": False,
+                    "venice_parameters": {
+                        "include_venice_system_prompt": False,
+                        "strip_thinking_response": False
+                    }
                 }
             )
             logger.info(f"[Overseer] API status: {resp.status_code}")
             if resp.status_code == 200:
                 msg = resp.json()['choices'][0]['message']
-                raw = msg.get('content') or msg.get('reasoning_content') or ''
-                logger.info(f"[Overseer] Raw response: {raw[:500]}")
+                # Combine all possible fields where the JSON might be hiding
+                raw = (msg.get('content') or '') + (msg.get('reasoning_content') or '') + (msg.get('thought') or '')
+                logger.info(f"[Overseer] Raw response length: {len(raw)}")
                 parsed = _extract_overseer_json(raw)
                 if parsed:
                     violations = parsed.get('violations', [])

@@ -107,43 +107,40 @@ class UIManager {
         const optionsList = document.createElement('div');
         optionsList.className = 'custom-dropdown-options';
         
-        // Sync function
-        const syncSelected = () => {
-            selected.textContent = select.options[select.selectedIndex]?.textContent;
-            Array.from(optionsList.children).forEach((item, idx) => {
-                item.classList.toggle('selected', idx === select.selectedIndex);
+        // Populate options with optgroup support
+        const populateOptions = () => {
+            optionsList.innerHTML = '';
+            let optIdx = 0;
+            
+            Array.from(select.children).forEach(child => {
+                if (child.tagName === 'OPTGROUP') {
+                    const header = document.createElement('div');
+                    header.className = 'custom-dropdown-header';
+                    header.textContent = child.label;
+                    optionsList.appendChild(header);
+                    
+                    Array.from(child.children).forEach(opt => {
+                        const idx = optIdx++;
+                        optionsList.appendChild(this.createDropdownItem(opt, idx, select, selected, optionsList));
+                    });
+                } else if (child.tagName === 'OPTION') {
+                    const idx = optIdx++;
+                    if (!child.hidden) {
+                        optionsList.appendChild(this.createDropdownItem(child, idx, select, selected, optionsList));
+                    }
+                }
             });
         };
 
-        // Check if this is the model dropdown (for delete buttons)
-        const isModelDropdown = select.id === 'image-model-select';
+        // Sync function
+        const syncSelected = () => {
+            selected.textContent = select.options[select.selectedIndex]?.textContent;
+            optionsList.querySelectorAll('.custom-dropdown-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.value === select.value);
+            });
+        };
 
-        // Populate options
-        Array.from(select.options).forEach((opt, idx) => {
-            if (opt.hidden) return; // Skip hidden options
-
-            const item = document.createElement('div');
-            item.className = 'custom-dropdown-item';
-            item.dataset.value = opt.value;
-            if (idx === select.selectedIndex) item.classList.add('selected');
-
-            // Create label span
-            const label = document.createElement('span');
-            label.className = 'dropdown-item-label';
-            label.textContent = opt.textContent;
-            item.appendChild(label);
-
-            // Select on click (on label area)
-            label.onclick = (e) => {
-                e.stopPropagation();
-                select.selectedIndex = idx;
-                select.dispatchEvent(new Event('change'));
-                syncSelected();
-                optionsList.classList.remove('show');
-                selected.style.borderRadius = '4px';
-            };
-            optionsList.appendChild(item);
-        });
+        populateOptions();
 
         // Toggle list
         selected.onclick = (e) => {
@@ -194,6 +191,31 @@ class UIManager {
         select.style.display = 'none'; // Hide native select
     }
 
+    createDropdownItem(opt, idx, select, selected, optionsList) {
+        const item = document.createElement('div');
+        item.className = 'custom-dropdown-item';
+        item.dataset.value = opt.value;
+        if (idx === select.selectedIndex) item.classList.add('selected');
+
+        const label = document.createElement('span');
+        label.className = 'dropdown-item-label';
+        label.textContent = opt.textContent;
+        item.appendChild(label);
+
+        label.onclick = (e) => {
+            e.stopPropagation();
+            select.selectedIndex = idx;
+            select.dispatchEvent(new Event('change'));
+            selected.textContent = opt.textContent;
+            optionsList.querySelectorAll('.custom-dropdown-item').forEach(it => {
+                it.classList.toggle('selected', it.dataset.value === opt.value);
+            });
+            optionsList.classList.remove('show');
+            selected.style.borderRadius = '4px';
+        };
+        return item;
+    }
+
     /**
      * Refresh a custom dropdown's options from its native select
      */
@@ -206,36 +228,27 @@ class UIManager {
         const optionsList = container.querySelector('.custom-dropdown-options');
         if (!selected || !optionsList) return;
 
-        // Check if this is the model dropdown (for delete buttons)
-        const isModelDropdown = select.id === 'image-model-select';
-
-        // Clear and repopulate options
+        // Clear and repopulate options with optgroup support
         optionsList.innerHTML = '';
-        Array.from(select.options).forEach((opt, idx) => {
-            if (opt.hidden) return;
-
-            const item = document.createElement('div');
-            item.className = 'custom-dropdown-item';
-            item.dataset.value = opt.value;
-            if (idx === select.selectedIndex) item.classList.add('selected');
-
-            // Create label span
-            const label = document.createElement('span');
-            label.className = 'dropdown-item-label';
-            label.textContent = opt.textContent;
-            item.appendChild(label);
-
-            // Select on click
-            label.onclick = (e) => {
-                e.stopPropagation();
-                select.selectedIndex = idx;
-                select.dispatchEvent(new Event('change'));
-                selected.textContent = opt.textContent;
-                Array.from(optionsList.children).forEach((it, i) => it.classList.toggle('selected', i === idx));
-                optionsList.classList.remove('show');
-                selected.style.borderRadius = '4px';
-            };
-            optionsList.appendChild(item);
+        let optIdx = 0;
+        
+        Array.from(select.children).forEach(child => {
+            if (child.tagName === 'OPTGROUP') {
+                const header = document.createElement('div');
+                header.className = 'custom-dropdown-header';
+                header.textContent = child.label;
+                optionsList.appendChild(header);
+                
+                Array.from(child.children).forEach(opt => {
+                    const idx = optIdx++;
+                    optionsList.appendChild(this.createDropdownItem(opt, idx, select, selected, optionsList));
+                });
+            } else if (child.tagName === 'OPTION') {
+                const idx = optIdx++;
+                if (!child.hidden) {
+                    optionsList.appendChild(this.createDropdownItem(child, idx, select, selected, optionsList));
+                }
+            }
         });
 
         // Update current selection text

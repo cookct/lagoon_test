@@ -58,7 +58,7 @@ export function populateSelect(selectEl, { includeBlank = false, blankLabel = ''
         groups[p].push(m);
     });
 
-    const providerLabels = { venice: 'Venice', together: 'Together.ai', ollama: 'Ollama', custom: 'Custom' };
+    const providerLabels = { venice: 'venice.ai', together: 'together.ai', zai: 'z.ai', ollama: 'Ollama', custom: 'Custom' };
     Object.entries(groups).forEach(([provider, models]) => {
         const group = document.createElement('optgroup');
         group.label = providerLabels[provider] || provider;

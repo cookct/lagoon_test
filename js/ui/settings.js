@@ -10,36 +10,85 @@ import { lagoonAlert, lagoonPrompt, lagoonConfirm } from './dialog.js';
 import { getWritingToolsOptions, saveWritingToolsOptions, DEFAULT_WRITING_TOOLS } from './messages.js';
 import { uiManager } from '../core/UIManager.js';
 import { VENICE_VOICES, DEFAULT_VOICE, GOOGLE_VOICES, DEFAULT_GOOGLE_VOICE, DEFAULT_PROVIDER } from '../core/TTSConfig.js';
+import { VENICE_PRICING } from '../components/ChatManager.js';
 
-// Store all options once so we can restore them
-let _allModelOptions = null;
+function formatPricing(m, provider) {
+    let inputPrice = null;
+    let outputPrice = null;
+    let cachePrice = null;
+
+    // Try pricing from API response first
+    if (m.pricing) {
+        inputPrice = m.pricing.input ?? m.pricing.in ?? null;
+        outputPrice = m.pricing.output ?? m.pricing.out ?? null;
+        cachePrice = m.pricing.cacheRead ?? null;
+    }
+
+    // Fall back to hardcoded VENICE_PRICING for Venice models
+    if (!inputPrice && provider === 'venice' && VENICE_PRICING[m.id]) {
+        const vp = VENICE_PRICING[m.id];
+        inputPrice = vp.in ?? null;
+        outputPrice = vp.out ?? null;
+        cachePrice = vp.cacheRead ?? null;
+    }
+
+    if (inputPrice === null && outputPrice === null) return '';
+
+    const inStr = inputPrice !== null ? `$${inputPrice.toFixed(2)}` : '—';
+    const outStr = outputPrice !== null ? `$${outputPrice.toFixed(2)}` : '—';
+    let priceLine = `in ${inStr} / out ${outStr}`;
+    if (cachePrice !== null) priceLine += ` / cache $${cachePrice.toFixed(2)}`;
+    return priceLine;
+}
+
+// Store all children (options and optgroups) once so we can restore them
+let _allModelChildren = null;
 
 export function filterModelDropdownForE2EE(e2eeOn) {
     const sel = document.getElementById('model');
     if (!sel) return;
 
-    // Snapshot all options on first call
-    if (!_allModelOptions) {
-        _allModelOptions = Array.from(sel.options).map(o => ({ value: o.value, text: o.text }));
+    // Snapshot all children on first call
+    if (!_allModelChildren) {
+        _allModelChildren = Array.from(sel.children).map(child => child.cloneNode(true));
     }
 
     const currentVal = sel.value;
-    const filtered = e2eeOn
-        ? _allModelOptions.filter(o => o.value.startsWith('e2ee-'))
-        : _allModelOptions;
-
     sel.innerHTML = '';
-    filtered.forEach(({ value, text }) => {
-        const opt = document.createElement('option');
-        opt.value = value;
-        opt.text = text;
-        sel.appendChild(opt);
+
+    _allModelChildren.forEach(child => {
+        if (child.tagName === 'OPTGROUP') {
+            const group = child.cloneNode(false); // Clone without children
+            const options = Array.from(child.children).filter(opt => {
+                return !e2eeOn || opt.value.startsWith('e2ee-');
+            });
+            if (options.length > 0) {
+                options.forEach(opt => group.appendChild(opt.cloneNode(true)));
+                sel.appendChild(group);
+            }
+        } else if (child.tagName === 'OPTION') {
+            if (!e2eeOn || child.value.startsWith('e2ee-')) {
+                sel.appendChild(child.cloneNode(true));
+            }
+        }
     });
 
-    // Restore selection if still available, otherwise pick first
-    const match = filtered.find(o => o.value === currentVal);
-    sel.value = match ? currentVal : filtered[0]?.value;
-    if (!match) sel.dispatchEvent(new Event('change'));
+    // Restore selection if still available, otherwise pick first valid option
+    const match = sel.querySelector(`option[value="${currentVal}"]`);
+    if (match) {
+        sel.value = currentVal;
+    } else {
+        const firstOpt = sel.querySelector('option:not([disabled])');
+        if (firstOpt) {
+            sel.value = firstOpt.value;
+            sel.dispatchEvent(new Event('change'));
+        }
+    }
+    
+    // Sync custom dropdown UI if it exists
+    const { uiManager } = import('../core/UIManager.js').then(m => {
+        m.uiManager.updateCustomDropdown(sel);
+    });
 }
 
 export async function showContextViewer() {
@@ -484,8 +533,9 @@ export async function showModelManager() {
     tabsContainer.className = 'sidebar-tabs';
     tabsContainer.style.marginBottom = '10px';
     tabsContainer.innerHTML = `
-        <button class="tab-btn active" data-tab="venice">Venice</button>
-        <button class="tab-btn" data-tab="together">Together.ai</button>
+        <button class="tab-btn active" data-tab="venice">venice.ai</button>
+        <button class="tab-btn" data-tab="together">together.ai</button>
+        <button class="tab-btn" data-tab="zai">z.ai</button>
         <button class="tab-btn" data-tab="installed">Installed</button>
     `;
     
@@ -566,8 +616,20 @@ export async function showModelManager() {
                 await refreshInstalled();
                 const installedIds = new Set(installedModels.map(m => m.id));
 
-                availableModels.forEach(m => {
+availableModels.forEach(m => {
                     const isInstalled = installedIds.has(m.id);
+                    // Build pricing string
+                    const formatPrice = (p) => (p === 0) ? 'Free' : (p != null ? `$${Number(p).toFixed(2)}` : null);
+                    let priceHtml = '';
+                    if (m.pricing) {
+                        const inp = formatPrice(m.pricing.input ?? m.pricing.in);
+                        const out = formatPrice(m.pricing.output ?? m.pricing.out);
+                        const cache = formatPrice(m.pricing.cache);
+                        
+                        if (inp != null && out != null) {
+                            priceHtml = `<div style="font-size:0.7rem;color:var(--text-dim);opacity:0.7">in ${inp} · ${cache != null ? `cache ${cache} · ` : ''}out ${out} /1M tok</div>`;
+                        }
+                    }
                     const row = document.createElement('div');
                     row.className = 'anchor-entry-row';
                     row.style.display = 'flex';
@@ -579,7 +641,8 @@ export async function showModelManager() {
                     row.innerHTML = `
                         <div style="flex:1">
                             <div style="font-weight:bold;color:var(--text-bright)">${m.name}</div>
-                            <div style="font-size:0.75rem;color:var(--text-dim)">${m.id} ${m.context_tokens ? `(${Math.round(m.context_tokens/1024)}k context)` : ''}</div>
+                            <div style="font-size:0.75rem;color:var(--text-dim)">${m.id} ${m.context_tokens ? `(${Math.round(m.context_tokens/1024)}k ctx)` : ''}</div>
+                            ${priceHtml}
                         </div>
                         <button class="btn-small install-model-btn" ${isInstalled ? 'disabled' : ''}>
                             ${isInstalled ? '✓ Added' : '+ Add'}

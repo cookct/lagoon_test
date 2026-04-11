@@ -3263,6 +3263,21 @@ body.theme-dark {
     color: var(--ansi-cyan);
 }
 
+.context-menu-group-label {
+    padding: 6px 12px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--ansi-cyan);
+    letter-spacing: 0.05rem;
+    background: rgba(56, 114, 170, 0.1);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 4px 0 2px 0;
+    pointer-events: none;
+    user-select: none;
+}
+
 /* Settings menu controls - base styles */
 .settings-section {
     padding: 8px 12px;

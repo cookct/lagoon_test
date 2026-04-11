@@ -21,7 +21,8 @@ def key_status():
     return jsonify({
         'venice': bool(get_api_key()),
         'google': bool(get_google_api_key()),
-        'together': bool(get_together_api_key())
+        'together': bool(get_together_api_key()),
+        'zai': bool(get_zai_api_key())
     })
 
 

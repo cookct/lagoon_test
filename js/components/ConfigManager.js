@@ -14,6 +14,7 @@ import { CODE_EXTENSIONS } from '../utils.js';
 export class ConfigManager {
     constructor() {
         this.dom = {};
+        this._editingConfigFilename = null; // tracks which config is open in the editor (NOT the active chat's parent)
         this.refreshDom();
     }
 
@@ -172,7 +173,7 @@ export class ConfigManager {
     }
 
     handleCreateCharacter() {
-        state.currentParentConfig = null;
+        this._editingConfigFilename = null;
         this.dom.configForm.reset();
         this.dom.configName.value = '';
         this.dom.avatarPreview.src = DEFAULT_USER_AVATAR_IMAGE_PATH;
@@ -251,11 +252,11 @@ export class ConfigManager {
         try {
             await saveConfigApi(filename, configData);
 
-            // Handle Renaming: If we have an existing parent config and the name changed, delete the old one
+            // Handle Renaming: If we have an existing config open in the editor and the name changed, delete the old one
             const newFilename = `${filename}.json`;
             let wasRename = false;
-            if (state.currentParentConfig && state.currentParentConfig !== newFilename) {
-                const oldFilename = state.currentParentConfig;
+            if (this._editingConfigFilename && this._editingConfigFilename !== newFilename) {
+                const oldFilename = this._editingConfigFilename;
                 wasRename = true;
                 console.log(`[ConfigManager] Renaming detected. Deleting old config: ${oldFilename}`);
                 try {
@@ -269,14 +270,14 @@ export class ConfigManager {
                 } catch (err) {
                     console.warn(`[ConfigManager] Failed to reparent chats after rename: ${err.message}`);
                 }
-                // Keep currentParentConfig in sync so wasEditingActiveChar check works below
-                state.currentParentConfig = newFilename;
+                this._editingConfigFilename = newFilename;
             }
 
             state.selectedAvatarFile = null;
 
-            // Track if this was an edit of the currently active character
-            const wasEditingActiveChar = wasRename || state.currentParentConfig === newFilename;
+            // Track if this was an edit of the currently active character.
+            // wasRename covers the rename case; otherwise check if edited config matches the current chat's parent.
+            const wasEditingActiveChar = wasRename || (this._editingConfigFilename !== null && this._editingConfigFilename === state.currentParentConfig);
             
             // Only update currentParentConfig if we were editing an existing character
             // Otherwise, keep the user in their current session (e.g., Quick Chat)
@@ -286,33 +287,22 @@ export class ConfigManager {
             
             await refreshSidebar();
 
-            // Only prompt if editing the currently active character (not creating new)
+            // If editing the active character, apply changes to the current chat immediately.
             if (wasEditingActiveChar) {
-                if (await lagoonConfirm('Configuration saved. Apply changes to current chat?')) {
-                    const newConfig = await fetchConfig(`${filename}.json`);
-                    if (newConfig) {
-                        // Update the live config in-place — keep messages, just swap settings
-                        state.currentConfig = { ...newConfig };
-                        window.updateOverseerTab?.();
-                        const { chatManager } = await import('./ChatManager.js');
-                        chatManager.updateModelButtonText();
-                        chatManager.updateContextGauge();
-                        if (chatManager.dom?.veniceToggle) {
-                            chatManager.dom.veniceToggle.checked = !!newConfig.include_venice_system_prompt;
-                        }
-                        // Update avatar and name in existing messages
-                        updateMessageAvatars(newConfig);
-                        // Persist the updated config to the chat file
-                        if (state.currentChatId) {
-                            const { saveChatApi } = await import('../api.js');
-                            saveChatApi(
-                                state.currentChatId,
-                                state.messages,
-                                state.currentConfig,
-                                state.currentParentConfig,
-                                null
-                            ).catch(e => console.warn('[ConfigManager] Failed to save chat after config update:', e));
-                        }
+                const newConfig = await fetchConfig(`${filename}.json`);
+                if (newConfig) {
+                    const { chatManager } = await import('./ChatManager.js');
+                    chatManager.applyCharacterConfig(newConfig);
+                    updateMessageAvatars(newConfig);
+                    if (state.currentChatId) {
+                        const { saveChatApi } = await import('../api.js');
+                        saveChatApi(
+                            state.currentChatId,
+                            state.messages,
+                            state.currentConfig,
+                            state.currentParentConfig,
+                            null
+                        ).catch(e => console.warn('[ConfigManager] Failed to persist chat after config update:', e));
                     }
                 }
             }
@@ -326,7 +316,7 @@ export class ConfigManager {
         const configData = await fetchConfig(configFilename);
         if (!configData) return;
 
-        state.currentParentConfig = configFilename;
+        this._editingConfigFilename = configFilename; // track editor state only — do NOT touch state.currentParentConfig
         this.dom.configName.value = configFilename.replace('.json', '');
         this.dom.model.value = configData.model || 'zai-org-glm-4.7';
         this.dom.model.dispatchEvent(new Event('change'));

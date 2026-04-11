@@ -16,7 +16,7 @@ import { lagoonAlert, lagoonConfirm } from '../ui/dialog.js';
 import { toggleSendButtonState } from '../ui/sendButton.js';
 
 // Venice pricing: { in, out, cacheRead, cacheWrite, tierAt, inTier } — all per million tokens
-const VENICE_PRICING = {
+export const VENICE_PRICING = {
     'venice-uncensored':                        { in: 0.20,  out: 0.90 },
     'venice-uncensored-role-play':              { in: 0.50,  out: 2.00 },
     'zai-org-glm-4.6':                          { in: 0.85,  out: 2.75,  cacheRead: 0.30 },
@@ -430,7 +430,7 @@ export class ChatManager {
             () => this.updateContextGauge(),
             (idx) => this.editAssistantMessage(idx),
             toggleKeepMessage,
-            (idx) => this.forkFromIndex(idx)
+            (idx) => this.forkFromMessage(idx)
         );
     }
 
@@ -621,11 +621,11 @@ export class ChatManager {
                 }
             }
 
-            // Style Injection - only for character chats, not quick chats
-            if (state.currentParentConfig) {
-                const stylePrefs = this.getStylePreferencesPrompt();
-                if (stylePrefs) historyToSend.unshift({ role: 'system', content: stylePrefs });
-            }
+            // Style learning disabled
+            // if (state.currentParentConfig) {
+            //     const stylePrefs = this.getStylePreferencesPrompt();
+            //     if (stylePrefs) historyToSend.unshift({ role: 'system', content: stylePrefs });
+            // }
 
             const sessionOverrides = {};
             sessionOverrides.enable_e2ee = localStorage.getItem('quickchat_e2ee') === 'true';
@@ -1096,6 +1096,41 @@ export class ChatManager {
         setTimeout(() => autoScroll(), 50);
     }
 
+    async deleteMessagePair(assistantIndex) {
+        if (assistantIndex < 0 || assistantIndex >= state.messages.length) return;
+
+        // Find the paired user message (immediately before, skipping system messages)
+        let userIndex = assistantIndex - 1;
+        while (userIndex >= 0 && state.messages[userIndex].role === 'system') {
+            userIndex--;
+        }
+        const hasUserPair = userIndex >= 0 && state.messages[userIndex].role === 'user';
+
+        // Remove assistant first (higher index), then user to avoid index shift issues
+        state.messages.splice(assistantIndex, 1);
+        if (hasUserPair) {
+            state.messages.splice(userIndex, 1);
+        }
+
+        // Remap kept message indices
+        if (state.keptMessages.size > 0) {
+            const removed = hasUserPair ? [assistantIndex, userIndex] : [assistantIndex];
+            const updated = new Set();
+            for (const idx of state.keptMessages) {
+                if (!removed.includes(idx)) {
+                    const shift = removed.filter(r => r < idx).length;
+                    updated.add(idx - shift);
+                }
+            }
+            state.keptMessages = updated;
+        }
+
+        this.renderMessages();
+        await this.saveChat();
+        this.updateContextGauge();
+        setTimeout(() => autoScroll(), 50);
+    }
+
     async regenerateFromIndex(assistantIndex, instruction = null, isNudge = false) {
         if (instruction) {
              const currentResponse = state.messages[assistantIndex]?.content;
@@ -1205,15 +1240,16 @@ export class ChatManager {
 
     async analyzeAndStoreEdit(original, edited, msgIndex) {
         try {
-            const result = await analyzeEditApi(original, edited);
-            if (result.success && result.analysis) {
-                this.saveStylePreference(result.analysis);
-                if (state.messages[msgIndex]) {
-                    state.messages[msgIndex].styleNote = result.analysis;
-                    this.saveChat();
-                }
-                this.showNotedIndicator(msgIndex, result.analysis);
-            }
+            // Style learning disabled - no longer analyzing edits
+            // const result = await analyzeEditApi(original, edited);
+            // if (result.success && result.analysis) {
+            //     this.saveStylePreference(result.analysis);
+            //     if (state.messages[msgIndex]) {
+            //         state.messages[msgIndex].styleNote = result.analysis;
+            //         this.saveChat();
+            //     }
+            //     this.showNotedIndicator(msgIndex, result.analysis);
+            // }
         } catch (e) {
             console.error('[StyleLearn] Edit analysis failed:', e);
         }
@@ -1249,12 +1285,14 @@ export class ChatManager {
     }
 
     getStylePreferencesPrompt() {
-        const key = this.getStylePreferenceKey();
-        const prefs = JSON.parse(localStorage.getItem(key) || '[]');
-        if (prefs.length === 0) return null;
-        const charName = state.currentConfig?.character_name || 'this character';
-        const recent = prefs.slice(-5).map(p => p.analysis).join('\n');
-        return `[USER STYLE PREFERENCES for ${charName} - learned from their edits]\n${recent}\n[Apply these preferences to your writing style]`;
+        // Style learning disabled
+        return null;
+        // const key = this.getStylePreferenceKey();
+        // const prefs = JSON.parse(localStorage.getItem(key) || '[]');
+        // if (prefs.length === 0) return null;
+        // const charName = state.currentConfig?.character_name || 'this character';
+        // const recent = prefs.slice(-5).map(p => p.analysis).join('\n');
+        // return `[USER STYLE PREFERENCES for ${charName} - learned from their edits]\n${recent}\n[Apply these preferences to your writing style]`;
     }
 
     _updateCost(model, usage) {

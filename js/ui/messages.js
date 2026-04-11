@@ -332,7 +332,7 @@ export function createUserMessageActions(content, msgIndex, onDeleteMessage = nu
     return actions;
 }
 
-export function createAssistantMessageActions(content, msgIndex, onRegenerate, onDeletePair, onEdit, onToggleKeep, isKept, isDualMode = false, onFork = null, overseerOptions = null) {
+export function createAssistantMessageActions(content, msgIndex, onRegenerate, onDeleteMessage, onEdit, onToggleKeep, isKept, isDualMode = false, onFork = null, overseerOptions = null) {
     const actions = document.createElement('div');
     actions.classList.add('message-actions', 'assistant-actions');
     actions.innerHTML = `
@@ -346,9 +346,10 @@ export function createAssistantMessageActions(content, msgIndex, onRegenerate, o
         <button class="fork-btn" title="Fork from here">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>
         </button>
+        ${isDualMode ? `
         <button class="nudge-btn" title="Nudge & Regenerate">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-        </button>
+        </button>` : ''}
         <button class="regen-btn" title="Regenerate">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         </button>
@@ -505,7 +506,7 @@ export function createAssistantMessageActions(content, msgIndex, onRegenerate, o
     });
 
     actions.querySelector('.delete-msg-btn')?.addEventListener('click', () => {
-        if (onDeletePair) onDeletePair(msgIndex);
+        if (onDeleteMessage) onDeleteMessage(msgIndex);
     });
 
     actions.querySelector('.speaker-btn')?.addEventListener('click', async (e) => {

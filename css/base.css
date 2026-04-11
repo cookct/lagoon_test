@@ -142,6 +142,21 @@ body {
     display: block;
 }
 
+.custom-dropdown-header {
+    padding: 6px 12px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--ansi-cyan);
+    letter-spacing: 0.05rem;
+    background: rgba(56, 114, 170, 0.1);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 4px 0 2px 0;
+    pointer-events: none;
+    user-select: none;
+}
+
 .custom-dropdown-item {
     padding: 8px 10px;
     font-size: 12px;

@@ -29,6 +29,15 @@ def get_together_api_key():
         return None
 
 
+def get_zai_api_key():
+    """Load Z.AI API key from config file"""
+    try:
+        with open(APP_CONFIG_FILE, 'r') as f:
+            return json.load(f).get("zai_api_key")
+    except Exception:
+        return None
+
+
 def get_google_api_key():
     """Load Google Gemini API key from config file"""
     try:

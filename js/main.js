@@ -90,6 +90,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const savedTheme = localStorage.getItem('theme') || 'hacker';
     document.body.classList.add('theme-' + savedTheme);
 
+    // Clear any existing style preferences (feature disabled)
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('style_preferences_')) {
+            localStorage.removeItem(key);
+        }
+    });
+
     // 4. Restore Image Mode (Removed)
 
     // 5. Initialize Scroll Detection
@@ -244,8 +251,10 @@ function showModelSelector(button) {
     menu.style.left = `${rect.left}px`;
 
     // Access native select from dom populated by populateLegacyDom
-    const modelOptions = Array.from(document.getElementById('model').options);
-    modelOptions.forEach(opt => {
+    const modelSelect = document.getElementById('model');
+    if (!modelSelect) return;
+
+    const createItem = (opt) => {
         const modelName = opt.value;
         const item = document.createElement('button');
         item.textContent = getDisplayName(modelName);
@@ -292,7 +301,22 @@ function showModelSelector(button) {
                 menu.remove();
             };
         }
-        menu.appendChild(item);
+        return item;
+    };
+
+    Array.from(modelSelect.children).forEach(child => {
+        if (child.tagName === 'OPTGROUP') {
+            const groupLabel = document.createElement('div');
+            groupLabel.className = 'context-menu-group-label';
+            groupLabel.textContent = child.label;
+            menu.appendChild(groupLabel);
+
+            Array.from(child.children).forEach(opt => {
+                menu.appendChild(createItem(opt));
+            });
+        } else if (child.tagName === 'OPTION') {
+            menu.appendChild(createItem(child));
+        }
     });
     
     // Manage Models
@@ -323,21 +347,20 @@ window.syncInstalledModels = syncInstalledModels;
 function syncOllamaModels(models) {
     const select = document.getElementById('model');
     if (!select) return;
-    // Remove any existing Ollama options + separator
-    select.querySelectorAll('[data-provider="ollama"], option[value="separator-ollama"]').forEach(o => o.remove());
+    // Remove any existing Ollama group
+    select.querySelectorAll('optgroup[label="Ollama"], option[value="separator-ollama"], [data-provider="ollama"]').forEach(o => o.remove());
     if (!models.length) return;
-    const sep = document.createElement('option');
-    sep.value = 'separator-ollama';
-    sep.textContent = '--- Local (Ollama) ---';
-    sep.disabled = true;
-    select.appendChild(sep);
+    
+    const group = document.createElement('optgroup');
+    group.label = 'Ollama';
     models.forEach(name => {
         const opt = document.createElement('option');
         opt.value = name;
         opt.textContent = name;
         opt.dataset.provider = 'ollama';
-        select.appendChild(opt);
+        group.appendChild(opt);
     });
+    select.appendChild(group);
     uiManager.updateCustomDropdown(select);
 }
 window.syncOllamaModels = syncOllamaModels;
@@ -347,13 +370,12 @@ async function syncCustomEndpoints() {
     const endpoints = await fetchCustomEndpoints();
     const select = document.getElementById('model');
     if (!select) return;
-    select.querySelectorAll('[data-provider="custom"], option[value="separator-custom"]').forEach(o => o.remove());
+    // Remove any existing Custom group
+    select.querySelectorAll('optgroup[label="Custom"], option[value="separator-custom"], [data-provider="custom"]').forEach(o => o.remove());
     if (!endpoints.length) return;
-    const sep = document.createElement('option');
-    sep.value = 'separator-custom';
-    sep.textContent = '--- Custom Endpoints ---';
-    sep.disabled = true;
-    select.appendChild(sep);
+    
+    const group = document.createElement('optgroup');
+    group.label = 'Custom';
     endpoints.forEach(ep => {
         const opt = document.createElement('option');
         opt.value = ep.id;
@@ -362,8 +384,9 @@ async function syncCustomEndpoints() {
         opt.dataset.baseUrl = ep.base_url;
         opt.dataset.modelId = ep.model_id;
         opt.dataset.apiKey = ep.api_key || '';
-        select.appendChild(opt);
+        group.appendChild(opt);
     });
+    select.appendChild(group);
     uiManager.updateCustomDropdown(select);
 }
 window.syncCustomEndpoints = syncCustomEndpoints;
