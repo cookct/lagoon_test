@@ -239,6 +239,11 @@ def stream_chat():
         }
         payload["venice_parameters"] = venice_params
 
+    if is_zai:
+        # z.ai thinking parameter - disabled when strip_thinking is true
+        strip_thinking = config.get('strip_thinking', False)
+        payload["thinking"] = {"type": "disabled" if strip_thinking else "enabled"}
+
     def generate():
         import time
         import re
