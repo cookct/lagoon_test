@@ -8,6 +8,7 @@ import json
 import uuid
 import logging
 import httpx
+import requests
 from flask import Blueprint, request, jsonify, Response
 
 from config import CHATS_DIR, VENICE_API_BASE, DEFAULT_MODEL, CONTEXT_WINDOWS, DEFAULT_CONTEXT_WINDOW, RECENT_MESSAGES_TO_KEEP, CREATIVE_FICTION_SYSTEM_PROMPT
@@ -17,7 +18,7 @@ from services.context import (
     manage_context, trigger_background_summarization, load_cached_summary, count_message_tokens,
     load_summary_stack, append_to_summary_stack, delete_summary_entry,
     generate_detailed_summary, _sync_to_disk, build_summary_messages, approve_pending_summary,
-    _generate_summary
+    _generate_summary, strip_cot_from_messages
 )
 from services.anchors import scan_and_inject as lore_scan, mark_aware as lore_mark_aware, strip_lore_updates, get_matched_entries as lore_get_matched
 from services.rag import retrieve as rag_retrieve, trigger_background_chunking
@@ -155,11 +156,16 @@ def stream_chat():
             for j, lm in enumerate(lore_msgs):
                 messages.insert(last_sys_idx + 1 + j, lm)
 
-    # ── Author's Note: depth-positioned re-injection (character chats only) ──
+    # ── Author's Note: dual-injection (top of prompt + depth-positioned) ──
     author_note = config.get('author_note', '').strip()
     if author_note and parent_config:
         depth = max(1, int(config.get('author_note_depth', 4)))
         note_msg = {"role": "system", "content": f"[Author's Note]\n{author_note}"}
+        
+        # 1. Inject at the very beginning (Part 1 of 2)
+        messages.insert(0, note_msg)
+        
+        # 2. Inject at depth (Part 2 of 2)
         non_sys_count = sum(1 for m in messages if m.get('role') != 'system')
         insert_from_end = min(depth, non_sys_count)
         if insert_from_end > 0:
@@ -176,7 +182,7 @@ def stream_chat():
             # No conversation yet — append after last system message
             last_sys_idx = max((i for i, m in enumerate(messages) if m.get('role') == 'system'), default=-1)
             messages.insert(last_sys_idx + 1, note_msg)
-        logger.info(f"[AN] Injected Author's Note at depth {depth}")
+        logger.info(f"[AN] Injected Author's Note at top and depth {depth}")
 
     # Determine Provider
     provider = _infer_provider(model_name, config)
@@ -582,6 +588,9 @@ def save_chat():
         return jsonify({"error": "chat_id is required to save."}), 400
 
     try:
+        # Strip CoT pollution from messages before saving to disk
+        messages = strip_cot_from_messages(messages)
+
         if not display_name:
             display_name = get_chat_display_name(messages)
 
@@ -1015,6 +1024,9 @@ def preview_prompt():
     chat_id = data.get('chat_id')
     parent_config = data.get('parent_config')
 
+    # Clean CoT before previewing
+    messages = strip_cot_from_messages(messages)
+
     api_key = get_api_key()
     if not api_key:
         return jsonify({"error": "API key not configured"}), 400
@@ -1093,6 +1105,318 @@ def preview_prompt():
 
     except Exception as e:
         logger.error(f"[preview_prompt] Error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@chat_bp.route('/api/image/edit', methods=['POST'])
+def edit_image_route():
+    """Proxy image multi-edit requests to Venice.ai."""
+    data = request.json
+    model_id = data.get('modelId', 'qwen-image-2-edit')
+    prompt = data.get('prompt')
+    images = data.get('images') # Array: [base, mask]
+
+    if not images or not prompt:
+        return jsonify({"error": "Images and prompt are required"}), 400
+
+    api_key = get_api_key()
+    if not api_key:
+        return jsonify({"error": "API key not configured"}), 400
+
+    # Multi-edit is the correct endpoint for compositing with masks
+    url = f"{VENICE_API_BASE}/image/multi-edit"
+    
+    # Strip Data URI prefixes from images if present (Venice multi-edit often wants raw Base64)
+    cleaned_images = []
+    for img in images:
+        if isinstance(img, str) and img.startswith('data:'):
+            # Extract just the base64 part after the comma
+            try:
+                cleaned_images.append(img.split(',', 1)[1])
+            except:
+                cleaned_images.append(img)
+        else:
+            cleaned_images.append(img)
+
+    payload = {
+        "modelId": model_id,
+        "prompt": prompt,
+        "images": cleaned_images
+    }
+
+    try:
+        resp = requests.post(
+            url,
+            headers={"Authorization": f"Bearer {api_key}"},
+            json=payload,
+            timeout=120
+        )
+        
+        logger.info(f"[edit_image] Venice Status: {resp.status_code}, Type: {resp.headers.get('Content-Type')}")
+
+        if resp.status_code != 200:
+            logger.error(f"[edit_image] Venice Error Response: {resp.text}")
+            resp.raise_for_status()
+
+        # Check if the response is JSON or Binary
+        content_type = resp.headers.get('Content-Type', '')
+        if 'application/json' in content_type:
+            try:
+                return jsonify(resp.json())
+            except Exception as json_err:
+                logger.error(f"[edit_image] JSON Parse Error: {json_err}. Raw: {resp.text[:100]}...")
+                return jsonify({"error": "Invalid JSON response from Venice", "raw": resp.text}), 500
+        
+        elif 'image/' in content_type:
+            # If it's binary, convert to B64 so the frontend can handle it normally
+            import base64
+            b64_data = base64.b64encode(resp.content).decode('utf-8')
+            mime = content_type.split(';')[0]
+            return jsonify({
+                "images": [f"data:{mime};base64,{b64_data}"]
+            })
+        
+        else:
+            # Fallback for unexpected types
+            if not resp.content:
+                logger.error("[edit_image] Venice returned an empty response")
+                return jsonify({"error": "Empty response from Venice"}), 500
+            
+            return jsonify({"error": f"Unexpected Content-Type: {content_type}", "raw": resp.text[:200]}), 500
+
+    except Exception as e:
+        logger.error(f"[edit_image] Multi-edit Error: {e}")
+        # Try to return the actual error message from Venice if available
+        error_msg = str(e)
+        if 'resp' in locals() and resp.text:
+            try:
+                error_data = resp.json()
+                error_msg = error_data.get('error', {}).get('message', resp.text)
+            except:
+                error_msg = resp.text
+        return jsonify({"error": error_msg}), 500
+
+
+@chat_bp.route('/api/image/upscale', methods=['POST'])
+def upscale_image_route():
+    """Proxy image upscale requests to Venice.ai upscale endpoint."""
+    data = request.json
+    image = data.get('image')
+    scale = data.get('scale', 2)
+    enhance = data.get('enhance', False)
+    enhance_creativity = data.get('enhanceCreativity', 0.5)
+    enhance_prompt = data.get('enhancePrompt', '')
+    replication = data.get('replication', 0.35)
+
+    logger.info(f"[upscale_image] Received request - image: {bool(image)}, scale: {scale}, enhance: {enhance}")
+
+    if not image:
+        logger.error("[upscale_image] No image in request")
+        return jsonify({"error": "Image is required"}), 400
+
+    # Validate scale
+    if scale < 1 or scale > 4:
+        return jsonify({"error": "Scale must be between 1 and 4"}), 400
+    
+    # Scale of 1 requires enhance
+    if scale == 1 and not enhance:
+        return jsonify({"error": "Scale of 1 requires enhance to be true"}), 400
+
+    api_key = get_api_key()
+    if not api_key:
+        return jsonify({"error": "API key not configured"}), 400
+
+    url = f"{VENICE_API_BASE}/image/upscale"
+    
+    # Strip Data URI prefix if present
+    if isinstance(image, str) and image.startswith('data:'):
+        image = image.split(',', 1)[1]
+
+    payload = {
+        "image": image,
+        "scale": scale,
+        "enhance": enhance,
+    }
+    
+    if enhance:
+        payload["enhanceCreativity"] = enhance_creativity
+        payload["replication"] = replication
+        if enhance_prompt:
+            payload["enhancePrompt"] = enhance_prompt
+
+    try:
+        resp = requests.post(
+            url,
+            headers={"Authorization": f"Bearer {api_key}"},
+            json=payload,
+            timeout=180  # Upscaling can take longer
+        )
+        
+        logger.info(f"[upscale_image] Venice Status: {resp.status_code}, Type: {resp.headers.get('Content-Type')}")
+
+        if resp.status_code != 200:
+            logger.error(f"[upscale_image] Venice Error Response: {resp.text}")
+            resp.raise_for_status()
+
+        # Check if the response is JSON or Binary
+        content_type = resp.headers.get('Content-Type', '')
+        if 'application/json' in content_type:
+            try:
+                return jsonify(resp.json())
+            except Exception as json_err:
+                logger.error(f"[upscale_image] JSON Parse Error: {json_err}. Raw: {resp.text[:100]}...")
+                return jsonify({"error": "Invalid JSON response from Venice", "raw": resp.text}), 500
+        
+        elif 'image/' in content_type:
+            # Return binary image directly
+            return resp.content, 200, {'Content-Type': content_type}
+        
+        else:
+            # Fallback for unexpected types
+            if not resp.content:
+                logger.error("[upscale_image] Venice returned an empty response")
+                return jsonify({"error": "Empty response from Venice"}), 500
+            
+            return jsonify({"error": f"Unexpected Content-Type: {content_type}", "raw": resp.text[:200]}), 500
+
+    except Exception as e:
+        logger.error(f"[upscale_image] Upscale Error: {e}")
+        error_msg = str(e)
+        if 'resp' in locals() and resp.text:
+            try:
+                error_data = resp.json()
+                error_msg = error_data.get('error', {}).get('message', resp.text)
+            except:
+                error_msg = resp.text
+        return jsonify({"error": error_msg}), 500
+
+
+@chat_bp.route('/api/image/generate/gemini', methods=['POST'])
+def gemini_image_generate_route():
+    """Generate or edit an image using the Google Gemini native image API via REST."""
+    from services.storage import get_google_api_key
+    import requests
+    import base64
+
+    data = request.json
+    model_id = data.get('model', 'gemini-3.1-flash-image-preview')
+    prompt = data.get('prompt')
+    images = data.get('images', [])  # list of data URLs
+
+    if not prompt:
+        return jsonify({"error": "prompt is required"}), 400
+
+    google_api_key = get_google_api_key()
+    if not google_api_key:
+        return jsonify({"error": "Google API key not configured"}), 400
+
+    # Build the REST payload: text prompt first, then images
+    parts = [{"text": prompt}]
+    for data_url in images:
+        if ',' in data_url:
+            header, b64 = data_url.split(',', 1)
+            mime = header.split(':')[1].split(';')[0]
+        else:
+            b64 = data_url
+            mime = 'image/png'
+        parts.append({
+            "inline_data": {
+                "mime_type": mime,
+                "data": b64
+            }
+        })
+
+    payload = {
+        "contents": [{"parts": parts}],
+        "generationConfig": {
+            "response_modalities": ["TEXT", "IMAGE"]
+        },
+        "safetySettings": [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_CIVIC_INTEGRITY", "threshold": "BLOCK_NONE"}
+        ]
+    }
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={google_api_key}"
+
+    try:
+        resp = requests.post(url, json=payload, timeout=120)
+        
+        if resp.status_code != 200:
+            logger.error(f"[gemini_image] REST Error {resp.status_code}: {resp.text}")
+            return jsonify({"error": f"Gemini API Error {resp.status_code}: {resp.text}"}), resp.status_code
+
+        result = resp.json()
+        # Log result structure (omit image data to avoid terminal spam)
+        log_result = {k: v for k, v in result.items() if k != 'candidates'}
+        if 'candidates' in result:
+            log_result['candidates'] = [
+                {k: v for k, v in c.items() if k != 'content'}
+                for c in result['candidates']
+            ]
+        logger.info(f"[gemini_image] API Result: {json.dumps(log_result)}")
+
+        # Log prompt feedback for safety diagnostics
+        if 'promptFeedback' in result:
+            logger.info(f"[gemini_image] Prompt Feedback: {result['promptFeedback']}")
+
+        # Parse candidates
+        candidates = result.get('candidates', [])
+        if not candidates:
+            # Check for safety refusals if no candidates (prompt block)
+            if 'promptFeedback' in result:
+                fb = result['promptFeedback']
+                if fb.get('blockReason'):
+                    return jsonify({"error": f"The prompt was blocked by Gemini safety filters: {fb['blockReason']}. Please try a more generic prompt (e.g., 'instant ramen' instead of 'Cup-o-Noodles')."}), 400
+            return jsonify({"error": "Gemini returned no candidates (likely a hard safety refusal). Try rephrasing your prompt."}), 400
+
+        candidate = candidates[0]
+        finish_reason = candidate.get('finishReason')
+        safety_ratings = candidate.get('safetyRatings', [])
+        
+        if safety_ratings:
+            # Filter and log ratings that aren't 'NEGLIGIBLE' or 'LOW' to see what's triggering
+            high_ratings = [r for r in safety_ratings if r.get('probability') not in ['NEGLIGIBLE', 'LOW']]
+            if high_ratings:
+                logger.warning(f"[gemini_image] High Safety Ratings: {high_ratings}")
+        
+        # If finish reason is something other than STOP or empty, it might be blocked
+        if finish_reason and finish_reason not in ["STOP", "MAX_TOKENS"]:
+            msg = f"Gemini blocked response: {finish_reason}"
+            if finish_reason == "PROHIBITED_CONTENT":
+                msg = "The request was blocked by safety filters. Please try a more generic prompt (e.g., 'instant ramen' instead of 'Cup-o-Noodles')."
+            
+            logger.warning(f"[gemini_image] {finish_reason} block triggered.")
+            return jsonify({"error": msg}), 400
+
+        content_parts = candidate.get('content', {}).get('parts', [])
+        result_text = None
+        result_image = None
+
+        for part in content_parts:
+            if 'text' in part:
+                result_text = part['text']
+            elif 'inlineData' in part:
+                img_data = part['inlineData'].get('data')
+                img_mime = part['inlineData'].get('mimeType', 'image/png')
+                result_image = f"data:{img_mime};base64,{img_data}"
+
+        if result_image:
+            return jsonify({"images": [result_image], "text": result_text})
+        elif result_text:
+            return jsonify({"error": f"Model returned text only: {result_text}"}), 500
+        else:
+            return jsonify({"error": "No image or text returned in parts"}), 500
+
+    except Exception as e:
+        logger.error(f"[gemini_image] REST Exception: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+    except Exception as e:
+        logger.error(f"[gemini_image] Error: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
 

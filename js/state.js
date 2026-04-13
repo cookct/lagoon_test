@@ -23,6 +23,7 @@ export const state = {
     promptHistory: [],  // Last 10 prompts
     promptHistoryIndex: -1,  // Current position in history (-1 = not browsing)
     promptDraft: '',  // Store current input when browsing history
+    mode: 'chat',  // 'chat' or 'image' mode
     // Dual model conversation mode
     dualModelMode: false,
     dualModelRunning: false,

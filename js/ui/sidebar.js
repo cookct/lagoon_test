@@ -5,6 +5,7 @@
 import { state, dom, defaultChatConfig, getDefaultChatConfig, DEFAULT_USER_AVATAR_IMAGE_PATH } from '../state.js';
 import { fetchConfigs, fetchChats, fetchConfig, deleteChatApi, deleteConfigApi, fetchChat, copyConfigApi } from '../api.js';
 import { lagoonConfirm, lagoonAlert, lagoonPrompt } from './dialog.js';
+import { cleanThinking } from '../utils.js';
 
 // Track which config details are open
 function getOpenConfigs() {
@@ -303,7 +304,7 @@ async function downloadSingleChat(chatMeta) {
         
         for (const msg of chatData.messages || []) {
             if (msg.role !== 'system') {
-                logContent += `[${msg.role.toUpperCase()}]: ${msg.content}\n\n`;
+                logContent += `[${msg.role.toUpperCase()}]: ${cleanThinking(msg.content)}\n\n`;
                 if (msg.role === 'assistant') {
                     logContent += `\n---\n\n`;
                 }
@@ -454,7 +455,7 @@ async function downloadCharacterLog(configFile) {
         logContent += `--- ${chatMeta.display_name || 'Chat'} ---\n`;
         for (const msg of chatData.messages || []) {
             if (msg.role !== 'system') {
-                logContent += `[${msg.role.toUpperCase()}]: ${msg.content}\n\n`;
+                logContent += `[${msg.role.toUpperCase()}]: ${cleanThinking(msg.content)}\n\n`;
             }
         }
         logContent += '\n';

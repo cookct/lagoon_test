@@ -267,3 +267,15 @@ def get_zai_models():
         }
     ]
     return jsonify({"models": models})
+
+
+
+@models_bp.route('/api/cortex/status', methods=['GET'])
+def get_cortex_status():
+    """Get system status including engine version and model count."""
+    config = model_registry.get_config()
+    model_count = len(config.get('models', {}))
+    return jsonify({
+        "engine_version": "Cortex v3.2-dev",
+        "models_loaded": model_count
+    })

@@ -1,3 +1,212 @@
 /* Lagoon Design Mode — User Overrides
    Managed by the Design Mode tool. Only this file is written by the backend.
    Core CSS files (base.css, themes.css, variables.css) are read-only. */
+
+
+/* ========================================
+   LIGHTBOX STYLES
+   ======================================== */
+
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+}
+
+.lightbox-overlay.hidden {
+    display: none !important;
+    pointer-events: none;
+}
+
+.lightbox-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: calc(100vw - 80px);
+    max-height: calc(100vh - 80px);
+    cursor: grab;
+}
+
+.lightbox-container:active {
+    cursor: grabbing;
+}
+
+#lightbox-image {
+    display: block;
+    max-width: calc(100vw - 80px);
+    max-height: calc(100vh - 80px);
+    transform-origin: center center;
+    transition: transform 0.1s ease-out;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    z-index: 10001;
+}
+
+.lightbox-nav:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.lightbox-nav svg {
+    width: 24px;
+    height: 24px;
+    stroke: white;
+}
+
+.lightbox-prev {
+    left: 20px;
+}
+
+.lightbox-next {
+    right: 20px;
+}
+
+.lightbox-counter {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10001;
+}
+
+/* Make image card previews clickable */
+.image-card-preview > img {
+    cursor: zoom-in;
+    transition: transform 0.2s;
+}
+
+.image-card-preview > img:hover {
+    transform: scale(1.02);
+}
+
+/* Make generated result images clickable */
+.image-result img {
+    cursor: zoom-in;
+}
+
+
+/* ========================================
+   IMAGE CARD FIXES
+   ======================================== */
+
+/* Keep buttons usable even when checkbox is unchecked */
+.image-card:has(.image-card-checkbox:not(:checked)) .image-card-actions {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Keep preview clickable for lightbox when unchecked */
+.image-card:has(.image-card-checkbox:not(:checked)) .image-card-preview {
+    pointer-events: auto;
+}
+
+
+/* ========================================
+   UPSCALER PARAMS
+   ======================================== */
+
+.upscaler-params {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.upscaler-params.hidden {
+    display: none;
+}
+
+.upscaler-param-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.upscaler-param-row:last-child {
+    margin-bottom: 0;
+}
+
+.upscaler-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-width: 70px;
+    cursor: help;
+}
+
+.upscaler-select {
+    flex: 1;
+    background: var(--bg-darker);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.upscaler-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.upscaler-slider {
+    flex: 1;
+    accent-color: var(--accent);
+}
+
+.upscaler-value {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    min-width: 30px;
+    text-align: right;
+}
+
+.upscaler-input {
+    flex: 1;
+    background: var(--bg-darker);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.upscaler-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.upscaler-param-row.enhance-only.hidden {
+    display: none;
+}

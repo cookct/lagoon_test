@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/image-editor.css">
     <link rel="stylesheet" href="css/sidebar_toggle.css">
     <link rel="stylesheet" href="css/chat.css">
     <link rel="stylesheet" href="css/modals.css">
@@ -45,8 +46,49 @@
     <!-- Mobile Chat Container (injected by mobile.js) -->
     
     <div class="app-container desktop-ui" id="app-container">
+        <!-- Hidden file input for image cards -->
+        <input type="file" id="image-card-file-input" accept="image/*" style="display:none">
+
         <!-- Left Sidebar -->
         <div class="sidebar-left" id="sidebar-left">
+            <!-- Image Mode Reference Cards -->
+            <div class="image-card-container mode-image-only" id="reference-cards-container">
+                <div class="tool-section image-card" id="card-ref-1">
+                    <div class="tool-section-header">
+                        <label class="image-card-toggle" title="Include in generation">
+                            <input type="checkbox" class="image-card-checkbox" data-target="ref-1" checked>
+                        </label>
+                        <span class="tool-section-title">Reference 1</span>
+                        <button type="button" class="image-card-clear-btn" data-target="ref-1" title="Clear image">&times;</button>
+                    </div>
+                    <div class="tool-section-body">
+                        <div class="image-card-preview" id="preview-ref-1"></div>
+                        <div class="image-card-actions">
+                            <button type="button" class="image-card-btn upload-btn" data-target="ref-1">Upload</button>
+                            <button type="button" class="image-card-btn paste-btn" data-target="ref-1">Paste</button>
+                            <button type="button" class="image-card-btn edit-btn" data-target="ref-1">Edit</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tool-section image-card" id="card-ref-2">
+                    <div class="tool-section-header">
+                        <label class="image-card-toggle" title="Include in generation">
+                            <input type="checkbox" class="image-card-checkbox" data-target="ref-2" checked>
+                        </label>
+                        <span class="tool-section-title">Reference 2</span>
+                        <button type="button" class="image-card-clear-btn" data-target="ref-2" title="Clear image">&times;</button>
+                    </div>
+                    <div class="tool-section-body">
+                        <div class="image-card-preview" id="preview-ref-2"></div>
+                        <div class="image-card-actions">
+                            <button type="button" class="image-card-btn upload-btn" data-target="ref-2">Upload</button>
+                            <button type="button" class="image-card-btn paste-btn" data-target="ref-2">Paste</button>
+                            <button type="button" class="image-card-btn edit-btn" data-target="ref-2">Edit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="sidebar-header">
                 <button id="quick-chat-btn">New Chat</button>
                 <button id="create-char-btn" class="secondary-btn">Create Character</button>
@@ -123,6 +165,77 @@
 
         <!-- Right Sidebar -->
         <div class="sidebar-right">
+            <!-- Image Mode Target Card -->
+            <div class="image-card-container mode-image-only" id="target-card-container">
+                <div class="tool-section image-card" id="card-target">
+                    <div class="tool-section-header">
+                        <label class="image-card-toggle" title="Include in generation">
+                            <input type="checkbox" class="image-card-checkbox" data-target="target" checked>
+                        </label>
+                        <span class="tool-section-title">Target</span>
+                        <button type="button" class="image-card-clear-btn" data-target="target" title="Clear image">&times;</button>
+                    </div>
+                    <div class="tool-section-body">
+                        <div class="image-card-preview" id="preview-target"></div>
+                        <div class="image-card-actions">
+                            <button type="button" class="image-card-btn upload-btn" data-target="target">Upload</button>
+                            <button type="button" class="image-card-btn paste-btn" data-target="target">Paste</button>
+                            <button type="button" class="image-card-btn edit-btn" data-target="target">Edit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="image-generate-panel mode-image-only" id="image-generate-panel">
+               <select id="image-generate-model" class="image-generate-select">
+                   <optgroup label="Generate">
+                       <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash</option>
+                       <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                       <option value="gemini-3-pro-image-preview">Nano Banana Pro</option>
+                       <option value="gemini-3.1-flash-image-preview">Nano Banana 2</option>
+                       <option value="gemini-2.5-flash-image">Nano Banana</option>
+                   </optgroup>
+                   <optgroup label="Edit">
+                       <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
+                       <option value="grok-imagine-edit">Grok Imagine Edit</option>
+                       <option value="seedream-v5-lite-edit">Seedream V5 Lite Edit</option>
+                       <option value="seedream-v4-edit">Seedream V4 Edit</option>
+                   </optgroup>
+                   <optgroup label="Upscale">
+                       <option value="upscaler">Upscaler</option>
+                   </optgroup>
+               </select>
+               <!-- Upscaler Parameters (shown only when upscaler selected) -->
+               <div id="upscaler-params" class="upscaler-params hidden">
+                   <div class="upscaler-param-row">
+                       <label class="upscaler-label" title="Scale factor for upscaling (1-4). Scale of 1 with enhance=true only runs enhancer.">Scale</label>
+                       <select id="upscaler-scale" class="upscaler-select">
+                           <option value="1">1x (Enhance only)</option>
+                           <option value="2" selected>2x</option>
+                           <option value="3">3x</option>
+                           <option value="4">4x</option>
+                       </select>
+                   </div>
+                   <div class="upscaler-param-row">
+                       <label class="upscaler-label" title="Enhance image using Venice's image engine">Enhance</label>
+                       <input type="checkbox" id="upscaler-enhance" class="upscaler-checkbox">
+                   </div>
+                   <div class="upscaler-param-row enhance-only hidden">
+                       <label class="upscaler-label" title="How much the enhancement AI can change the image (0-1)">Creativity</label>
+                       <input type="range" id="upscaler-creativity" min="0" max="1" step="0.05" value="0.5" class="upscaler-slider">
+                       <span id="upscaler-creativity-value" class="upscaler-value">0.5</span>
+                   </div>
+                   <div class="upscaler-param-row enhance-only hidden">
+                       <label class="upscaler-label" title="Style to apply during enhancement (e.g., 'gold', 'marble')">Style</label>
+                       <input type="text" id="upscaler-style" placeholder="e.g., gold, marble" class="upscaler-input">
+                   </div>
+                   <div class="upscaler-param-row enhance-only hidden">
+                       <label class="upscaler-label" title="How strongly lines/noise are preserved (0-1). Higher = noisier but less AI-generated.">Replication</label>
+                       <input type="range" id="upscaler-replication" min="0" max="1" step="0.05" value="0.35" class="upscaler-slider">
+                       <span id="upscaler-replication-value" class="upscaler-value">0.35</span>
+                   </div>
+               </div>
+            </div>
             <div id="right-sidebar-header">
                 <div id="balance-display" class="balance-indicator" title="Account Balance (USD)">
                     <span class="balance-label">$</span><span id="balance-usd">--</span>
@@ -784,6 +897,81 @@
                 <button type="button" id="install-model-manager-btn" class="primary-btn hidden">Install Selected</button>
             </div>
         </div>
+    </div>
+
+    <!-- Image Editor Modal -->
+    <div id="image-edit-modal" class="image-editor-overlay hidden">
+        <div id="image-edit-toolbar" class="image-editor-toolbar">
+            <div class="editor-tool-group">
+                <select id="editor-model-select" class="editor-select">
+                    <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
+                    <option value="seedream-v4-edit">Seedream V4 Edit</option>
+                </select>
+            </div>
+            <div class="editor-tool-group">
+                <button type="button" id="editor-draw-btn" class="editor-btn active" title="Draw Mask (D)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l5 5"/><path d="M9.5 9.5L11 11"/></svg>
+                </button>
+                <button type="button" id="editor-erase-btn" class="editor-btn" title="Erase Mask (E)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16C2 15 2 13 3 12L13 2C14 1 16 1 17 2L21 6C22 7 22 9 21 10L11 20"/><path d="M17 2l4 4"/><path d="M11 20l4-4"/></svg>
+                </button>
+            </div>
+            <div class="editor-tool-group">
+                <span class="editor-label">Brush</span>
+                <input type="range" id="editor-brush-slider" min="5" max="100" value="30">
+                <span id="editor-brush-value" class="editor-value">30</span>
+            </div>
+            <div class="editor-tool-group editor-prompt-group">
+                <div id="editor-prompt-wrapper" class="editor-prompt-wrapper">
+                    <input type="text" id="editor-prompt-input" placeholder="Instruction for the edit..." autocomplete="off">
+                    <div class="chase-spinner-box">
+                        <div class="chase-top"></div>
+                        <div class="chase-right"></div>
+                        <div class="chase-bottom"></div>
+                        <div class="chase-left"></div>
+                    </div>
+                </div>
+                <button type="button" id="editor-execute-btn" class="editor-btn primary" title="Execute Edit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+            <div class="editor-tool-group">
+                <button type="button" id="editor-save-btn" class="editor-btn success">Save Mask</button>
+                <button type="button" id="editor-cancel-btn" class="editor-btn danger">Cancel</button>
+            </div>
+        </div>
+        <div id="image-edit-workspace" class="image-editor-workspace">
+            <div id="image-edit-canvas-container" class="image-editor-canvas-container">
+                <img id="image-edit-base-img" src="" alt="Base">
+                <canvas id="image-edit-mask-canvas"></canvas>
+                <button type="button" id="editor-original-btn" class="editor-original-btn hidden">Original</button>
+                <div class="chase-spinner-box">
+                    <div class="chase-top"></div>
+                    <div class="chase-right"></div>
+                    <div class="chase-bottom"></div>
+                    <div class="chase-left"></div>
+                </div>
+            </div>
+        </div>
+        <div id="image-edit-cursor" class="image-editor-cursor"></div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox-modal" class="lightbox-overlay hidden">
+        <div id="lightbox-container" class="lightbox-container">
+            <img id="lightbox-image" src="" alt="Lightbox image">
+        </div>
+        <div id="lightbox-prev" class="lightbox-nav lightbox-prev" title="Previous (Left Arrow)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </div>
+        <div id="lightbox-next" class="lightbox-nav lightbox-next" title="Next (Right Arrow)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18l6-6-6-6"/>
+            </svg>
+        </div>
+        <div id="lightbox-counter" class="lightbox-counter"></div>
     </div>
 
     <script type="module" src="js/main.js?v=3"></script>

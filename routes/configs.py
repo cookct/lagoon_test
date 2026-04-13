@@ -11,7 +11,7 @@ from config import CONFIG_DIR
 
 logger = logging.getLogger(__name__)
 from services import memory_settings
-from services.storage import get_api_key, get_google_api_key, get_together_api_key
+from services.storage import get_api_key, get_google_api_key, get_together_api_key, get_zai_api_key
 
 configs_bp = Blueprint('configs', __name__)
 

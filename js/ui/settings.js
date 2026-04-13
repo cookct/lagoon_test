@@ -902,6 +902,58 @@ export function showSettingsMenu(button) {
     menu.classList.add('context-menu', 'settings-menu');
     const rect = button.getBoundingClientRect();
 
+    // Mode Toggle Section
+    const modeSection = document.createElement('div');
+    modeSection.classList.add('settings-section');
+    modeSection.style.paddingTop = '4px';
+
+    const modeLabel = document.createElement('div');
+    modeLabel.classList.add('settings-section-title');
+    modeLabel.textContent = 'App Mode';
+    modeSection.appendChild(modeLabel);
+
+    const modeToggleContainer = document.createElement('div');
+    modeToggleContainer.classList.add('mode-toggle-btns');
+    modeToggleContainer.style.justifyContent = 'center';
+    modeToggleContainer.style.marginTop = '6px';
+
+    const chatBtn = document.createElement('button');
+    chatBtn.classList.add('mode-btn');
+    if (state.mode === 'chat') chatBtn.classList.add('active');
+    chatBtn.textContent = 'Chat';
+    chatBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (state.mode === 'chat') return;
+        state.mode = 'chat';
+        localStorage.setItem('app_mode', 'chat');
+        chatBtn.classList.add('active');
+        imageBtn.classList.remove('active');
+        toggleAppMode();
+    };
+
+    const imageBtn = document.createElement('button');
+    imageBtn.classList.add('mode-btn');
+    if (state.mode === 'image') imageBtn.classList.add('active');
+    imageBtn.textContent = 'Image';
+    imageBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (state.mode === 'image') return;
+        state.mode = 'image';
+        localStorage.setItem('app_mode', 'image');
+        imageBtn.classList.add('active');
+        chatBtn.classList.remove('active');
+        toggleAppMode();
+    };
+
+    modeToggleContainer.appendChild(chatBtn);
+    modeToggleContainer.appendChild(imageBtn);
+    modeSection.appendChild(modeToggleContainer);
+    menu.appendChild(modeSection);
+
+    const modeSeparator = document.createElement('div');
+    modeSeparator.style.cssText = 'height:1px;background:var(--border);margin:8px 0;';
+    menu.appendChild(modeSeparator);
+
     const currentTheme = localStorage.getItem('theme') || 'hacker';
     const themes = [
         { id: 'hacker', label: 'Hacker Console' },
@@ -1773,4 +1825,60 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initDesktopTTS);
 } else {
     initDesktopTTS();
+}
+
+/**
+ * Switch the application layout between 'chat' and 'image' mode.
+ */
+export function toggleAppMode() {
+    const isImageMode = state.mode === 'image';
+
+    // Left Sidebar Content
+    const leftHeader = document.getElementById('sidebar-header');
+    const leftTabs = document.querySelector('.sidebar-left .sidebar-tabs');
+    const leftContent = document.getElementById('sidebar-content');
+    const leftFooter = document.getElementById('sidebar-footer');
+
+    // Right Sidebar Content
+    const rightHeader = document.getElementById('right-sidebar-header');
+    const rightTabs = document.querySelector('.sidebar-right .sidebar-tabs');
+    const rightContent = document.getElementById('right-sidebar-content');
+
+    // Note: We leave the sidebars (.sidebar-left, .sidebar-right) and 
+    // splitters visible to maintain the 3-column layout.
+
+    // Image Mode Cards
+    const refCards = document.getElementById('reference-cards-container');
+    const targetCards = document.getElementById('target-card-container');
+
+    if (isImageMode) {
+        if (leftHeader) leftHeader.style.display = 'none';
+        if (leftTabs) leftTabs.style.display = 'none';
+        if (leftContent) leftContent.style.display = 'none';
+        if (leftFooter) leftFooter.style.display = 'none';
+
+        if (rightHeader) rightHeader.style.display = 'none';
+        if (rightTabs) rightTabs.style.display = 'none';
+        if (rightContent) rightContent.style.display = 'none';
+
+        if (refCards) refCards.style.display = 'flex';
+        if (targetCards) targetCards.style.display = 'flex';
+
+        document.body.classList.add('mode-image');
+    } else {
+        if (leftHeader) leftHeader.style.display = '';
+        if (leftTabs) leftTabs.style.display = '';
+        if (leftContent) leftContent.style.display = '';
+        if (leftFooter) leftFooter.style.display = '';
+
+        if (rightHeader) rightHeader.style.display = '';
+        if (rightTabs) rightTabs.style.display = '';
+        if (rightContent) rightContent.style.display = '';
+
+        if (refCards) refCards.style.display = 'none';
+        if (targetCards) targetCards.style.display = 'none';
+
+        document.body.classList.remove('mode-image');
+    }
+    console.log(`[Lagoon] Mode switched to: ${state.mode} (Tabs removed)`);
 }

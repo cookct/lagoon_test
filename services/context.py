@@ -12,6 +12,7 @@ Architecture:
 - Token counting uses tiktoken (cl100k_base) for accuracy.
 """
 import os
+import re
 import json
 import uuid
 import threading
@@ -30,6 +31,29 @@ from config import (
 from services import memory_settings
 
 logger = logging.getLogger(__name__)
+
+def strip_cot_from_messages(messages):
+    """
+    Remove <think>...</think> blocks from assistant messages to prevent context pollution.
+    Returns a new list of messages with cleaned content.
+    """
+    if not messages:
+        return []
+    
+    cleaned = []
+    for msg in messages:
+        if msg.get('role') == 'assistant':
+            content = msg.get('content', '')
+            if isinstance(content, str) and '<think>' in content:
+                # Remove thinking blocks (non-greedy, dotall)
+                # We strip extra whitespace left behind to keep it lean
+                new_content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
+                new_msg = dict(msg)
+                new_msg['content'] = new_content
+                cleaned.append(new_msg)
+                continue
+        cleaned.append(msg)
+    return cleaned
 
 # ── Tiktoken ────────────────────────────────────────────────────────────────
 _encoder = None
@@ -428,6 +452,9 @@ def trigger_background_summarization(messages, model_name, api_key, chat_id, sum
     if chat_id in _pending_summarizations:
         return
 
+    # Strip CoT pollution from messages before analyzing for background summary
+    messages = strip_cot_from_messages(messages)
+
     # Skip if a pending review already exists — don't stack up unapproved summaries
     summaries = load_summary_stack(chat_id)
     if any(s.get('pending_review') for s in summaries):
@@ -468,7 +495,7 @@ def manage_context(messages, model_name, api_key, chat_id=None, max_bytes=None, 
     Input `messages` are raw (config system msgs + conversation).
     Any [SUMMARY] system messages are stripped (migration from old behavior).
 
-    Returns: (llm_payload, was_modified)
+    Returns: (llm_payload, was_modified, needs_review)
 
     llm_payload  = config_system_msgs + stack_summary_msgs + recent_conversation
     Disk write   = config_system_msgs + pruned_conversation  (NO summaries ever written)
@@ -476,7 +503,10 @@ def manage_context(messages, model_name, api_key, chat_id=None, max_bytes=None, 
     if max_bytes is None:
         max_bytes = MAX_REQUEST_BYTES
     if not messages:
-        return messages, False
+        return messages, False, False
+
+    # 0. Strip Chain of Thought pollution by default
+    messages = strip_cot_from_messages(messages)
 
     # Strip any legacy injected summary messages — stack file is authoritative
     config_system_msgs = [m for m in messages

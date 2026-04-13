@@ -248,15 +248,36 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
 
 /* Assistant message actions - bottom right */
 .desktop-ui .assistant-actions {
+    display: flex;
+    align-items: center;
     justify-content: flex-start;
     gap: 6px;
-    margin-top: 4px; /* Reduced from 10px */
+    margin-top: 4px;
     opacity: 0.8;
     padding-left: 2px;
 }
 
 .desktop-ui .assistant-actions:hover {
     opacity: 1;
+}
+
+/* Image result action buttons — small icon buttons, not full-width text buttons */
+.desktop-ui .image-actions {
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.desktop-ui .image-actions .action-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.desktop-ui .image-actions .action-btn svg {
+    width: 14px;
+    height: 14px;
+    display: block;
 }
 
 /* User message actions - on the left side */

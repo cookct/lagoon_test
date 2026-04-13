@@ -372,8 +372,8 @@ export class DualModelManager {
         state.isTemporaryChat = false;
 
         // Clear chat display
-        const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages) chatMessages.innerHTML = '';
+        const target = dom.messagesContainer || dom.chatMessages;
+        if (target) target.innerHTML = '';
 
         // Show control bar
         this.showControlBar();
@@ -613,7 +613,7 @@ export class DualModelManager {
     }
 
     addDualModelMessage(modelKey, config, msgIndex) {
-        const chatMessages = document.getElementById('chat-messages');
+        const target = dom.messagesContainer || dom.chatMessages;
 
         const group = document.createElement('div');
         group.className = `message-group assistant model-${modelKey.toLowerCase()}`;
@@ -636,7 +636,7 @@ export class DualModelManager {
             </div>
         `;
 
-        chatMessages.appendChild(group);
+        if (target) target.appendChild(group);
         autoScroll();
 
         return group;
@@ -961,10 +961,10 @@ export class DualModelManager {
     }
 
     renderDualMessages(messages) {
-        const chatMessages = document.getElementById('chat-messages');
-        if (!chatMessages) return;
+        const target = dom.messagesContainer || dom.chatMessages;
+        if (!target) return;
 
-        chatMessages.innerHTML = '';
+        target.innerHTML = '';
 
         messages.forEach((msg, index) => {
             if (msg.role === 'user' && !msg.modelKey) {
@@ -975,12 +975,12 @@ export class DualModelManager {
                 const config = state.dualModelConfig[`model${msg.modelKey}`];
                 if (config) {
                     this.addDualModelMessage(msg.modelKey, config, index);
-                    const msgDiv = chatMessages.querySelector(`[data-index="${index}"] .message`);
+                    const msgDiv = target.querySelector(`[data-index="${index}"] .message`);
                     if (msgDiv) {
                         msgDiv.innerHTML = parseMarkdown(msg.content);
                         
                         // Also append actions toolbar if the message is complete
-                        const messageGroup = chatMessages.querySelector(`.message-group[data-index="${index}"]`);
+                        const messageGroup = target.querySelector(`.message-group[data-index="${index}"]`);
                         if (messageGroup) {
                             const bubbleWrapper = messageGroup.querySelector('.bubble-wrapper');
                             if (bubbleWrapper && !bubbleWrapper.querySelector('.assistant-actions')) {

@@ -198,8 +198,9 @@ export function addMessageToUI(role, content, config, isStreaming = false, attac
 
     group.appendChild(messageContent);
 
-    if (dom.chatMessages) {
-        dom.chatMessages.appendChild(group);
+    const target = dom.messagesContainer || dom.chatMessages;
+    if (target) {
+        target.appendChild(group);
     }
 
     return group;
@@ -246,8 +247,9 @@ export function renderCitations(results) {
 }
 
 export function renderMessages(onRegenerate, onDeleteMessage, onUpdateGauge, onEdit, onToggleKeep, onFork = null) {
-    if (!dom.chatMessages) return;
-    dom.chatMessages.innerHTML = '';
+    const target = dom.messagesContainer || dom.chatMessages;
+    if (!target) return;
+    target.innerHTML = '';
     state.messages.forEach((msg, index) => {
         // Find if this message has associated search results in state
         const config = { ...state.currentConfig };

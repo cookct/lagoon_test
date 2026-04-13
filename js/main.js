@@ -28,7 +28,11 @@ import { refreshSidebar } from './ui/sidebar.js';
 window.refreshSidebar = refreshSidebar;
 import { setupScrollDetection, handleScrollVisibility, autoScroll } from './ui/scroll.js';
 
-import { showContextViewer, showSettingsMenu, filterModelDropdownForE2EE } from './ui/settings.js';
+import { showContextViewer, showSettingsMenu, filterModelDropdownForE2EE, toggleAppMode } from './ui/settings.js';
+
+import { imageModeManager } from './components/ImageModeManager.js';
+import { imageEditor } from './components/ImageEditor.js';
+import { lightbox } from './components/Lightbox.js';
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', async () => {
@@ -59,6 +63,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     chatManager.init();
     configManager.init();
     sessionManager.init();
+    imageModeManager.init();
+    imageEditor.init();
+    lightbox.init();
     settingsPersistence.init();
     dualModelManager.init();
     const anchorsManager = new AnchorsManager();
@@ -86,9 +93,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     initModalDraggability();
     initDesignMode();
 
-    // 3. Restore Theme
+    // 4. Restore Theme & Mode
     const savedTheme = localStorage.getItem('theme') || 'hacker';
     document.body.classList.add('theme-' + savedTheme);
+
+    state.mode = localStorage.getItem('app_mode') || 'chat';
+    toggleAppMode();
 
     // Clear any existing style preferences (feature disabled)
     Object.keys(localStorage).forEach(key => {

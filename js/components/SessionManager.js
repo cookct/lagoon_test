@@ -207,8 +207,8 @@ export class SessionManager {
         menu.classList.add('context-menu');
         const rect = button.getBoundingClientRect();
         
-        ['Plain Text', 'Markdown', 'Prose', 'Word (DOCX)'].forEach((label, i) => {
-            const fmt = ['plain', 'markdown', 'prose', 'docx'][i];
+        ['Plain Text', 'Markdown', 'Markdown (Clean)', 'Prose', 'Word (DOCX)'].forEach((label, i) => {
+            const fmt = ['plain', 'markdown', 'markdown_clean', 'prose', 'docx'][i];
             const item = document.createElement('button');
             item.textContent = label;
             item.classList.add('context-menu-item');
@@ -243,13 +243,20 @@ export class SessionManager {
                 const runs = [];
                 let lastIndex = 0;
                 // Regex for basic markdown: bold (***, **, __) and italics (*, _)
-                // We're handling the nested 3-star (bold+italic) case as well
                 const regex = /(\*\*\*|__\*|\*__|__|__|\*\*|\*|_)(.*?)\1/g;
                 let match;
 
+                const processText = (txt) => {
+                    const lines = txt.split('\n');
+                    lines.forEach((line, i) => {
+                        if (line) runs.push(new TextRun(line));
+                        if (i < lines.length - 1) runs.push(new TextRun({ text: "", break: 1 }));
+                    });
+                };
+
                 while ((match = regex.exec(text)) !== null) {
                     if (match.index > lastIndex) {
-                        runs.push(new TextRun(text.substring(lastIndex, match.index)));
+                        processText(text.substring(lastIndex, match.index));
                     }
 
                     const marker = match[1];
@@ -264,7 +271,7 @@ export class SessionManager {
                     lastIndex = regex.lastIndex;
                 }
                 if (lastIndex < text.length) {
-                    runs.push(new TextRun(text.substring(lastIndex)));
+                    processText(text.substring(lastIndex));
                 }
                 return runs;
             };
@@ -281,15 +288,12 @@ export class SessionManager {
                             children: [new TextRun({ text: `Exported on ${new Date().toLocaleDateString()}`, italics: true })],
                         }),
                         new Paragraph({ text: "" }), // Spacer
-...keptMsgs.flatMap((m, idx) => {
-                            // Normalize line endings and split into paragraphs
+                        ...keptMsgs.flatMap((m, idx) => {
                             const normalized = m.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
                             const paragraphs = normalized.split(/\n\n+/).filter(p => p.trim());
                             return paragraphs.map(para => {
-                                // Convert single newlines within paragraphs to spaces (or could use break)
-                                const text = para.trim().replace(/\n/g, ' ');
                                 return new Paragraph({
-                                    children: markdownToRuns(text),
+                                    children: markdownToRuns(para.trim()),
                                     spacing: { after: 200 },
                                 });
                             });
@@ -316,6 +320,9 @@ export class SessionManager {
         if (format === 'markdown') {
             output = keptMsgs.map(m => m.content).join('\n\n---\n\n');
             ext = 'md';
+        } else if (format === 'markdown_clean') {
+            output = keptMsgs.map(m => m.content).join('\n\n');
+            ext = 'txt'; // Keep as .txt so it opens in any editor easily
         } else if (format === 'prose') {
             output = keptMsgs.map(m => stripMarkdown(m.content)).join('\n\n');
             ext = 'txt';

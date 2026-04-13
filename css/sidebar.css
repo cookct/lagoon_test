@@ -630,3 +630,138 @@
     border-color: var(--ansi-cyan);
     outline: none;
 }
+
+/* --- Image Mode Cards --- */
+.mode-image-only {
+    display: none;
+}
+
+body.mode-image .mode-image-only {
+    display: block;
+}
+
+.image-card-container {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.image-card .tool-section-header {
+    justify-content: space-between;
+}
+
+/* Checkbox toggle */
+.image-card-toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.image-card-checkbox {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
+/* Dim card body when unchecked */
+.image-card:has(.image-card-checkbox:not(:checked)) .tool-section-body {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.image-card-preview {
+    width: 100%;
+    max-height: 240px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: none; /* Hidden when empty */
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.image-card-preview:has(img) {
+    display: flex; /* Show when image exists */
+}
+
+.image-card-preview img {
+    max-width: 100%;
+    max-height: 240px;
+    object-fit: contain;
+    display: block;
+}
+
+.image-card-clear-btn {
+    width: 18px;
+    height: 18px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-dim);
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+
+.image-card:has(.image-card-preview img) .image-card-clear-btn {
+    display: flex;
+}
+
+.image-card-clear-btn:hover {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff4444;
+    border-color: rgba(255, 68, 68, 0.4);
+}
+
+.image-card-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.image-card-btn {
+    flex: 1;
+    padding: 6px;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.image-card-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- Image Generate Panel --- */
+.image-generate-panel {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.image-generate-select {
+    width: 100%;
+    background: var(--bg-darker);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.image-generate-select:focus {
+    border-color: var(--accent);
+    outline: none;
+}
