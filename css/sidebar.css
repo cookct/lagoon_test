@@ -665,12 +665,6 @@ body.mode-image .mode-image-only {
     accent-color: var(--accent);
 }
 
-/* Dim card body when unchecked */
-.image-card:has(.image-card-checkbox:not(:checked)) .tool-section-body {
-    opacity: 0.4;
-    pointer-events: none;
-}
-
 .image-card-preview {
     width: 100%;
     max-height: 240px;
@@ -744,6 +738,32 @@ body.mode-image .mode-image-only {
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* --- Custom Dropdown Styling for Sidebar --- */
+.sidebar-right .custom-dropdown-container,
+.sidebar-left .custom-dropdown-container {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.sidebar-right .custom-dropdown-selected {
+    background: rgba(0, 0, 0, 0.4);
+    font-size: 0.75rem;
+    height: 32px;
+}
+
+.sidebar-right .custom-dropdown-options,
+.sidebar-left .custom-dropdown-options {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+}
+
+.sidebar-right .custom-dropdown-item:hover,
+.sidebar-left .custom-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
 /* --- Image Generate Panel --- */
 .image-generate-panel {
     padding: 10px;
@@ -759,6 +779,7 @@ body.mode-image .mode-image-only {
     border-radius: 4px;
     font-size: 0.8rem;
     cursor: pointer;
+    margin-bottom: 12px;
 }
 
 .image-generate-select:focus {

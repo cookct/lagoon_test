@@ -15,9 +15,104 @@
             "auth_header": "x-goog-api-key",
             "auth_prefix": "",
             "api_key_name": "google"
+        },
+        "zai": {
+            "base_url": "https://api.z.ai/api/paas/v4",
+            "auth_header": "Authorization",
+            "auth_prefix": "Bearer",
+            "api_key_name": "zai"
         }
     },
     "models": {
+        "glm-image": {
+            "provider": "zai",
+            "endpoint": "/images/generations",
+            "display_name": "GLM-Image",
+            "category": "generate",
+            "price_per_image": 0.01,
+            "params": {
+                "prompt": {
+                    "type": "string",
+                    "required": true
+                },
+                "size": {
+                    "type": "enum",
+                    "options": [
+                        "1280x1280",
+                        "1568x1056",
+                        "1056x1568",
+                        "1472x1088",
+                        "1088x1472",
+                        "1728x960",
+                        "960x1728"
+                    ],
+                    "default": "1280x1280"
+                },
+                "quality": {
+                    "type": "enum",
+                    "options": [
+                        "standard",
+                        "hd"
+                    ],
+                    "default": "hd"
+                }
+            },
+            "ui_controls": [
+                "dimensions",
+                "quality"
+            ]
+        },
+        "firered-image-edit": {
+            "provider": "venice",
+            "endpoint": "/image/edit",
+            "display_name": "FireRed Image Edit",
+            "category": "edit",
+            "supports_ai_mask": true,
+            "supports_multi_edit": false,
+            "price_per_image": 0.04,
+            "params": {
+                "prompt": {
+                    "type": "string",
+                    "required": true,
+                    "max_length": 32768
+                },
+                "image": {
+                    "type": "image",
+                    "required": true
+                }
+            },
+            "ui_controls": []
+        },
+        "qwen-image-2-edit": {
+            "provider": "venice",
+            "endpoint": "/image/multi-edit",
+            "display_name": "Qwen Image 2 Edit",
+            "category": "edit",
+            "supports_ai_mask": true,
+            "supports_multi_edit": true,
+            "price_per_image": 0.04,
+            "ui_controls": []
+        },
+        "seedream-v4-edit": {
+            "provider": "venice",
+            "endpoint": "/image/multi-edit",
+            "display_name": "Seedream V4 Edit",
+            "category": "edit",
+            "supports_ai_mask": true,
+            "supports_multi_edit": true,
+            "price_per_image": 0.04,
+            "ui_controls": []
+        },
+        "grok-imagine-edit": {
+            "provider": "venice",
+            "endpoint": "/image/edit",
+            "display_name": "Grok Imagine Edit",
+            "category": "edit",
+            "supports_ai_mask": false,
+            "supports_multi_edit": false,
+            "price_per_image": 0.04,
+            "ui_controls": []
+        },
         "e2ee-gemma-3-27b-p": {
             "provider": "venice",
             "display_name": "Gemma 3 27B (E2EE)",

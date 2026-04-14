@@ -87,6 +87,76 @@
     cursor: pointer;
 }
 
+.image-editor-toolbar .custom-dropdown-container {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.image-editor-toolbar .custom-dropdown-selected {
+    background: var(--bg-darker);
+    height: 32px;
+    font-size: 13px;
+    min-width: 150px;
+}
+
+.image-editor-toolbar .custom-dropdown-options {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+}
+
+.image-editor-toolbar .custom-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.image-editor-main {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-editor-sidebar {
+    width: 140px;
+    background: rgba(10, 10, 10, 0.95);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
+    z-index: 20;
+    flex-shrink: 0;
+}
+
+.wheel-control {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: ns-resize;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.wheel-control:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.editor-value-large {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(14, 99, 156, 0.4);
+}
+
 .editor-label {
     font-size: 12px;
     color: var(--text-dim);
@@ -126,92 +196,80 @@
 /* Workspace */
 .image-editor-workspace {
     flex: 1;
-    overflow: hidden; /* We handle scrolling manually */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: auto; /* Let browser handle scrollable bounds */
     position: relative;
     cursor: none; /* Custom cursor */
+    display: flex;
+    background: #050505;
 }
 
 .image-editor-canvas-container {
     position: relative;
-    overflow: hidden;
+    margin: auto; /* Centers when smaller, allows scrolling when larger */
+    flex-shrink: 0;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
     background: #111;
     border: 1px solid var(--accent);
+    /* We will set width/height via JS for layout scaling */
 }
 
-/* Light chase around image while editing */
-.image-editor-canvas-container .chase-spinner-box {
-    position: absolute;
-    top: -1px;
-    left: -1px;
-    right: -1px;
-    bottom: -1px;
+/* Loading Spinner — Morphing Core */
+.editor-loading-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10001;
+    display: none;
     pointer-events: none;
-    z-index: 20;
-    opacity: 0;
-    transition: opacity 0.3s ease;
 }
 
-.image-editor-canvas-container.working .chase-spinner-box {
-    opacity: 1;
+.image-editor-overlay.working .editor-loading-overlay {
+    display: block;
 }
 
-.image-editor-canvas-container .chase-top {
-    top: 0; left: 0;
-    width: 100%; height: 2px;
+.spinner-morphing-core {
+    width: 60px;
+    height: 60px;
+    background: var(--ansi-cyan);
+    animation: morph-spinner 1.5s infinite ease-in-out;
+    box-shadow: 0 0 30px var(--ansi-cyan);
 }
 
-.image-editor-canvas-container .chase-right {
-    top: 0; right: 0;
-    width: 2px; height: 100%;
-    background: linear-gradient(180deg, transparent, var(--accent), transparent);
-}
-
-.image-editor-canvas-container .chase-bottom {
-    bottom: 0; left: 0;
-    width: 100%; height: 2px;
-}
-
-.image-editor-canvas-container .chase-left {
-    top: 0; left: 0;
-    width: 2px; height: 100%;
-    background: linear-gradient(180deg, transparent, var(--accent), transparent);
-}
-
-.image-editor-canvas-container.working .chase-top {
-    animation: chaseTop 2s linear infinite;
-}
-.image-editor-canvas-container.working .chase-right {
-    animation: chaseRight 2s linear infinite;
-    animation-delay: 0.5s;
-}
-.image-editor-canvas-container.working .chase-bottom {
-    animation: chaseBottom 2s linear infinite;
-    animation-delay: 1s;
-}
-.image-editor-canvas-container.working .chase-left {
-    animation: chaseLeft 2s linear infinite;
-    animation-delay: 1.5s;
+@keyframes morph-spinner {
+    0% { transform: rotate(0deg); border-radius: 0; }
+    50% { transform: rotate(180deg); border-radius: 50%; }
+    100% { transform: rotate(360deg); border-radius: 0; }
 }
 
 #image-edit-base-img {
     display: block;
+    width: 100%; /* Scale with container */
+    height: 100%;
     max-width: none;
     user-select: none;
     pointer-events: none;
+    image-rendering: pixelated; /* Optional: Keep sharp when pixel-peeping */
 }
 
-#image-edit-mask-canvas {
+#image-edit-mask-canvas, #image-edit-preview-canvas {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
+    width: 100%; /* Scale with container */
     height: 100%;
     touch-action: none;
-    opacity: 0.4; /* Constant 40% opacity for the mask */
+    image-rendering: pixelated;
+}
+
+#image-edit-mask-canvas {
+    opacity: 0.6; /* Orange mask */
+    z-index: 5;
+}
+
+#image-edit-preview-canvas {
+    opacity: 0.4; /* Red dilation/feather preview */
+    z-index: 4;
 }
 
 /* Custom Cursor */
@@ -227,6 +285,10 @@
     background: rgba(255, 165, 0, 0.4); /* 40% opacity orange fill */
 }
 
+.image-editor-overlay.working .image-editor-cursor {
+    display: none !important;
+}
+
 .image-editor-workspace:hover .image-editor-cursor {
     display: block;
 }
@@ -236,14 +298,13 @@
     display: none;
 }
 
-/* --- Light Chase Spinner for Prompt Box --- */
+/* --- Prompt Input --- */
 .editor-prompt-wrapper {
     position: relative;
     flex: 1;
     display: flex;
-    overflow: hidden; /* Contain the chasing lights */
     border-radius: 6px;
-    padding: 2px; /* Space for the lights */
+    padding: 2px;
 }
 
 #editor-prompt-input {
@@ -258,71 +319,12 @@
     position: relative;
 }
 
-.chase-spinner-box {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.editor-prompt-wrapper.working .chase-spinner-box {
-    opacity: 1;
-}
-
-.chase-top, .chase-right, .chase-bottom, .chase-left {
-    position: absolute;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-}
-
-.chase-top {
-    top: 0; left: -100%;
-    width: 100%; height: 2px;
-}
-
-.chase-right {
-    top: -100%; right: 0;
-    width: 2px; height: 100%;
-    background: linear-gradient(180deg, transparent, var(--accent), transparent);
-}
-
-.chase-bottom {
-    bottom: 0; right: -100%;
-    width: 100%; height: 2px;
-}
-
-.chase-left {
-    bottom: -100%; left: 0;
-    width: 2px; height: 100%;
-    background: linear-gradient(180deg, transparent, var(--accent), transparent);
-}
-
-.editor-prompt-wrapper.working .chase-top {
-    animation: chaseTop 2s linear infinite;
-}
-.editor-prompt-wrapper.working .chase-right {
-    animation: chaseRight 2s linear infinite;
-    animation-delay: 0.5s;
-}
-.editor-prompt-wrapper.working .chase-bottom {
-    animation: chaseBottom 2s linear infinite;
-    animation-delay: 1s;
-}
-.editor-prompt-wrapper.working .chase-left {
-    animation: chaseLeft 2s linear infinite;
-    animation-delay: 1.5s;
-}
-
 /* --- Original Toggle Button --- */
 .editor-original-btn {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 10;
+    position: fixed;
+    top: 72px; /* 60px toolbar + 12px gap */
+    right: 16px;
+    z-index: 10002;
     padding: 8px 16px;
     background: rgba(99, 102, 241, 0.9);
     color: white;

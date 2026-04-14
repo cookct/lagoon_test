@@ -26,6 +26,35 @@
     pointer-events: none;
 }
 
+.lightbox-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+    transition: all 0.2s;
+}
+
+.lightbox-close-btn:hover {
+    background: rgba(220, 38, 38, 0.8);
+    border-color: #ef4444;
+    transform: scale(1.1);
+}
+
+.lightbox-close-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
 .lightbox-container {
     position: relative;
     display: flex;

@@ -56,7 +56,7 @@
                 <div class="tool-section image-card" id="card-ref-1">
                     <div class="tool-section-header">
                         <label class="image-card-toggle" title="Include in generation">
-                            <input type="checkbox" class="image-card-checkbox" data-target="ref-1" checked>
+                            <input type="checkbox" class="image-card-checkbox" data-target="ref-1">
                         </label>
                         <span class="tool-section-title">Reference 1</span>
                         <button type="button" class="image-card-clear-btn" data-target="ref-1" title="Clear image">&times;</button>
@@ -73,7 +73,7 @@
                 <div class="tool-section image-card" id="card-ref-2">
                     <div class="tool-section-header">
                         <label class="image-card-toggle" title="Include in generation">
-                            <input type="checkbox" class="image-card-checkbox" data-target="ref-2" checked>
+                            <input type="checkbox" class="image-card-checkbox" data-target="ref-2">
                         </label>
                         <span class="tool-section-title">Reference 2</span>
                         <button type="button" class="image-card-clear-btn" data-target="ref-2" title="Clear image">&times;</button>
@@ -145,6 +145,8 @@
                         </button>
                     </div>
                     <div class="input-wrapper">
+                        <div class="input-chase-bottom"></div>
+                        <div class="input-chase-left"></div>
                         <textarea id="message-input" placeholder="Type your message..." rows="1" disabled autocomplete="off"></textarea>
                         <button type="submit" id="send-btn" disabled>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -170,7 +172,7 @@
                 <div class="tool-section image-card" id="card-target">
                     <div class="tool-section-header">
                         <label class="image-card-toggle" title="Include in generation">
-                            <input type="checkbox" class="image-card-checkbox" data-target="target" checked>
+                            <input type="checkbox" class="image-card-checkbox" data-target="target">
                         </label>
                         <span class="tool-section-title">Target</span>
                         <button type="button" class="image-card-clear-btn" data-target="target" title="Clear image">&times;</button>
@@ -194,19 +196,52 @@
                        <option value="gemini-3-pro-image-preview">Nano Banana Pro</option>
                        <option value="gemini-3.1-flash-image-preview">Nano Banana 2</option>
                        <option value="gemini-2.5-flash-image">Nano Banana</option>
-                   </optgroup>
-                   <optgroup label="Edit">
-                       <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
+                       <option value="glm-image">GLM-Image</option>
+                       <option value="nano-banana-pro">Nano Banana Pro (Venice)</option>
+                       <option value="grok-imagine-image-pro">Grok Imagine Pro</option>
+                       </optgroup>                   <optgroup label="Edit">                       <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
                        <option value="grok-imagine-edit">Grok Imagine Edit</option>
                        <option value="seedream-v5-lite-edit">Seedream V5 Lite Edit</option>
                        <option value="seedream-v4-edit">Seedream V4 Edit</option>
-                   </optgroup>
-                   <optgroup label="Upscale">
+                       <option value="nano-banana-pro-edit">Nano Banana Pro Edit</option>
+                       <option value="firered-image-edit">FireRed Image Edit</option>
+                       </optgroup>                   <optgroup label="Upscale">
                        <option value="upscaler">Upscaler</option>
                    </optgroup>
                </select>
-               <!-- Upscaler Parameters (shown only when upscaler selected) -->
-               <div id="upscaler-params" class="upscaler-params hidden">
+               <!-- Results count — applies to all models -->
+               <div class="upscaler-param-row" id="results-count-row">
+                   <label class="upscaler-label" title="Number of parallel results to generate">Results</label>
+                   <select id="image-results-count" class="upscaler-select">
+                       <option value="1" selected>1</option>
+                       <option value="2">2</option>
+                       <option value="3">3</option>
+                       <option value="4">4</option>
+                   </select>
+               </div>
+               <!-- GLM-Image Parameters -->
+               <div id="glm-image-params" class="upscaler-params hidden">
+                   <div class="upscaler-param-row">
+                       <label class="upscaler-label">Size</label>
+                       <select id="glm-image-size" class="upscaler-select">
+                           <option value="1280x1280" selected>1280x1280</option>
+                           <option value="1568x1056">1568x1056</option>
+                           <option value="1056x1568">1056x1568</option>
+                           <option value="1472x1088">1472x1088</option>
+                           <option value="1088x1472">1088x1472</option>
+                           <option value="1728x960">1728x960</option>
+                           <option value="960x1728">960x1728</option>
+                       </select>
+                   </div>
+                   <div class="upscaler-param-row">
+                       <label class="upscaler-label">Quality</label>
+                       <select id="glm-image-quality" class="upscaler-select">
+                           <option value="hd" selected>HD</option>
+                           <option value="standard">Standard</option>
+                       </select>
+                   </div>
+               </div>
+               <!-- Upscaler Parameters (shown only when upscaler selected) -->               <div id="upscaler-params" class="upscaler-params hidden">
                    <div class="upscaler-param-row">
                        <label class="upscaler-label" title="Scale factor for upscaling (1-4). Scale of 1 with enhance=true only runs enhancer.">Scale</label>
                        <select id="upscaler-scale" class="upscaler-select">
@@ -904,8 +939,9 @@
         <div id="image-edit-toolbar" class="image-editor-toolbar">
             <div class="editor-tool-group">
                 <select id="editor-model-select" class="editor-select">
-                    <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
-                    <option value="seedream-v4-edit">Seedream V4 Edit</option>
+                    <option value="qwen-image-2-edit" data-mask-capable="true">Qwen Image 2 Edit</option>
+                    <option value="seedream-v4-edit" data-mask-capable="true">Seedream V4 Edit</option>
+                    <option value="grok-imagine-edit" data-mask-capable="false">Grok Imagine Edit</option>
                 </select>
             </div>
             <div class="editor-tool-group">
@@ -924,40 +960,52 @@
             <div class="editor-tool-group editor-prompt-group">
                 <div id="editor-prompt-wrapper" class="editor-prompt-wrapper">
                     <input type="text" id="editor-prompt-input" placeholder="Instruction for the edit..." autocomplete="off">
-                    <div class="chase-spinner-box">
-                        <div class="chase-top"></div>
-                        <div class="chase-right"></div>
-                        <div class="chase-bottom"></div>
-                        <div class="chase-left"></div>
-                    </div>
                 </div>
                 <button type="button" id="editor-execute-btn" class="editor-btn primary" title="Execute Edit">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
             <div class="editor-tool-group">
-                <button type="button" id="editor-save-btn" class="editor-btn success">Save Mask</button>
-                <button type="button" id="editor-cancel-btn" class="editor-btn danger">Cancel</button>
+                <button type="button" id="editor-mask-toggle-btn" class="editor-btn" title="Hide mask">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button type="button" id="editor-done-btn" class="editor-btn success" title="Keep changes and exit">Done</button>
+                <button type="button" id="editor-cancel-btn" class="editor-btn danger" title="Discard changes and exit">Cancel</button>
             </div>
         </div>
-        <div id="image-edit-workspace" class="image-editor-workspace">
-            <div id="image-edit-canvas-container" class="image-editor-canvas-container">
-                <img id="image-edit-base-img" src="" alt="Base">
-                <canvas id="image-edit-mask-canvas"></canvas>
-                <button type="button" id="editor-original-btn" class="editor-original-btn hidden">Original</button>
-                <div class="chase-spinner-box">
-                    <div class="chase-top"></div>
-                    <div class="chase-right"></div>
-                    <div class="chase-bottom"></div>
-                    <div class="chase-left"></div>
+        <div class="image-editor-main">
+            <div class="image-editor-sidebar">
+                <div class="sidebar-group wheel-control" id="editor-dilation-group" title="Hover & Scroll to adjust Dilation">
+                    <span class="editor-label">Dilation</span>
+                    <span id="editor-dilation-value" class="editor-value-large">10</span>
+                </div>
+                <div class="sidebar-group wheel-control" id="editor-feather-group" title="Hover & Scroll to adjust Feather">
+                    <span class="editor-label">Feather</span>
+                    <span id="editor-feather-value" class="editor-value-large">4</span>
+                </div>
+            </div>
+            <div id="image-edit-workspace" class="image-editor-workspace">
+                <div id="image-edit-canvas-container" class="image-editor-canvas-container">
+                    <img id="image-edit-base-img" src="" alt="Base">
+                    <canvas id="image-edit-preview-canvas"></canvas>
+                    <canvas id="image-edit-mask-canvas"></canvas>
+                </div>
+                <div class="editor-loading-overlay">
+                    <div class="spinner-morphing-core"></div>
                 </div>
             </div>
         </div>
+        <button type="button" id="editor-original-btn" class="editor-original-btn hidden">Original</button>
         <div id="image-edit-cursor" class="image-editor-cursor"></div>
     </div>
 
     <!-- Lightbox Modal -->
     <div id="lightbox-modal" class="lightbox-overlay hidden">
+        <button type="button" id="lightbox-close" class="lightbox-close-btn" title="Close (Esc)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+        </button>
         <div id="lightbox-container" class="lightbox-container">
             <img id="lightbox-image" src="" alt="Lightbox image">
         </div>

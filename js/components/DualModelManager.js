@@ -11,6 +11,7 @@ import { addMessageToUI, createAssistantMessageActions } from '../ui/messages.js
 import { autoScroll } from '../ui/scroll.js';
 import { refreshSidebar } from '../ui/sidebar.js';
 import { lagoonAlert } from '../ui/dialog.js';
+import { uiManager } from '../core/UIManager.js';
 
 export class DualModelManager {
     constructor() {
@@ -204,6 +205,14 @@ export class DualModelManager {
             populateSelect(select, { includeBlank: true, blankLabel: "Use Character's Model" });
         });
 
+        // Initialize/Update custom dropdowns
+        [selectA, selectB, overrideA, overrideB].forEach(select => {
+            if (select) {
+                uiManager.initCustomDropdown(select);
+                uiManager.updateCustomDropdown(select);
+            }
+        });
+
         // Set different defaults if we have at least 2 characters
         if (this.characters.length >= 2) {
             selectA.value = this.characters[0].filename;
@@ -273,6 +282,7 @@ export class DualModelManager {
         const overrideEl = document.getElementById(`dual-model-${modelKey.toLowerCase()}-override`);
         if (overrideEl) {
             overrideEl.value = '';
+            uiManager.updateCustomDropdown(overrideEl);
         }
     }
 

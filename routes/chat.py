@@ -1112,37 +1112,67 @@ def preview_prompt():
 def edit_image_route():
     """Proxy image multi-edit requests to Venice.ai."""
     data = request.json
-    model_id = data.get('modelId', 'qwen-image-2-edit')
+    model_id = data.get('modelId') or data.get('model', 'qwen-image-2-edit')
     prompt = data.get('prompt')
-    images = data.get('images') # Array: [base, mask]
+    images = data.get('images', []) # Array: [base, mask]
 
-    if not images or not prompt:
-        return jsonify({"error": "Images and prompt are required"}), 400
+    if not prompt:
+        return jsonify({"error": "Prompt is required"}), 400
 
     api_key = get_api_key()
     if not api_key:
         return jsonify({"error": "API key not configured"}), 400
 
-    # Multi-edit is the correct endpoint for compositing with masks
-    url = f"{VENICE_API_BASE}/image/multi-edit"
-    
-    # Strip Data URI prefixes from images if present (Venice multi-edit often wants raw Base64)
+    # Clean images first so routing logic can reference cleaned_images
     cleaned_images = []
-    for img in images:
-        if isinstance(img, str) and img.startswith('data:'):
-            # Extract just the base64 part after the comma
-            try:
-                cleaned_images.append(img.split(',', 1)[1])
-            except:
+    if images:
+        for img in images:
+            if isinstance(img, str) and img.startswith('data:'):
+                try:
+                    cleaned_images.append(img.split(',', 1)[1])
+                except:
+                    cleaned_images.append(img)
+            else:
                 cleaned_images.append(img)
-        else:
-            cleaned_images.append(img)
+
+    # Resolve endpoint and capabilities from model_configs.json.
+    # The config's "endpoint" field is the source of truth for routing.
+    # Fall back to name heuristic for models not yet in the registry.
+    from services.model_registry import get_model as get_image_model_config
+    model_config = get_image_model_config(model_id)
+    if model_config and model_config.get('endpoint'):
+        model_endpoint = model_config['endpoint']
+        api_supports_mask = model_config.get('supports_ai_mask', False)
+        url = f"{VENICE_API_BASE}{model_endpoint}"
+        # Generate endpoint uses "model" key; all edit endpoints use "modelId"
+        model_key = "model" if model_endpoint == "/image/generate" else "modelId"
+    else:
+        # Fallback: name heuristic for unknown models
+        is_edit = "-edit" in model_id or model_id == "qwen-edit"
+        api_supports_mask = is_edit
+        model_endpoint = "/image/multi-edit" if is_edit else "/image/generate"
+        url = f"{VENICE_API_BASE}{model_endpoint}"
+        model_key = "modelId" if is_edit else "model"
+
+    if model_key == "modelId" and not cleaned_images:
+        return jsonify({"error": f"Load an image in the Target card to use {model_id}."}), 400
+
+    # Strip the mask (second image) if the model doesn't support AI masking —
+    # the frontend enforces the mask locally via compositing.
+    if not api_supports_mask and len(cleaned_images) > 1:
+        cleaned_images = cleaned_images[:1]
 
     payload = {
-        "modelId": model_id,
-        "prompt": prompt,
-        "images": cleaned_images
+        model_key: model_id,
+        "prompt": prompt
     }
+
+    # /image/edit expects a singular "image" field; /image/multi-edit and /image/generate use "images" array
+    if cleaned_images:
+        if model_endpoint == "/image/edit":
+            payload["image"] = cleaned_images[0]
+        else:
+            payload["images"] = cleaned_images
 
     try:
         resp = requests.post(
@@ -1417,6 +1447,68 @@ def gemini_image_generate_route():
 
     except Exception as e:
         logger.error(f"[gemini_image] Error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@chat_bp.route('/api/image/generate/zai', methods=['POST'])
+def zai_image_generate_route():
+    """Generate an image using the Z.AI GLM-Image API."""
+    from services.storage import get_zai_api_key
+    import requests
+    import base64
+
+    data = request.json
+    model_id = data.get('model', 'glm-image')
+    prompt = data.get('prompt')
+    size = data.get('size', '1280x1280')
+    quality = data.get('quality', 'hd')
+
+    if not prompt:
+        return jsonify({"error": "prompt is required"}), 400
+
+    api_key = get_zai_api_key()
+    if not api_key:
+        return jsonify({"error": "Z.AI API key not configured"}), 400
+
+    url = "https://api.z.ai/api/paas/v4/images/generations"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": model_id,
+        "prompt": prompt,
+        "size": size,
+        "quality": quality
+    }
+
+    try:
+        resp = requests.post(url, headers=headers, json=payload, timeout=120)
+        
+        if resp.status_code != 200:
+            logger.error(f"[zai_image] API Error {resp.status_code}: {resp.text}")
+            return jsonify({"error": f"Z.AI API Error {resp.status_code}: {resp.text}"}), resp.status_code
+
+        result = resp.json()
+        logger.info(f"[zai_image] API Result: {json.dumps(result)}")
+
+        if 'data' in result and len(result['data']) > 0:
+            image_url = result['data'][0].get('url')
+            if image_url:
+                # Download the image and convert to base64 to be consistent with Gemini route
+                img_resp = requests.get(image_url, timeout=60)
+                if img_resp.status_code == 200:
+                    img_data = base64.b64encode(img_resp.content).decode('utf-8')
+                    mime = img_resp.headers.get('Content-Type', 'image/png')
+                    return jsonify({"images": [f"data:{mime};base64,{img_data}"]})
+                else:
+                    # Fallback to returning the URL if download fails
+                    return jsonify({"images": [image_url]})
+        
+        return jsonify({"error": "No image returned from Z.AI"}), 500
+
+    except Exception as e:
+        logger.error(f"[zai_image] Exception: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
 

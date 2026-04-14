@@ -12,6 +12,8 @@ import { uiManager } from '../core/UIManager.js';
 import { VENICE_VOICES, DEFAULT_VOICE, GOOGLE_VOICES, DEFAULT_GOOGLE_VOICE, DEFAULT_PROVIDER } from '../core/TTSConfig.js';
 import { VENICE_PRICING } from '../components/ChatManager.js';
 
+import { imageModeManager } from '../components/ImageModeManager.js';
+
 function formatPricing(m, provider) {
     let inputPrice = null;
     let outputPrice = null;
@@ -1880,5 +1882,6 @@ export function toggleAppMode() {
 
         document.body.classList.remove('mode-image');
     }
+    imageModeManager.syncContextFileBtn();
     console.log(`[Lagoon] Mode switched to: ${state.mode} (Tabs removed)`);
 }

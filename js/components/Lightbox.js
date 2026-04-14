@@ -42,6 +42,7 @@ export class Lightbox {
         this.dom.prevBtn = document.getElementById('lightbox-prev');
         this.dom.nextBtn = document.getElementById('lightbox-next');
         this.dom.counter = document.getElementById('lightbox-counter');
+        this.dom.closeBtn = document.getElementById('lightbox-close');
     }
 
     bindEvents() {
@@ -50,6 +51,12 @@ export class Lightbox {
             if (e.target === this.dom.modal || e.target === this.dom.container) {
                 this.close();
             }
+        });
+
+        // Close button
+        this.dom.closeBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.close();
         });
 
         // Navigation buttons
@@ -173,6 +180,15 @@ export class Lightbox {
         
         if (newScale === oldScale) return;
         
+        // If zooming back to 1.0, reset translation to re-center
+        if (newScale === 1.0) {
+            this.translateX = 0;
+            this.translateY = 0;
+            this.scale = 1.0;
+            this.updateTransform();
+            return;
+        }
+
         // Get current image position and dimensions
         const rect = this.dom.image.getBoundingClientRect();
         

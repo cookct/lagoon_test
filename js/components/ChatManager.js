@@ -157,6 +157,9 @@ export class ChatManager {
 
         // Context Files
         this.dom.contextFileBtn?.addEventListener('click', (e) => {
+            // If in Image Mode, this button is repurposed for Edit Mode toggling (handled in ImageModeManager)
+            if (state.mode === 'image') return;
+
             // Only trigger click if not clicking the 'X' (cancel) badge
             if (!e.target.closest('.file-cancel-badge')) {
                 const input = document.getElementById('context-file-input');
@@ -1018,7 +1021,7 @@ export class ChatManager {
             // Re-enable input
             this.dom.messageInput.disabled = false;
             if (this.dom.changeModelBtn) this.dom.changeModelBtn.disabled = false;
-            if (this.dom.contextFileBtn) this.dom.contextFileBtn.disabled = false;
+            if (this.dom.contextFileBtn && state.mode !== 'image') this.dom.contextFileBtn.disabled = false;
             if (this.dom.viewContextBtn) this.dom.viewContextBtn.disabled = false;
             this.dom.messageInput.focus();
         }

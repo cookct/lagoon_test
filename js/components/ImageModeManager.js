@@ -6,11 +6,32 @@
 import { lagoonAlert } from '../ui/dialog.js';
 import { imageEditor } from './ImageEditor.js';
 import { lightbox } from './Lightbox.js';
-import { dom } from '../state.js';
+import { dom, addToPromptHistory } from '../state.js';
 import { addMessageToUI } from '../ui/messages.js';
 
 export class ImageModeManager {
     constructor() {
+        this.dom = {};
+        this.currentActiveTarget = null;
+        this.editModeActive = false;
+        this.activeEditBtn = null;
+        this.editSourceImage = null;
+        this.editHistory = [];
+    }
+
+    init() {
+        this.cacheDom();
+        this.cacheUpscalerDom();
+        this.cacheGlmDom();
+        this.bindEvents();
+        this.bindClearEvents();
+        this.bindGenerateEvents();
+        this.bindLightboxEvents();
+        this.bindUpscalerEvents();
+        console.log('[ImageModeManager] Initialized');
+    }
+
+    cacheDom() {
         this.dom = {
             fileInput: document.getElementById('image-card-file-input'),
             uploadBtns: document.querySelectorAll('.image-card-btn.upload-btn'),
@@ -19,25 +40,8 @@ export class ImageModeManager {
             messageInput: document.getElementById('message-input'),
             messagesContainer: document.getElementById('messages-container'),
             chatForm: document.getElementById('chat-form'),
-            // Upscaler params
-            upscalerParams: null, // Will be cached in init
-            upscalerScale: null,
-            upscalerEnhance: null,
-            upscalerCreativity: null,
-            upscalerStyle: null,
-            upscalerReplication: null,
+            contextFileBtn: document.getElementById('context-file-btn'),
         };
-        this.currentActiveTarget = null;
-    }
-
-    init() {
-        this.cacheUpscalerDom();
-        this.bindEvents();
-        this.bindClearEvents();
-        this.bindGenerateEvents();
-        this.bindLightboxEvents();
-        this.bindUpscalerEvents();
-        console.log('[ImageModeManager] Initialized');
     }
 
     cacheUpscalerDom() {
@@ -47,6 +51,12 @@ export class ImageModeManager {
         this.dom.upscalerCreativity = document.getElementById('upscaler-creativity');
         this.dom.upscalerStyle = document.getElementById('upscaler-style');
         this.dom.upscalerReplication = document.getElementById('upscaler-replication');
+    }
+
+    cacheGlmDom() {
+        this.dom.glmParams = document.getElementById('glm-image-params');
+        this.dom.glmSize = document.getElementById('glm-image-size');
+        this.dom.glmQuality = document.getElementById('glm-image-quality');
     }
 
     bindEvents() {
@@ -92,6 +102,19 @@ export class ImageModeManager {
                 }
             });
         });
+
+        // Toggle edit off from main attachment/edit button
+        if (this.dom.contextFileBtn) {
+            this.dom.contextFileBtn.addEventListener('click', (e) => {
+                if (document.body.classList.contains('mode-image')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (this.editModeActive) {
+                        this.toggleEditMode(this.editSourceImage, this.activeEditBtn);
+                    }
+                }
+            });
+        }
     }
 
     bindClearEvents() {
@@ -107,10 +130,12 @@ export class ImageModeManager {
     }
 
     bindGenerateEvents() {
-        // Intercept the main chat form submit in capture phase — fires before ChatManager's
-        // bubble-phase listener. Only takes over when image mode is active.
+        // Intercept the main chat form submit.
         this.dom.chatForm.addEventListener('submit', (e) => {
+            // Only take over if Image Mode is active
             if (!document.body.classList.contains('mode-image')) return;
+            
+            console.log('[ImageModeManager] Form submit intercepted');
             e.preventDefault();
             e.stopImmediatePropagation();
             this.generateEdit();
@@ -147,9 +172,11 @@ export class ImageModeManager {
 
     bindUpscalerEvents() {
         // Model select change - show/hide upscaler params
-        this.dom.generateModel.addEventListener('change', () => {
-            this.toggleUpscalerParams();
-        });
+        if (this.dom.generateModel) {
+            this.dom.generateModel.addEventListener('change', () => {
+                this.toggleUpscalerParams();
+            });
+        }
 
         // Enhance checkbox - show/hide enhance-only params
         if (this.dom.upscalerEnhance) {
@@ -159,13 +186,15 @@ export class ImageModeManager {
         }
 
         // Slider value displays
-        if (this.dom.upscalerCreativity) {
-            this.dom.upscalerCreativity.addEventListener('input', (e) => {
+        const creativitySlider = document.getElementById('upscaler-creativity');
+        if (creativitySlider) {
+            creativitySlider.addEventListener('input', (e) => {
                 document.getElementById('upscaler-creativity-value').textContent = e.target.value;
             });
         }
-        if (this.dom.upscalerReplication) {
-            this.dom.upscalerReplication.addEventListener('input', (e) => {
+        const replicationSlider = document.getElementById('upscaler-replication');
+        if (replicationSlider) {
+            replicationSlider.addEventListener('input', (e) => {
                 document.getElementById('upscaler-replication-value').textContent = e.target.value;
             });
         }
@@ -175,10 +204,17 @@ export class ImageModeManager {
     }
 
     toggleUpscalerParams() {
-        const isUpscaler = this.dom.generateModel.value === 'upscaler';
+        const selectedModel = this.dom.generateModel.value;
+        const isUpscaler = selectedModel === 'upscaler';
+        const isGlm = selectedModel === 'glm-image';
+
         if (this.dom.upscalerParams) {
             this.dom.upscalerParams.classList.toggle('hidden', !isUpscaler);
         }
+        if (this.dom.glmParams) {
+            this.dom.glmParams.classList.toggle('hidden', !isGlm);
+        }
+        
         // Hide message input for upscaler (no prompt needed)
         if (this.dom.messageInput) {
             this.dom.messageInput.placeholder = isUpscaler ? 'Optional style prompt for enhancement...' : 'Type your message...';
@@ -211,6 +247,11 @@ export class ImageModeManager {
         const preview = document.getElementById(`preview-${target}`);
         if (!preview) return;
         preview.innerHTML = `<img src="${dataUrl}" alt="${target} preview">`;
+        
+        // Auto-check the checkbox when an image is loaded
+        const checkbox = document.querySelector(`.image-card-checkbox[data-target="${target}"]`);
+        if (checkbox) checkbox.checked = true;
+
         console.log(`[ImageModeManager] Updated preview for: ${target}`);
     }
 
@@ -218,7 +259,42 @@ export class ImageModeManager {
         const preview = document.getElementById(`preview-${target}`);
         if (!preview) return;
         preview.innerHTML = '';
+        
+        // Uncheck the checkbox when the preview is cleared
+        const checkbox = document.querySelector(`.image-card-checkbox[data-target="${target}"]`);
+        if (checkbox) checkbox.checked = false;
+
+        // Clear editor state if this was the target card
+        if (target === 'target') {
+            imageEditor.clearMaskState();
+        }
+
         console.log(`[ImageModeManager] Cleared preview for: ${target}`);
+    }
+
+    /**
+     * Fire a single fetch to the image endpoint and return the final image src.
+     */
+    async _fetchSingle(endpoint, body) {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+
+        const newB64 = result.images ? result.images[0] : result.image;
+        if (!newB64) throw new Error('No image returned from model.');
+
+        let finalSrc = (newB64.startsWith('data:') || newB64.startsWith('http'))
+            ? newB64
+            : `data:image/png;base64,${newB64}`;
+
+        if (imageEditor.savedPixels) {
+            finalSrc = await imageEditor.restorePixels(finalSrc);
+        }
+        return finalSrc;
     }
 
     /**
@@ -226,12 +302,15 @@ export class ImageModeManager {
      * and restore any saved pixels (from a prior mask/clothing session) with feathering.
      */
     async generateEdit() {
-        const modelId = this.dom.generateModel.value;
+        const selectedModel = this.dom.generateModel.value;
 
-        // Handle upscaler separately
-        if (modelId === 'upscaler') {
+        // Handle upscaler separately (edit mode does not override upscale)
+        if (selectedModel === 'upscaler') {
             return await this.upscaleImage();
         }
+
+        // When edit mode is active, force grok-imagine-edit regardless of dropdown
+        const modelId = this.editModeActive ? 'grok-imagine-edit' : selectedModel;
 
         const prompt = this.dom.messageInput.value.trim();
         if (!prompt) {
@@ -239,13 +318,19 @@ export class ImageModeManager {
             return;
         }
 
+        // Add to prompt history
+        addToPromptHistory(prompt);
+
         // Edit models that only use the target image card
-        const editModels = ['qwen-image-2-edit', 'grok-imagine-edit', 'seedream-v5-lite-edit', 'seedream-v4-edit'];
+        const editModels = ['qwen-image-2-edit', 'seedream-v5-lite-edit', 'seedream-v4-edit', 'firered-image-edit'];
 
         // Gather images based on model type
         let images = [];
-        
-        if (editModels.includes(modelId)) {
+
+        if (this.editModeActive && this.editSourceImage) {
+            // Edit mode: use the stored source image directly — no card needed
+            images = [this.editSourceImage];
+        } else if (editModels.includes(modelId)) {
             // Edit models only use the target image card
             const targetImg = document.querySelector(`#preview-target img`);
             if (!targetImg || !targetImg.src) {
@@ -263,50 +348,64 @@ export class ImageModeManager {
             }
         }
 
-        if (images.length === 0) {
-            await lagoonAlert('Load at least one image before generating.');
-            return;
+        const sendBtn = document.getElementById('send-btn');
+        if (sendBtn) {
+            sendBtn.disabled = true;
+            sendBtn.classList.add('loading');
         }
 
-        const sendBtn = document.getElementById('send-btn');
-        if (sendBtn) sendBtn.disabled = true;
+        // Clear and disable message input during generation
+        if (this.dom.messageInput) {
+            this.dom.messageInput.value = '';
+            this.dom.messageInput.disabled = true;
+            this.dom.messageInput.style.height = '44px';
+        }
 
         const isGemini = modelId.startsWith('gemini-');
-        const endpoint = isGemini ? '/api/image/generate/gemini' : '/api/image/edit';
-        const body = isGemini
+        const isZai = modelId === 'glm-image';
+
+        let endpoint = '/api/image/edit';
+        if (isGemini) endpoint = '/api/image/generate/gemini';
+        if (isZai) endpoint = '/api/image/generate/zai';
+
+        const body = (isGemini || isZai)
             ? { model: modelId, prompt, images }
             : { modelId, prompt, images };
 
+        if (isZai) {
+            body.size = this.dom.glmSize?.value || '1280x1280';
+            body.quality = this.dom.glmQuality?.value || 'hd';
+        }
+
+        const resultsCount = parseInt(document.getElementById('image-results-count')?.value || '1', 10);
+
+        this.showGeneratingSpinner(resultsCount);
         try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-
-            const result = await response.json();
-            console.log('[ImageModeManager] Generate response:', response.status, Object.keys(result));
-            if (result.error) throw new Error(result.error);
-
-            const newB64 = result.images ? result.images[0] : result.image;
-            if (!newB64) throw new Error('No image returned from model.');
-
-            let finalSrc = newB64.startsWith('data:') ? newB64 : `data:image/png;base64,${newB64}`;
-            console.log('[ImageModeManager] Got image, src length:', finalSrc.length);
-
-            // If saved pixels exist, restore them with feathering.
-            if (imageEditor.savedPixels) {
-                console.log('[ImageModeManager] Saved pixels found, restoring onto result...');
-                finalSrc = await imageEditor.restorePixels(finalSrc);
+            if (resultsCount === 1) {
+                const finalSrc = await this._fetchSingle(endpoint, body);
+                this.displayResult(finalSrc);
+            } else {
+                const settled = await Promise.allSettled(
+                    Array.from({ length: resultsCount }, () => this._fetchSingle(endpoint, body))
+                );
+                const srcs = settled.filter(r => r.status === 'fulfilled').map(r => r.value);
+                const failed = settled.filter(r => r.status === 'rejected').length;
+                if (srcs.length > 0) this.displayMultipleResults(srcs);
+                if (failed > 0) console.warn(`[ImageModeManager] ${failed} image(s) failed in batch`);
             }
-
-            this.displayResult(finalSrc);
-
         } catch (err) {
             console.error('[ImageModeManager] Generate failed:', err);
             await lagoonAlert(`Generate failed: ${err.message}`);
         } finally {
-            if (sendBtn) sendBtn.disabled = false;
+            this.removeGeneratingSpinner();
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('loading');
+            }
+            if (this.dom.messageInput) {
+                this.dom.messageInput.disabled = false;
+                this.dom.messageInput.focus();
+            }
         }
     }
 
@@ -340,7 +439,10 @@ export class ImageModeManager {
         }
 
         const sendBtn = document.getElementById('send-btn');
-        if (sendBtn) sendBtn.disabled = true;
+        if (sendBtn) {
+            sendBtn.disabled = true;
+            sendBtn.classList.add('loading');
+        }
 
         // Strip data URI prefix for the image
         let imageData = targetImg.src;
@@ -365,6 +467,7 @@ export class ImageModeManager {
             }
         }
 
+        this.showGeneratingSpinner();
         try {
             const response = await fetch('/api/image/upscale', {
                 method: 'POST',
@@ -398,8 +501,199 @@ export class ImageModeManager {
             console.error('[ImageModeManager] Upscale failed:', err);
             await lagoonAlert(`Upscale failed: ${err.message}`);
         } finally {
-            if (sendBtn) sendBtn.disabled = false;
+            this.removeGeneratingSpinner();
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('loading');
+            }
+            if (this.dom.messageInput) {
+                this.dom.messageInput.disabled = false;
+                this.dom.messageInput.focus();
+            }
         }
+    }
+
+    toggleEditMode(src, btn) {
+        if (this.editModeActive && this.activeEditBtn === btn) {
+            // Same button clicked — toggle off, clear history
+            this.editModeActive = false;
+            this.editSourceImage = null;
+            this.editHistory = [];
+            this.activeEditBtn.classList.remove('active');
+            this.activeEditBtn.title = 'Edit with Grok Imagine';
+            this.activeEditBtn = null;
+            document.body.classList.remove('image-edit-mode');
+        } else {
+            // Switching source — push current state to history before overwriting
+            if (this.editModeActive && this.editSourceImage) {
+                this.editHistory.push({ src: this.editSourceImage, btn: this.activeEditBtn });
+            }
+            if (this.activeEditBtn) {
+                this.activeEditBtn.classList.remove('active');
+                this.activeEditBtn.title = 'Edit with Grok Imagine';
+            }
+            this.editModeActive = true;
+            this.editSourceImage = src;
+            this.activeEditBtn = btn;
+            btn.classList.add('active');
+            btn.title = 'Editing with Grok — click to stop';
+            document.body.classList.add('image-edit-mode');
+        }
+        this.syncContextFileBtn();
+    }
+
+    syncContextFileBtn() {
+        const btn = this.dom.contextFileBtn;
+        if (!btn) return;
+
+        const isImageMode = document.body.classList.contains('mode-image');
+        
+        if (isImageMode && this.editModeActive) {
+            btn.disabled = false;
+            btn.classList.add('active-edit');
+            btn.title = 'Stop Editing Image';
+            btn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    <line x1="18" y1="9" x2="12" y2="15" stroke="red" stroke-width="3"/>
+                </svg>
+            `;
+        } else if (isImageMode) {
+            btn.disabled = true;
+            btn.classList.remove('active-edit');
+            btn.title = 'Select an image to edit';
+            btn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+            `;
+        } else {
+            // Restore chat mode icon (Paperclip)
+            btn.classList.remove('active-edit');
+            btn.title = 'Upload file (code, PDF, TXT)';
+            btn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+                <span class="file-cancel-badge" id="file-cancel-btn">&times;</span>
+            `;
+            // Note: chat mode will re-enable based on ChatManager logic
+        }
+    }
+
+    showGeneratingSpinner(count = 1) {
+        const container = dom.messagesContainer || dom.chatMessages;
+        if (!container) return;
+
+        const spinnerHtml = `<div class="spinner-fold">
+                <div class="fold-sq"></div>
+                <div class="fold-sq"></div>
+                <div class="fold-sq"></div>
+                <div class="fold-sq"></div>
+            </div>`;
+
+        const wrap = document.createElement('div');
+        wrap.id = 'image-gen-loading';
+        wrap.className = 'image-gen-placeholder' + (count > 1 ? ' multi' : '');
+
+        if (count === 1) {
+            wrap.innerHTML = `<div class="placeholder-cell">
+                ${spinnerHtml}
+                <span class="image-gen-label">Generating Image...</span>
+            </div>`;
+        } else {
+            wrap.innerHTML = Array.from({ length: count }, () =>
+                `<div class="placeholder-cell">${spinnerHtml}</div>`
+            ).join('');
+        }
+
+        container.appendChild(wrap);
+        wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    removeGeneratingSpinner() {
+        document.getElementById('image-gen-loading')?.remove();
+    }
+
+    /**
+     * Display multiple results in a 2-column grid.
+     * Does NOT auto-chain edit mode — user picks which one to continue with.
+     */
+    displayMultipleResults(srcs) {
+        const targetContainer = dom.messagesContainer || dom.chatMessages;
+        if (!targetContainer) return;
+
+        const group = document.createElement('div');
+        group.className = 'message-group assistant image-result';
+
+        const grid = document.createElement('div');
+        grid.className = 'image-result-grid';
+
+        srcs.forEach(src => {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.innerHTML = `
+                <img src="${src}" alt="Generated result">
+                <div class="assistant-actions image-actions">
+                    <button type="button" class="action-btn set-ref-btn" title="Set as Reference 1">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    </button>
+                    <button type="button" class="action-btn set-target-btn" title="Set as Target Card">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                    <button type="button" class="action-btn edit-mode-btn" title="Edit with Grok Imagine">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button type="button" class="action-btn delete-image-btn" title="Delete">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                </div>`;
+
+            const editBtn = cell.querySelector('.edit-mode-btn');
+            cell.querySelector('.set-ref-btn').onclick = () => this.updatePreview('ref-1', src);
+            cell.querySelector('.set-target-btn').onclick = () => this.updatePreview('target', src);
+            cell.querySelector('.edit-mode-btn').onclick = () => this.toggleEditMode(src, editBtn);
+            cell.querySelector('.delete-image-btn').onclick = () => {
+                if (this.editModeActive) {
+                    if (this.activeEditBtn === editBtn) {
+                        const prev = this.editHistory.pop();
+                        if (prev) {
+                            this.editSourceImage = prev.src;
+                            this.activeEditBtn = prev.btn;
+                            if (prev.btn && document.contains(prev.btn)) {
+                                prev.btn.classList.add('active');
+                                prev.btn.title = 'Editing with Grok — click to stop';
+                            }
+                        } else {
+                            this.editModeActive = false;
+                            this.editSourceImage = null;
+                            this.activeEditBtn = null;
+                            document.body.classList.remove('image-edit-mode');
+                        }
+                        this.syncContextFileBtn();
+                    } else {
+                        this.editHistory = this.editHistory.filter(e => e.btn !== editBtn);
+                    }
+                }
+                // If this was the last cell, remove the whole group
+                if (grid.querySelectorAll('.grid-cell').length === 1) {
+                    group.remove();
+                } else {
+                    cell.remove();
+                }
+            };
+
+            grid.appendChild(cell);
+        });
+
+        group.appendChild(grid);
+        targetContainer.appendChild(group);
+        // Delay slightly to ensure any auto-scroll from DOM changes is finished
+        setTimeout(() => {
+            group.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     }
 
     /**
@@ -414,7 +708,7 @@ export class ImageModeManager {
                 <div class="message-content">
                     <div class="bubble-wrapper">
                         <div class="message-bubble">
-                            <img src="${finalSrc}" alt="Generated result" style="max-width:100%;border-radius:4px;display:block;">
+                            <img src="${finalSrc}" alt="Generated result">
                         </div>
                         <div class="assistant-actions image-actions">
                             <button type="button" class="action-btn set-ref-btn" title="Set as Reference 1">
@@ -423,26 +717,69 @@ export class ImageModeManager {
                             <button type="button" class="action-btn set-target-btn" title="Set as Target Card">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                             </button>
+                            <button type="button" class="action-btn edit-mode-btn" title="Edit with Grok Imagine">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </button>
                             <button type="button" class="action-btn delete-image-btn" title="Delete result">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                             </button>
                         </div>
                     </div>
                 </div>`;
-            
+
             // Bind actions
             resultGroup.querySelector('.set-ref-btn').onclick = () => this.updatePreview('ref-1', finalSrc);
             resultGroup.querySelector('.set-target-btn').onclick = () => this.updatePreview('target', finalSrc);
-            resultGroup.querySelector('.delete-image-btn').onclick = () => resultGroup.remove();
+            resultGroup.querySelector('.delete-image-btn').onclick = () => {
+                if (this.editModeActive) {
+                    if (this.activeEditBtn === editBtn) {
+                        // Deleted the active source — restore previous from history
+                        const prev = this.editHistory.pop();
+                        if (prev) {
+                            this.editSourceImage = prev.src;
+                            this.activeEditBtn = prev.btn;
+                            if (prev.btn && document.contains(prev.btn)) {
+                                prev.btn.classList.add('active');
+                                prev.btn.title = 'Editing with Grok — click to stop';
+                            }
+                        } else {
+                            // Nothing to fall back to — turn off
+                            this.editModeActive = false;
+                            this.editSourceImage = null;
+                            this.activeEditBtn = null;
+                            document.body.classList.remove('image-edit-mode');
+                        }
+                        this.syncContextFileBtn();
+                    } else {
+                        // Non-active image deleted — purge it from history so we never fall back to a ghost
+                        this.editHistory = this.editHistory.filter(e => e.btn !== editBtn);
+                    }
+                }
+                resultGroup.remove();
+            };
+
+            const editBtn = resultGroup.querySelector('.edit-mode-btn');
+            editBtn.onclick = () => this.toggleEditMode(finalSrc, editBtn);
 
             targetContainer.appendChild(resultGroup);
-        }
 
-        // Scroll #chat-messages to bottom directly
-        if (dom.chatMessages) {
-            requestAnimationFrame(() => {
-                dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
-            });
+            // If edit mode is already active, auto-chain: new image becomes the edit source
+            if (this.editModeActive) {
+                this.toggleEditMode(finalSrc, editBtn);
+            }
+
+            // Wait for image to load so dimensions are known before scrolling
+            const img = resultGroup.querySelector('img');
+            if (img) {
+                img.onload = () => {
+                    // Delay slightly to ensure any auto-scroll from DOM changes is finished
+                    setTimeout(() => {
+                        resultGroup.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                };
+                // Fallback if cached or fails
+                if (img.complete) img.onload();
+            }
         }
         console.log('[ImageModeManager] Result manually appended to container');
     }

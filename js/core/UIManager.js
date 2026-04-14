@@ -98,7 +98,7 @@ class UIManager {
         if (select.previousElementSibling?.className === 'custom-dropdown-container') return;
 
         const container = document.createElement('div');
-        container.className = 'custom-dropdown-container';
+        container.className = 'custom-dropdown-container ' + select.className;
         
         const selected = document.createElement('div');
         selected.className = 'custom-dropdown-selected';
@@ -156,6 +156,10 @@ class UIManager {
             });
 
             if (!isShowing) {
+                // Measure the container width to ensure the list matches
+                const rect = container.getBoundingClientRect();
+                optionsList.style.width = `${rect.width}px`;
+                
                 optionsList.classList.add('show');
                 selected.style.borderRadius = '4px 4px 0 0';
             } else {

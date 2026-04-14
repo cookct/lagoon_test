@@ -128,7 +128,7 @@ body {
     left: 0;
     width: 100%;
     z-index: 1000;
-    background: #1a1a1a;
+    background: #0d1117;
     border: 1px solid var(--border);
     border-radius: 0 0 4px 4px;
     max-height: 300px;

@@ -17,6 +17,29 @@
     position: relative;
     background-color: transparent;
     overflow-anchor: auto;
+    container-type: inline-size;
+}
+
+/* Constrain generated images to be no taller than 75% of chat width and center them */
+.image-result img {
+    max-width: 100%;
+    max-height: 75cqw;
+    object-fit: contain;
+    border-radius: 4px;
+    display: block;
+    margin: 0 auto;
+}
+
+.desktop-ui .message-group.assistant.image-result {
+    margin-left: auto;
+    margin-right: auto;
+    justify-content: center;
+    width: fit-content;
+    scroll-margin-top: 60px;
+}
+
+.desktop-ui .message-group.assistant.image-result .avatar {
+    display: none; /* Remove avatar for centered image results to keep them perfectly centered */
 }
 
 .desktop-ui #chat-messages::before {
@@ -701,6 +724,18 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
     animation: flash-red 1s infinite;
 }
 
+.desktop-ui .file-upload-btn.active-edit {
+    background-color: rgba(79, 193, 255, 0.15);
+    border-color: var(--ansi-cyan);
+    color: var(--ansi-cyan);
+    box-shadow: 0 0 10px rgba(79, 193, 255, 0.2);
+}
+
+.desktop-ui .file-upload-btn.active-edit:hover {
+    background-color: rgba(79, 193, 255, 0.25);
+    box-shadow: 0 0 15px rgba(79, 193, 255, 0.4);
+}
+
 .desktop-ui .file-cancel-badge {
     display: none;
     position: absolute;
@@ -807,6 +842,35 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
     background-color: rgba(220, 38, 38, 0.2);
     color: var(--ansi-red);
     border-color: var(--ansi-red);
+}
+
+.desktop-ui #send-btn.loading {
+    border-color: var(--ansi-cyan) !important;
+    background-color: rgba(14, 99, 156, 0.2) !important;
+    opacity: 1 !important;
+    box-shadow: 0 0 10px rgba(14, 99, 156, 0.3);
+}
+
+.desktop-ui #send-btn.loading svg {
+    display: none;
+}
+
+.desktop-ui #send-btn.loading::after {
+    content: "";
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(14, 99, 156, 0.1);
+    border-top: 2px solid var(--ansi-cyan);
+    border-left: 2px solid var(--ansi-cyan);
+    border-radius: 50%;
+    animation: spin 0.6s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+    display: block;
+    box-shadow: 0 0 5px var(--ansi-cyan);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .desktop-ui .action-btn {
@@ -953,4 +1017,182 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
 
 .desktop-ui #scroll-bottom-btn.hidden {
     display: none;
+}
+
+/* ── Image generation placeholder cells ── */
+.image-gen-placeholder {
+    padding: 8px 0;
+}
+
+.image-gen-placeholder.multi {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.placeholder-cell {
+    border: 1px solid var(--ansi-cyan);
+    border-radius: 8px;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.placeholder-cell .image-gen-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ansi-cyan);
+    opacity: 0.85;
+}
+
+.placeholder-cell .spinner-fold {
+    width: 36px;
+    height: 36px;
+    position: relative;
+    transform: rotateZ(45deg);
+}
+
+.placeholder-cell .fold-sq {
+    float: left;
+    width: 50%;
+    height: 50%;
+    position: relative;
+    transform: scale(1.1);
+}
+
+.placeholder-cell .fold-sq::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--ansi-cyan);
+    animation: img-fold 2.4s linear infinite;
+    transform-origin: 100% 100%;
+}
+
+.placeholder-cell .fold-sq:nth-child(2) { transform: scale(1.1) rotateZ(90deg); }
+.placeholder-cell .fold-sq:nth-child(4) { transform: scale(1.1) rotateZ(180deg); }
+.placeholder-cell .fold-sq:nth-child(3) { transform: scale(1.1) rotateZ(270deg); }
+.placeholder-cell .fold-sq:nth-child(2)::before { animation-delay: 0.3s; }
+.placeholder-cell .fold-sq:nth-child(4)::before { animation-delay: 0.6s; }
+.placeholder-cell .fold-sq:nth-child(3)::before { animation-delay: 0.9s; }
+
+@keyframes img-fold {
+    0%,  10%  { transform: perspective(140px) rotateX(-180deg); opacity: 0; }
+    25%, 75%  { transform: perspective(140px) rotateX(0deg);    opacity: 1; }
+    90%, 100% { transform: perspective(140px) rotateY(180deg);  opacity: 0; }
+}
+
+/* ── Multi-result grid ── */
+.image-result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.image-result-grid .grid-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.image-result-grid .grid-cell img {
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+    display: block;
+}
+
+.image-result-grid .grid-cell .assistant-actions {
+    justify-content: center;
+}
+
+/* ── Edit mode: chase animation around input field ── */
+
+/* Pseudo-elements need content declaration */
+.desktop-ui .input-wrapper::before,
+.desktop-ui .input-wrapper::after {
+    content: '';
+}
+
+/* All four chase segments share base positioning rules */
+.desktop-ui .input-wrapper::before,
+.desktop-ui .input-wrapper::after,
+.desktop-ui .input-wrapper .input-chase-bottom,
+.desktop-ui .input-wrapper .input-chase-left {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 3;
+    transition: opacity 0.3s;
+}
+
+/* Top: left → right */
+.desktop-ui .input-wrapper::before {
+    top: 0; left: -100%;
+    width: 60%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--ansi-cyan) 50%, transparent);
+}
+
+/* Right: top → bottom */
+.desktop-ui .input-wrapper::after {
+    top: -100%; right: 0;
+    width: 2px; height: 60%;
+    background: linear-gradient(180deg, transparent, var(--ansi-cyan) 50%, transparent);
+}
+
+/* Bottom: right → left */
+.desktop-ui .input-wrapper .input-chase-bottom {
+    bottom: 0; right: -100%;
+    width: 60%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--ansi-cyan) 50%, transparent);
+}
+
+/* Left: bottom → top */
+.desktop-ui .input-wrapper .input-chase-left {
+    bottom: -100%; left: 0;
+    width: 2px; height: 60%;
+    background: linear-gradient(180deg, transparent, var(--ansi-cyan) 50%, transparent);
+}
+
+/* Activate when body carries the edit-mode flag */
+body.image-edit-mode .desktop-ui .input-wrapper {
+    overflow: hidden;
+}
+
+body.image-edit-mode .desktop-ui .input-wrapper::before,
+body.image-edit-mode .desktop-ui .input-wrapper::after,
+body.image-edit-mode .desktop-ui .input-wrapper .input-chase-bottom,
+body.image-edit-mode .desktop-ui .input-wrapper .input-chase-left {
+    opacity: 1;
+}
+
+body.image-edit-mode .desktop-ui .input-wrapper::before {
+    animation: chaseTop 2s linear infinite;
+}
+body.image-edit-mode .desktop-ui .input-wrapper::after {
+    animation: chaseRight 2s linear infinite;
+    animation-delay: 0.5s;
+}
+body.image-edit-mode .desktop-ui .input-wrapper .input-chase-bottom {
+    animation: chaseBottom 2s linear infinite;
+    animation-delay: 1s;
+}
+body.image-edit-mode .desktop-ui .input-wrapper .input-chase-left {
+    animation: chaseLeft 2s linear infinite;
+    animation-delay: 1.5s;
+}
+
+/* Edit button active (toggle on) state */
+.desktop-ui .image-actions .action-btn.edit-mode-btn.active {
+    border-color: var(--ansi-cyan);
+    color: var(--ansi-cyan);
+    background: rgba(79, 193, 255, 0.12);
+    box-shadow: 0 0 6px rgba(79, 193, 255, 0.25);
 }

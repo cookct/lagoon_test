@@ -2,95 +2,14 @@
   "project_notes": [],
   "session_history": [
     {
-      "summary": "The qwen-image-2-edit model is already fully integrated into the image editor:\n\n1. **Model Dropdown** (index.html line 866): Already has `<option value=\"qwen-image-2-edit\">Qwen Image 2 Edit</option>`\n\n2. **Backend Route** (routes/chat.py line 1111): The `/api/image/edit` endpoint already routes to Venice's `/image/multi-edit` API with the modelId parameter\n\n3. **ImageEditor.js**: The `executeEdit()` method sends the selected model ID to the backend and works on the target image card's loaded image\n\nNo changes needed - the feature is complete and functional.",
+      "summary": "Discovery complete. Found the issue in ImageModeManager.js and index.html:\n\n**Current behavior:**\n- Style field exists in right sidebar (upscaler-style) inside an \"enhance-only\" row\n- Code at line 464 does: `body.enhancePrompt = style || prompt;` (prioritizes sidebar field)\n- Message input placeholder already says \"Optional style prompt for enhancement...\"\n\n**Proposed fix:**\n1. Remove the style input field from index.html (lines 263-265)\n2. Update ImageModeManager.js line 464 to use only the message input: `body.enhancePrompt = prompt;`\n3. Remove the `style` variable declaration (line 429) and DOM caching (line 52)\n\nThe message input is already set up to serve as the style prompt - just need to remove the redundant sidebar field and simplify the logic.",
       "files": [],
-      "timestamp": "2026-04-13T13:24:51.643346"
+      "timestamp": "2026-04-14T11:10:10.085426"
     },
     {
-      "summary": "Added qwen-image-2-edit model to the main image mode page:\n\n1. **index.html**: Added `<option value=\"qwen-image-2-edit\">Qwen Image 2 Edit</option>` to the `#image-generate-model` dropdown\n\n2. **js/components/ImageModeManager.js**: Updated `generateEdit()` method to handle qwen-image-2-edit specifically - when selected, it only uses the image from the target card (ignoring reference cards and checkboxes), then routes to Venice's `/api/image/edit` endpoint",
-      "files": [
-        "js/components/ImageModeManager.js",
-        "index.html"
-      ],
-      "timestamp": "2026-04-13T13:26:16.118783"
-    },
-    {
-      "summary": "Updated the main image mode dropdown with sections:\n\n1. **index.html**: Added optgroup sections \"Generate\" and \"Edit\" with all edit models (qwen-image-2-edit, grok-imagine-edit, seedream-v5-lite-edit, seedream-v4-edit, upscaler)\n\n2. **js/components/ImageModeManager.js**: Updated generateEdit() to handle all edit models - they only use the target image card and route to Venice's /api/image/edit endpoint",
-      "files": [
-        "js/components/ImageModeManager.js",
-        "index.html"
-      ],
-      "timestamp": "2026-04-13T13:34:39.061697"
-    },
-    {
-      "summary": "Lightbox Implementation Plan:\n\n**New File: `js/components/Lightbox.js`**\n- Open/close with click/Escape\n- Fit-to-screen initial sizing\n- Smart zoom (mouse wheel, centered on cursor)\n- Zoom limit (can't go below fit-to-screen)\n- Arrow key navigation for generated images\n\n**Modify: `index.html`**\n- Add lightbox modal HTML structure\n\n**Modify: `css/user-overrides.css`**\n- Dark overlay, centered image, nav arrows, counter\n\n**Modify: `js/components/ImageModeManager.js`**\n- Wire click events on image card previews and generated results\n- Pass image collection for navigation\n\n**Modify: `js/main.js`**\n- Import and initialize Lightbox",
+      "summary": "Found TWO issues:\n\n**Issue 1 - Style prompt (as reported):**\n- Sidebar style field takes priority over message input\n- Fix: Remove sidebar field, use only message input for `enhancePrompt`\n\n**Issue 2 - Blob URL causing \"Invalid or corrupt image\" error:**\n- When upscale returns binary image, code does: `finalSrc = URL.createObjectURL(blob)` \n- This creates a blob URL like `blob:http://...` \n- When \"set as target\" is clicked, this blob URL is stored in the img src\n- On next upscale, code tries to extract base64: `imageData.split(',')[1]`\n- Blob URLs have no comma, so it sends the blob URL string as image data \u2192 invalid\n\n**Fix needed:** Convert blob to base64 data URL before displaying, so \"set as target\" works correctly.",
       "files": [],
-      "timestamp": "2026-04-13T13:40:34.694490"
-    },
-    {
-      "summary": "Implemented lightbox feature:\n\n1. **js/components/Lightbox.js** (NEW) - Full lightbox component with zoom, pan, and navigation\n2. **index.html** - Added lightbox modal HTML\n3. **css/user-overrides.css** - Added lightbox styles\n4. **js/components/ImageModeManager.js** - Wired click events on image cards and generated results\n5. **js/main.js** - Import and initialize lightbox\n\nFeatures: fit-to-screen, smart cursor-centered zoom, zoom limits, arrow key navigation for generated images, drag-to-pan, Escape to close.",
-      "files": [
-        "js/components/Lightbox.js",
-        "index.html",
-        "js/main.js",
-        "js/components/ImageModeManager.js"
-      ],
-      "timestamp": "2026-04-13T13:44:15.813786"
-    },
-    {
-      "summary": "Fixed potential issues with lightbox implementation:\n\n1. **js/components/Lightbox.js** - Added null check in init() to prevent errors if modal not found\n2. **css/user-overrides.css** - Added `!important` to `.lightbox-overlay.hidden` and changed selector to direct children only\n3. **js/components/ImageModeManager.js** - Added check to skip lightbox handling on button clicks\n\nIf buttons are still greyed out, please check browser console for JavaScript errors.",
-      "files": [],
-      "timestamp": "2026-04-13T13:51:04.449457"
-    },
-    {
-      "summary": "Fixed image card checkbox behavior - buttons and preview now remain clickable even when checkbox is unchecked. The checkbox only controls whether the image is included in the generation payload, not the interactivity of the card.",
-      "files": [],
-      "timestamp": "2026-04-13T13:54:11.666885"
-    },
-    {
-      "summary": "Implemented Venice upscaler with dedicated endpoint and parameters:\n\n1. **index.html**: Added upscaler parameter panel (scale, enhance, creativity, style, replication) shown only when upscaler is selected\n\n2. **css/user-overrides.css**: Added styles for upscaler controls\n\n3. **js/components/ImageModeManager.js**: \n   - Upscaler uses separate `/api/image/upscale` endpoint\n   - Parameters panel toggles based on model selection\n   - Enhance-only params show/hide based on checkbox\n   - Validates scale=1 requires enhance=true\n\n4. **routes/chat.py**: Added `/api/image/upscale` endpoint proxying to Venice's upscale API",
-      "files": [
-        "js/components/ImageModeManager.js",
-        "routes/chat.py",
-        "index.html"
-      ],
-      "timestamp": "2026-04-13T14:02:07.805336"
-    },
-    {
-      "summary": "Added debugging to upscaler:\n- Frontend logs image data length before sending\n- Backend logs received request details\n\nTry again and check console/server logs to see where the image data is being lost.",
-      "files": [
-        "js/components/ImageModeManager.js",
-        "routes/chat.py"
-      ],
-      "timestamp": "2026-04-13T14:06:22.841300"
-    },
-    {
-      "summary": "Added more detailed debugging to upscaleImage() to check if target preview, image element, and src are found. Check browser console for the log output.",
-      "files": [
-        "js/components/ImageModeManager.js"
-      ],
-      "timestamp": "2026-04-13T14:07:42.847657"
-    },
-    {
-      "summary": "Fixed lightbox zoom - simplified the scale calculation:\n- Scale 1.0 = fit-to-screen (minimum)\n- Zoom uses center-offset calculation to zoom toward cursor\n- Removed the confusing scale/minScale ratio",
-      "files": [
-        "js/components/Lightbox.js"
-      ],
-      "timestamp": "2026-04-13T14:11:57.699344"
-    },
-    {
-      "summary": "Fixed lightbox to open with image fit-to-screen by setting max-width/max-height CSS constraints on the image element.",
-      "files": [
-        "css/user-overrides.css"
-      ],
-      "timestamp": "2026-04-13T14:14:38.860976"
-    },
-    {
-      "summary": "Fixed lightbox zoom to properly follow cursor position - zoom now dynamically adjusts to keep the point under the cursor in place as you zoom in/out.",
-      "files": [
-        "js/components/Lightbox.js"
-      ],
-      "timestamp": "2026-04-13T14:19:12.772206"
+      "timestamp": "2026-04-14T11:19:35.839586"
     }
   ],
   "key_files": [
