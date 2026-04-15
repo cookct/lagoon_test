@@ -292,6 +292,10 @@ export class ImageEditor {
     clearMaskState() {
         this.savedPixels = null;
         this.postEditSrc = null;
+        const rpLabel = document.getElementById('restore-pixels-label');
+        const rpCheck = document.getElementById('restore-pixels-checkbox');
+        if (rpLabel) rpLabel.style.display = 'none';
+        if (rpCheck) rpCheck.checked = false;
         if (this.dom.maskCanvas && this.dom.maskCanvas.width) {
             this.ctx.clearRect(0, 0, this.dom.maskCanvas.width, this.dom.maskCanvas.height);
             this.ctxPreview.clearRect(0, 0, this.dom.previewCanvas.width, this.dom.previewCanvas.height);
@@ -306,6 +310,10 @@ export class ImageEditor {
         }
         this.savedPixels = null;
         this.originalCardSrc = null;
+        const rpLabel = document.getElementById('restore-pixels-label');
+        const rpCheck = document.getElementById('restore-pixels-checkbox');
+        if (rpLabel) rpLabel.style.display = 'none';
+        if (rpCheck) rpCheck.checked = false;
         this.dom.originalBtn.classList.add('hidden');
         this.close();
     }
@@ -523,6 +531,10 @@ export class ImageEditor {
                 dilation: this.dilation,
                 feather: this.feather
             };
+            const rpLabel = document.getElementById('restore-pixels-label');
+            const rpCheck = document.getElementById('restore-pixels-checkbox');
+            if (rpLabel) rpLabel.style.display = '';
+            if (rpCheck) rpCheck.checked = true;
 
             // 2. Process the mask for the final composite (using dilation/feather settings)
             const processedMaskUrl = await this.getProcessedMaskDataUrl();
@@ -689,6 +701,10 @@ export class ImageEditor {
                     dilation: this.dilation,
                     feather: this.feather
                 };
+                const rpLabel = document.getElementById('restore-pixels-label');
+                const rpCheck = document.getElementById('restore-pixels-checkbox');
+                if (rpLabel) rpLabel.style.display = '';
+                if (rpCheck) rpCheck.checked = true;
 
                 const resultImg = new Image();
                 resultImg.onload = () => {

@@ -49,7 +49,7 @@ export class ImageModeManager {
         this.dom.upscalerScale = document.getElementById('upscaler-scale');
         this.dom.upscalerEnhance = document.getElementById('upscaler-enhance');
         this.dom.upscalerCreativity = document.getElementById('upscaler-creativity');
-        this.dom.upscalerStyle = document.getElementById('upscaler-style');
+
         this.dom.upscalerReplication = document.getElementById('upscaler-replication');
     }
 
@@ -102,6 +102,19 @@ export class ImageModeManager {
                 }
             });
         });
+
+        // Checkbox change — re-evaluate model filter when user manually toggles a card
+        document.querySelectorAll('.image-card-checkbox').forEach(cb => {
+            cb.addEventListener('change', () => this.updateModelFilter());
+        });
+
+        // Clear all cards button (image mode only)
+        const imageClearBtn = document.getElementById('image-clear-btn');
+        if (imageClearBtn) {
+            imageClearBtn.addEventListener('click', () => {
+                ['ref-1', 'ref-2', 'target'].forEach(id => this.clearPreview(id));
+            });
+        }
 
         // Toggle edit off from main attachment/edit button
         if (this.dom.contextFileBtn) {
@@ -207,12 +220,23 @@ export class ImageModeManager {
         const selectedModel = this.dom.generateModel.value;
         const isUpscaler = selectedModel === 'upscaler';
         const isGlm = selectedModel === 'glm-image';
+        const isGemini = selectedModel.startsWith('gemini-') || selectedModel.startsWith('nano-');
+        
+        // Edit models should not show dimension params
+        const editModels = ['qwen-image-2-edit', 'seedream-v5-lite-edit', 'seedream-v4-edit', 'firered-image-edit', 'gemini-3-pro-edit', 'nano-banana-pro-edit', 'grok-imagine-edit'];
+        const isEditModel = editModels.includes(selectedModel) || this.editModeActive;
 
         if (this.dom.upscalerParams) {
             this.dom.upscalerParams.classList.toggle('hidden', !isUpscaler);
         }
         if (this.dom.glmParams) {
             this.dom.glmParams.classList.toggle('hidden', !isGlm);
+        }
+        
+        const geminiParams = document.getElementById('gemini-params');
+        if (geminiParams) {
+            // Only show Gemini params if it's a Gemini model AND NOT an edit model
+            geminiParams.style.display = (isGemini && !isEditModel) ? 'block' : 'none';
         }
         
         // Hide message input for upscaler (no prompt needed)
@@ -247,11 +271,16 @@ export class ImageModeManager {
         const preview = document.getElementById(`preview-${target}`);
         if (!preview) return;
         preview.innerHTML = `<img src="${dataUrl}" alt="${target} preview">`;
-        
+
         // Auto-check the checkbox when an image is loaded
         const checkbox = document.querySelector(`.image-card-checkbox[data-target="${target}"]`);
         if (checkbox) checkbox.checked = true;
 
+        // New image loaded into this slot — invalidate the cached true original so the
+        // editor seeds fresh on next open instead of editing the previously-loaded image.
+        imageEditor.trueOriginals.delete(target);
+
+        this.updateModelFilter();
         console.log(`[ImageModeManager] Updated preview for: ${target}`);
     }
 
@@ -259,7 +288,7 @@ export class ImageModeManager {
         const preview = document.getElementById(`preview-${target}`);
         if (!preview) return;
         preview.innerHTML = '';
-        
+
         // Uncheck the checkbox when the preview is cleared
         const checkbox = document.querySelector(`.image-card-checkbox[data-target="${target}"]`);
         if (checkbox) checkbox.checked = false;
@@ -269,7 +298,15 @@ export class ImageModeManager {
             imageEditor.clearMaskState();
         }
 
+        // Slot is empty — drop the cached true original so the next load seeds fresh
+        imageEditor.trueOriginals.delete(target);
+
+        this.updateModelFilter();
         console.log(`[ImageModeManager] Cleared preview for: ${target}`);
+    }
+
+    updateModelFilter() {
+        // Disabled - users can select any model regardless of loaded images
     }
 
     /**
@@ -291,7 +328,8 @@ export class ImageModeManager {
             ? newB64
             : `data:image/png;base64,${newB64}`;
 
-        if (imageEditor.savedPixels) {
+        const restoreCheckbox = document.getElementById('restore-pixels-checkbox');
+        if (imageEditor.savedPixels && restoreCheckbox?.checked) {
             finalSrc = await imageEditor.restorePixels(finalSrc);
         }
         return finalSrc;
@@ -339,8 +377,10 @@ export class ImageModeManager {
             }
             images = [targetImg.src];
         } else {
-            // Generate models: gather images from all cards with checked checkboxes
-            for (const cardId of ['ref-1', 'ref-2', 'target']) {
+            // Generate models: gather images from all cards with checked checkboxes.
+            // Card order: target first, then references (reversed for API).
+            const order = ['target', 'ref-2', 'ref-1'];
+            for (const cardId of order) {
                 const checkbox = document.querySelector(`.image-card-checkbox[data-target="${cardId}"]`);
                 if (checkbox && !checkbox.checked) continue;
                 const img = document.querySelector(`#preview-${cardId} img`);
@@ -370,7 +410,14 @@ export class ImageModeManager {
 
         const body = (isGemini || isZai)
             ? { model: modelId, prompt, images }
-            : { modelId, prompt, images };
+            : { modelId, prompt, images, multi_ref: images.length > 1 };
+
+        if (isGemini && !editModels.includes(modelId)) {
+            const ratio = document.getElementById('image-param-aspect_ratio')?.value;
+            const res = document.getElementById('image-param-resolution')?.value;
+            if (ratio && ratio !== 'Auto') body.aspect_ratio = ratio;
+            if (res && res !== 'Auto') body.resolution = res;
+        }
 
         if (isZai) {
             body.size = this.dom.glmSize?.value || '1280x1280';
@@ -428,7 +475,7 @@ export class ImageModeManager {
         const scale = parseInt(this.dom.upscalerScale?.value || '2', 10);
         const enhance = this.dom.upscalerEnhance?.checked || false;
         const creativity = parseFloat(this.dom.upscalerCreativity?.value || '0.5');
-        const style = this.dom.upscalerStyle?.value?.trim() || '';
+
         const replication = parseFloat(this.dom.upscalerReplication?.value || '0.35');
         const prompt = this.dom.messageInput.value.trim();
 
@@ -462,8 +509,8 @@ export class ImageModeManager {
         if (enhance) {
             body.enhanceCreativity = creativity;
             body.replication = replication;
-            if (style || prompt) {
-                body.enhancePrompt = style || prompt;
+            if (prompt) {
+                body.enhancePrompt = prompt;
             }
         }
 
@@ -480,9 +527,14 @@ export class ImageModeManager {
             
             if (contentType.includes('image/')) {
                 const blob = await response.blob();
-                const finalSrc = URL.createObjectURL(blob);
-                console.log('[ImageModeManager] Upscaled image received');
-                this.displayResult(finalSrc);
+                // Convert blob to base64 data URL so "set as target" works correctly
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const finalSrc = reader.result;
+                    console.log('[ImageModeManager] Upscaled image received');
+                    this.displayResult(finalSrc);
+                };
+                reader.readAsDataURL(blob);
             } else {
                 // JSON response (error or base64)
                 const result = await response.json();

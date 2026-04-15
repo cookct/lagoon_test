@@ -4,10 +4,10 @@ Main entry point.
 """
 import os
 import logging
-from flask import Flask, render_template, send_from_directory, make_response
+from flask import Flask, render_template, send_from_directory, make_response, session, redirect, url_for, request
 from flask_socketio import SocketIO
 
-from config import CHATS_DIR, CONFIG_DIR, MODEL_AVATARS_DIR, MAX_CONTENT_LENGTH
+from config import CHATS_DIR, CONFIG_DIR, MODEL_AVATARS_DIR, MAX_CONTENT_LENGTH, ADMIN_USERNAME, ADMIN_PASSWORD
 
 # --- Flask App Initialization ---
 app = Flask(__name__, template_folder='.')
@@ -21,6 +21,45 @@ logging.getLogger('httpx').setLevel(logging.WARNING)
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 app.config['SECRET_KEY'] = 'lagoon-secret-key'
 app.config['TEMPLATES_AUTO_RELOAD'] = True  # Disable template caching
+
+
+# --- Authentication Middleware ---
+@app.before_request
+def require_login():
+    # Allow login route, static files and images without auth
+    allowed_routes = ['login', 'serve_static_files', 'serve_images']
+    if request.endpoint in allowed_routes:
+        return
+
+    if not session.get('logged_in'):
+        # For API calls, return 401 instead of redirecting to login page
+        # This prevents breaking JS fetch calls with HTML redirects
+        if request.path.startswith('/api/') or request.path == '/chat':
+            return {"error": "Unauthorized"}, 401
+        return redirect(url_for('login'))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session['logged_in'] = True
+            session['username'] = username
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', error="Invalid username or password")
+
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
 
 # --- SocketIO for Gemini Live ---
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')

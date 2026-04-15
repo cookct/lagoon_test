@@ -665,6 +665,23 @@ body.mode-image .mode-image-only {
     accent-color: var(--accent);
 }
 
+.restore-pixels-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--text-muted, #888);
+    white-space: nowrap;
+}
+
+.restore-pixels-toggle input[type="checkbox"] {
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
 .image-card-preview {
     width: 100%;
     max-height: 240px;

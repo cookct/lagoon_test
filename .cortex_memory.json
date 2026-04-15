@@ -1,17 +1,6 @@
 {
   "project_notes": [],
-  "session_history": [
-    {
-      "summary": "Discovery complete. Found the issue in ImageModeManager.js and index.html:\n\n**Current behavior:**\n- Style field exists in right sidebar (upscaler-style) inside an \"enhance-only\" row\n- Code at line 464 does: `body.enhancePrompt = style || prompt;` (prioritizes sidebar field)\n- Message input placeholder already says \"Optional style prompt for enhancement...\"\n\n**Proposed fix:**\n1. Remove the style input field from index.html (lines 263-265)\n2. Update ImageModeManager.js line 464 to use only the message input: `body.enhancePrompt = prompt;`\n3. Remove the `style` variable declaration (line 429) and DOM caching (line 52)\n\nThe message input is already set up to serve as the style prompt - just need to remove the redundant sidebar field and simplify the logic.",
-      "files": [],
-      "timestamp": "2026-04-14T11:10:10.085426"
-    },
-    {
-      "summary": "Found TWO issues:\n\n**Issue 1 - Style prompt (as reported):**\n- Sidebar style field takes priority over message input\n- Fix: Remove sidebar field, use only message input for `enhancePrompt`\n\n**Issue 2 - Blob URL causing \"Invalid or corrupt image\" error:**\n- When upscale returns binary image, code does: `finalSrc = URL.createObjectURL(blob)` \n- This creates a blob URL like `blob:http://...` \n- When \"set as target\" is clicked, this blob URL is stored in the img src\n- On next upscale, code tries to extract base64: `imageData.split(',')[1]`\n- Blob URLs have no comma, so it sends the blob URL string as image data \u2192 invalid\n\n**Fix needed:** Convert blob to base64 data URL before displaying, so \"set as target\" works correctly.",
-      "files": [],
-      "timestamp": "2026-04-14T11:19:35.839586"
-    }
-  ],
+  "session_history": [],
   "key_files": [
     "configs/Co-Writer.json",
     "chats/7c614518-8ae4-44c8-ace5-5674b290d4e9.json",
@@ -22,7 +11,8 @@
     "js/components/ImageModeManager.js",
     "js/components/Lightbox.js",
     "js/main.js",
-    "css/user-overrides.css"
+    "css/user-overrides.css",
+    "js/core/UIManager.js"
   ],
   "user_preferences": {},
   "last_balance_vcu": 0.0,

@@ -92,7 +92,10 @@
             <div id="sidebar-header">
                 <button id="quick-chat-btn">New Chat</button>
                 <button id="create-char-btn" class="secondary-btn">Create Character</button>
-                <button id="import-chat-btn" class="secondary-btn">Import</button>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <button id="import-chat-btn" class="secondary-btn" style="flex: 1;">Import</button>
+                    <a href="/logout" class="secondary-btn" style="flex: 1; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; background: #2a2f37; border: 1px solid #3a3f47; color: #8e9297;">Logout</a>
+                </div>
             </div>
             <div class="sidebar-tabs">
                 <button class="tab-btn active" data-tab="characters">Characters</button>
@@ -136,6 +139,9 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             <span class="export-count" id="export-count"></span>
                         </button>
+                        <button type="button" id="image-clear-btn" class="export-btn image-clear-btn" title="Clear all cards">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        </button>
                     </div>
                     <div class="file-upload-wrapper">
                         <input type="file" id="context-file-input" accept=".pdf,.txt,.png,.jpg,.jpeg,.webp,.gif,.py,.js,.css,.html,.json,.md,.sh,.yaml,.yml,.toml,.xml,.sql,.c,.cpp,.h,.java,.go,.rs,.ts,.tsx,.jsx,.vue,.svelte,.rb,.php,.swift,.kt,.scala,.r,.lua,.pl,.ex,.exs,.hs,.clj,.lisp,.el,.vim,.conf,.ini,.env,.log,.csv" class="hidden">
@@ -175,6 +181,10 @@
                             <input type="checkbox" class="image-card-checkbox" data-target="target">
                         </label>
                         <span class="tool-section-title">Target</span>
+                        <label class="restore-pixels-toggle" id="restore-pixels-label" title="Apply saved pixel restoration to results" style="display:none">
+                            <input type="checkbox" id="restore-pixels-checkbox">
+                            <span>Restore</span>
+                        </label>
                         <button type="button" class="image-card-clear-btn" data-target="target" title="Clear image">&times;</button>
                     </div>
                     <div class="tool-section-body">
@@ -191,24 +201,52 @@
             <div class="image-generate-panel mode-image-only" id="image-generate-panel">
                <select id="image-generate-model" class="image-generate-select">
                    <optgroup label="Generate">
+                       <option value="nano-banana-pro">Nano Banana Pro (Venice)</option>
+                       <option value="gemini-3-pro-image-preview">Nano Banana Pro (Google)</option>
                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash</option>
                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                       <option value="gemini-3-pro-image-preview">Nano Banana Pro</option>
                        <option value="gemini-3.1-flash-image-preview">Nano Banana 2</option>
                        <option value="gemini-2.5-flash-image">Nano Banana</option>
                        <option value="glm-image">GLM-Image</option>
-                       <option value="nano-banana-pro">Nano Banana Pro (Venice)</option>
                        <option value="grok-imagine-image-pro">Grok Imagine Pro</option>
-                       </optgroup>                   <optgroup label="Edit">                       <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
+                       </optgroup>                   <optgroup label="Edit">                       <option value="nano-banana-pro-edit">Nano Banana Pro Edit (Venice)</option>
+                       <option value="gemini-3-pro-edit">Nano Banana Pro Edit (Google)</option>
+                       <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
                        <option value="grok-imagine-edit">Grok Imagine Edit</option>
                        <option value="seedream-v5-lite-edit">Seedream V5 Lite Edit</option>
                        <option value="seedream-v4-edit">Seedream V4 Edit</option>
-                       <option value="nano-banana-pro-edit">Nano Banana Pro Edit</option>
                        <option value="firered-image-edit">FireRed Image Edit</option>
                        </optgroup>                   <optgroup label="Upscale">
                        <option value="upscaler">Upscaler</option>
                    </optgroup>
                </select>
+
+               <!-- Gemini specific params -->
+               <div id="gemini-params" style="display:none; margin-top:10px;">
+                   <div class="upscaler-param-row">
+                       <label class="upscaler-label">Ratio</label>
+                       <select id="image-param-aspect_ratio" class="upscaler-select">
+                           <option value="Auto" selected>Auto</option>
+                           <option value="1:1">1:1</option>
+                           <option value="3:2">3:2</option>
+                           <option value="16:9">16:9</option>
+                           <option value="21:9">21:9</option>
+                           <option value="9:16">9:16</option>
+                           <option value="2:3">2:3</option>
+                           <option value="4:5">4:5</option>
+                       </select>
+                   </div>
+                   <div class="upscaler-param-row">
+                       <label class="upscaler-label">Quality</label>
+                       <select id="image-param-resolution" class="upscaler-select">
+                           <option value="Auto" selected>Auto</option>
+                           <option value="1K">1K</option>
+                           <option value="2K">2K</option>
+                           <option value="4K">4K</option>
+                       </select>
+                   </div>
+               </div>
+
                <!-- Results count — applies to all models -->
                <div class="upscaler-param-row" id="results-count-row">
                    <label class="upscaler-label" title="Number of parallel results to generate">Results</label>
@@ -260,10 +298,7 @@
                        <input type="range" id="upscaler-creativity" min="0" max="1" step="0.05" value="0.5" class="upscaler-slider">
                        <span id="upscaler-creativity-value" class="upscaler-value">0.5</span>
                    </div>
-                   <div class="upscaler-param-row enhance-only hidden">
-                       <label class="upscaler-label" title="Style to apply during enhancement (e.g., 'gold', 'marble')">Style</label>
-                       <input type="text" id="upscaler-style" placeholder="e.g., gold, marble" class="upscaler-input">
-                   </div>
+
                    <div class="upscaler-param-row enhance-only hidden">
                        <label class="upscaler-label" title="How strongly lines/noise are preserved (0-1). Higher = noisier but less AI-generated.">Replication</label>
                        <input type="range" id="upscaler-replication" min="0" max="1" step="0.05" value="0.35" class="upscaler-slider">

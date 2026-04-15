@@ -9,6 +9,8 @@ import uuid
 import logging
 import httpx
 import requests
+import datetime
+import copy
 from flask import Blueprint, request, jsonify, Response
 
 from config import CHATS_DIR, VENICE_API_BASE, DEFAULT_MODEL, CONTEXT_WINDOWS, DEFAULT_CONTEXT_WINDOW, RECENT_MESSAGES_TO_KEEP, CREATIVE_FICTION_SYSTEM_PROMPT
@@ -1116,6 +1118,15 @@ def edit_image_route():
     prompt = data.get('prompt')
     images = data.get('images', []) # Array: [base, mask]
 
+    # Log incoming request
+    logger.info(f"[edit_image] INCOMING - model: {model_id}, prompt: {(prompt or '')[:100]}...")
+    logger.info(f"[edit_image] INCOMING IMAGES COUNT: {len(images)}")
+    for i, img in enumerate(images):
+        if isinstance(img, str):
+            logger.info(f"[edit_image]   Image {i}: {img[:60]}... (len={len(img)})")
+        else:
+            logger.info(f"[edit_image]   Image {i}: {type(img)}")
+
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
 
@@ -1157,10 +1168,23 @@ def edit_image_route():
     if model_key == "modelId" and not cleaned_images:
         return jsonify({"error": f"Load an image in the Target card to use {model_id}."}), 400
 
+    multi_ref = bool(data.get('multi_ref', False))
+
     # Strip the mask (second image) if the model doesn't support AI masking —
     # the frontend enforces the mask locally via compositing.
-    if not api_supports_mask and len(cleaned_images) > 1:
+    # In multi_ref mode there is no mask — all images are reference cards, so skip the strip.
+    if not api_supports_mask and not multi_ref and len(cleaned_images) > 1:
         cleaned_images = cleaned_images[:1]
+
+    # Upgrade /image/edit → /image/multi-edit when the caller is sending multiple
+    # reference card images (multi_ref=True) and the model supports it.
+    # We do NOT upgrade for the mask workflow ([base, mask] from ImageEditor) —
+    # that path never sets multi_ref, keeping mask handling on /image/edit.
+    supports_multi_edit = model_config.get('supports_multi_edit', False) if model_config else False
+    if model_endpoint == "/image/edit" and supports_multi_edit and multi_ref and len(cleaned_images) > 1:
+        model_endpoint = "/image/multi-edit"
+        url = f"{VENICE_API_BASE}/image/multi-edit"
+        logger.info(f"[edit_image] Upgrading to /image/multi-edit for {len(cleaned_images)} reference images")
 
     payload = {
         model_key: model_id,
@@ -1330,8 +1354,30 @@ def gemini_image_generate_route():
 
     data = request.json
     model_id = data.get('model', 'gemini-3.1-flash-image-preview')
+    
+    # Log incoming request (redact base64)
+    images_in = data.get('images', [])
+    logger.info(f"[gemini_image] INCOMING REQUEST - model: {model_id}, prompt: {data.get('prompt', '')[:100]}...")
+    logger.info(f"[gemini_image] INCOMING IMAGES COUNT: {len(images_in)}")
+    for i, img in enumerate(images_in):
+        if isinstance(img, str):
+            img_preview = img[:50] + '...' if len(img) > 50 else img
+            logger.info(f"[gemini_image]   Image {i}: {img_preview}")
+        else:
+            logger.info(f"[gemini_image]   Image {i}: {type(img)}")
+    
+    # Map edit variants back to their base model names for the API URL
+    api_model_id = model_id
+    if api_model_id.endswith('-edit'):
+        api_model_id = api_model_id.replace('-edit', '-image-preview')
+        # Special case for gemini-3-pro-edit -> gemini-3-pro-image-preview
+        if api_model_id == "gemini-3-pro-image-preview":
+            pass # already handled by replace
+    
     prompt = data.get('prompt')
     images = data.get('images', [])  # list of data URLs
+    aspect_ratio = data.get('aspect_ratio')
+    resolution = data.get('resolution')
 
     if not prompt:
         return jsonify({"error": "prompt is required"}), 400
@@ -1340,7 +1386,8 @@ def gemini_image_generate_route():
     if not google_api_key:
         return jsonify({"error": "Google API key not configured"}), 400
 
-    # Build the REST payload: text prompt first, then images
+    # Build the REST payload: text prompt first, then images.
+    # Frontend sends images in card order: [ref-1, ref-2, target] — matches user's numbering.
     parts = [{"text": prompt}]
     for data_url in images:
         if ',' in data_url:
@@ -1356,11 +1403,17 @@ def gemini_image_generate_route():
             }
         })
 
+    gen_config = {
+        "response_modalities": ["TEXT", "IMAGE"]
+    }
+    if aspect_ratio:
+        gen_config["aspect_ratio"] = aspect_ratio
+    if resolution:
+        gen_config["resolution"] = resolution
+
     payload = {
         "contents": [{"parts": parts}],
-        "generationConfig": {
-            "response_modalities": ["TEXT", "IMAGE"]
-        },
+        "generationConfig": gen_config,
         "safetySettings": [
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
@@ -1370,7 +1423,16 @@ def gemini_image_generate_route():
         ]
     }
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={google_api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{api_model_id}:generateContent?key={google_api_key}"
+
+    # Log the full packet to Werkzeug console (minus raw base64)
+    log_payload = copy.deepcopy(payload)
+    for content in log_payload.get('contents', []):
+        for part in content.get('parts', []):
+            if 'inline_data' in part:
+                part['inline_data']['data'] = f"<BASE64_LEN_{len(part['inline_data']['data'])}>"
+    
+    logger.info(f"[gemini_image] FULL PACKET:\nURL: {url.split('?')[0]}\nPayload: {json.dumps(log_payload, indent=2)}")
 
     try:
         resp = requests.post(url, json=payload, timeout=120)

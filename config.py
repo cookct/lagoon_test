@@ -37,6 +37,8 @@ MAX_REQUEST_BYTES = 3000000         # 3MB hard limit for API requests
 
 # --- Flask Settings ---
 MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB upload limit
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "lagoon"
 
 # --- API Settings ---
 VENICE_API_BASE = "https://api.venice.ai/api/v1"

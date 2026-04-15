@@ -34,7 +34,7 @@ class UIManager {
         if (this.dom.toggleSidebarBtn) {
             this.dom.toggleSidebarBtn.addEventListener('click', () => this.toggleSidebar());
         }
-        window.addEventListener('resize', () => this.syncMessagesContainer());
+        // Removed resize/focus handlers - CSS handles messages-container centering
     }
 
     initTabs() {
@@ -150,6 +150,7 @@ class UIManager {
             // Close ALL other custom dropdowns
             document.querySelectorAll('.custom-dropdown-options').forEach(el => {
                 el.classList.remove('show');
+                el.classList.remove('dropup');
                 if (el.previousSibling && el.previousSibling.classList.contains('custom-dropdown-selected')) {
                     el.previousSibling.style.borderRadius = '4px';
                 }
@@ -160,8 +161,22 @@ class UIManager {
                 const rect = container.getBoundingClientRect();
                 optionsList.style.width = `${rect.width}px`;
                 
-                optionsList.classList.add('show');
-                selected.style.borderRadius = '4px 4px 0 0';
+                // Smart positioning: check if there's enough room below
+                const viewportHeight = window.innerHeight;
+                const spaceBelow = viewportHeight - rect.bottom;
+                const spaceAbove = rect.top;
+                
+                // Estimate dropdown height (max-height is usually 300px in CSS)
+                const maxDropdownHeight = 300;
+                const needsDropup = spaceBelow < maxDropdownHeight && spaceAbove > spaceBelow;
+                
+                if (needsDropup) {
+                    optionsList.classList.add('show', 'dropup');
+                    selected.style.borderRadius = '0 0 4px 4px';
+                } else {
+                    optionsList.classList.add('show');
+                    selected.style.borderRadius = '4px 4px 0 0';
+                }
             } else {
                 selected.style.borderRadius = '4px';
             }
@@ -181,7 +196,7 @@ class UIManager {
 
         // Global close
         document.addEventListener('click', () => {
-            optionsList.classList.remove('show');
+            optionsList.classList.remove('show', 'dropup');
             selected.style.borderRadius = '4px';
         });
 
@@ -214,7 +229,7 @@ class UIManager {
             optionsList.querySelectorAll('.custom-dropdown-item').forEach(it => {
                 it.classList.toggle('selected', it.dataset.value === opt.value);
             });
-            optionsList.classList.remove('show');
+            optionsList.classList.remove('show', 'dropup');
             selected.style.borderRadius = '4px';
         };
         return item;
@@ -268,20 +283,9 @@ class UIManager {
     }
 
     syncMessagesContainer() {
-        const textarea = this.dom.messageInput;
-        const container = this.dom.messagesContainer;
-        const chatMessages = this.dom.chatMessages;
-        
-        if (!textarea || !container || !chatMessages) return;
-
-        const textareaRect = textarea.getBoundingClientRect();
-        const chatMessagesRect = chatMessages.getBoundingClientRect();
-
-        const leftOffset = textareaRect.left - chatMessagesRect.left;
-        const rightOffset = chatMessagesRect.right - textareaRect.right;
-
-        container.style.marginLeft = leftOffset + 'px';
-        container.style.marginRight = rightOffset + 'px';
+        // Disabled - CSS handles centering with margin: 0 auto and max-width: 900px
+        // The previous JS calculation was causing layout issues on resize/wake-from-sleep
+        return;
     }
 
     setupSplitters() {

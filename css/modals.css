@@ -2931,6 +2931,18 @@
     cursor: not-allowed;
 }
 
+.image-clear-btn {
+    display: none;
+}
+
+body.mode-image #export-btn {
+    display: none;
+}
+
+body.mode-image .image-clear-btn {
+    display: flex;
+}
+
 .export-btn.hidden {
     display: none;
 }

@@ -24,6 +24,97 @@
         }
     },
     "models": {
+        "nano-banana-pro": {
+            "provider": "venice",
+            "endpoint": "/image/generate",
+            "display_name": "Nano Banana Pro (Venice)",
+            "category": "generate",
+            "edit_variant": "nano-banana-pro-edit",
+            "price_per_image": 0.18,
+            "params": {
+                "prompt": {
+                    "type": "string",
+                    "required": true,
+                    "max_length": 32768
+                },
+                "resolution": {
+                    "type": "enum",
+                    "options": ["1K", "2K", "4K"],
+                    "default": "1K"
+                },
+                "aspect_ratio": {
+                    "type": "enum",
+                    "options": ["1:1", "3:2", "16:9", "21:9", "9:16", "2:3", "4:5"],
+                    "default": "1:1"
+                },
+                "steps": {
+                    "type": "int",
+                    "default": 20,
+                    "max": 50
+                }
+            },
+            "ui_controls": ["resolution", "aspect_ratio", "steps"]
+        },
+        "nano-banana-pro-edit": {
+            "provider": "venice",
+            "endpoint": "/image/edit",
+            "display_name": "Nano Banana Pro Edit (Venice)",
+            "category": "edit",
+            "supports_ai_mask": true,
+            "supports_multi_edit": true,
+            "price_per_image": 0.18,
+            "params": {
+                "prompt": {
+                    "type": "string",
+                    "required": true,
+                    "max_length": 32768
+                },
+                "image": {
+                    "type": "image",
+                    "required": true
+                }
+            },
+            "ui_controls": []
+        },
+        "gemini-3-pro-image-preview": {
+            "provider": "google",
+            "endpoint": "/gemini-3-pro-image-preview:generateContent",
+            "display_name": "Nano Banana Pro (Google)",
+            "category": "generate",
+            "edit_variant": "gemini-3-pro-edit",
+            "price_per_image": 0.02,
+            "params": {
+                "prompt": {
+                    "type": "string",
+                    "required": true
+                },
+                "aspect_ratio": {
+                    "type": "enum",
+                    "options": ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"],
+                    "default": "1:1"
+                },
+                "resolution": {
+                    "type": "enum",
+                    "options": ["1K", "2K", "4K"],
+                    "default": "2K"
+                }
+            },
+            "ui_controls": ["aspect_ratio", "resolution"]
+        },
+        "gemini-3-pro-edit": {
+            "provider": "google",
+            "endpoint": "/gemini-3-pro-image-preview:generateContent",
+            "display_name": "Nano Banana Pro Edit (Google)",
+            "category": "edit",
+            "price_per_image": 0.02,
+            "params": {
+                "prompt": {
+                    "type": "string",
+                    "required": true
+                }
+            },
+            "ui_controls": []
+        },
         "glm-image": {
             "provider": "zai",
             "endpoint": "/images/generations",
@@ -109,7 +200,7 @@
             "display_name": "Grok Imagine Edit",
             "category": "edit",
             "supports_ai_mask": false,
-            "supports_multi_edit": false,
+            "supports_multi_edit": true,
             "price_per_image": 0.04,
             "ui_controls": []
         },
