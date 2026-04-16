@@ -247,6 +247,24 @@
                    </div>
                </div>
 
+               <!-- Venice edit model params (grok, seedream, nano-banana) -->
+               <div id="venice-edit-params" style="display:none; margin-top:10px;">
+                   <div class="upscaler-param-row">
+                       <label class="upscaler-label">Ratio</label>
+                       <select id="venice-edit-aspect-ratio" class="upscaler-select">
+                           <option value="auto" selected>Auto</option>
+                           <option value="1:1">1:1</option>
+                           <option value="3:2">3:2</option>
+                           <option value="16:9">16:9</option>
+                           <option value="21:9">21:9</option>
+                           <option value="9:16">9:16</option>
+                           <option value="2:3">2:3</option>
+                           <option value="3:4">3:4</option>
+                           <option value="4:5">4:5</option>
+                       </select>
+                   </div>
+               </div>
+
                <!-- Results count — applies to all models -->
                <div class="upscaler-param-row" id="results-count-row">
                    <label class="upscaler-label" title="Number of parallel results to generate">Results</label>
@@ -969,7 +987,7 @@
         </div>
     </div>
 
-    <!-- Image Editor Modal -->
+    <!-- Masking Modal -->
     <div id="image-edit-modal" class="image-editor-overlay hidden">
         <div id="image-edit-toolbar" class="image-editor-toolbar">
             <div class="editor-tool-group">

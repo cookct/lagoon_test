@@ -1,6 +1,6 @@
 /**
- * Image Editor Component
- * Full-screen modal for masking and image modification.
+ * Masking Modal Component
+ * Full-screen modal for mask-based image editing.
  */
 
 import { state } from '../state.js';

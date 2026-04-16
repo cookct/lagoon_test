@@ -18,6 +18,7 @@ logging.basicConfig(
 )
 app.logger.setLevel(logging.INFO)
 logging.getLogger('httpx').setLevel(logging.WARNING)
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 app.config['SECRET_KEY'] = 'lagoon-secret-key'
 app.config['TEMPLATES_AUTO_RELOAD'] = True  # Disable template caching

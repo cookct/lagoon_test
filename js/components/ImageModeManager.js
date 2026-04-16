@@ -238,6 +238,12 @@ export class ImageModeManager {
             // Only show Gemini params if it's a Gemini model AND NOT an edit model
             geminiParams.style.display = (isGemini && !isEditModel) ? 'block' : 'none';
         }
+
+        const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'nano-banana-pro-edit', 'grok-imagine-image-pro'];
+        const veniceEditParams = document.getElementById('venice-edit-params');
+        if (veniceEditParams) {
+            veniceEditParams.style.display = veniceAspectModels.includes(selectedModel) ? 'block' : 'none';
+        }
         
         // Hide message input for upscaler (no prompt needed)
         if (this.dom.messageInput) {
@@ -359,8 +365,9 @@ export class ImageModeManager {
         // Add to prompt history
         addToPromptHistory(prompt);
 
-        // Edit models that only use the target image card
-        const editModels = ['qwen-image-2-edit', 'seedream-v5-lite-edit', 'seedream-v4-edit', 'firered-image-edit'];
+        // Target-only models in the main area — no reference cards, just the target card.
+        // Separate from masking modal models (editor-model-select in index.html).
+        const editModels = ['qwen-image-2-edit', 'firered-image-edit'];
 
         // Gather images based on model type
         let images = [];
@@ -408,9 +415,22 @@ export class ImageModeManager {
         if (isGemini) endpoint = '/api/image/generate/gemini';
         if (isZai) endpoint = '/api/image/generate/zai';
 
+        // multi_ref = true only when 2 reference cards are checked+loaded (not counting target)
+        const refCount = ['ref-1', 'ref-2'].filter(id => {
+            const cb = document.querySelector(`.image-card-checkbox[data-target="${id}"]`);
+            const img = document.querySelector(`#preview-${id} img`);
+            return (!cb || cb.checked) && img && img.src;
+        }).length;
+
         const body = (isGemini || isZai)
             ? { model: modelId, prompt, images }
-            : { modelId, prompt, images, multi_ref: images.length > 1 };
+            : { modelId, prompt, images, multi_ref: refCount > 1 };
+
+        const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'nano-banana-pro-edit', 'grok-imagine-image-pro'];
+        if (veniceAspectModels.includes(modelId)) {
+            const ratio = document.getElementById('venice-edit-aspect-ratio')?.value;
+            if (ratio && ratio !== 'auto') body.aspect_ratio = ratio;
+        }
 
         if (isGemini && !editModels.includes(modelId)) {
             const ratio = document.getElementById('image-param-aspect_ratio')?.value;

@@ -1155,17 +1155,14 @@ def edit_image_route():
         model_endpoint = model_config['endpoint']
         api_supports_mask = model_config.get('supports_ai_mask', False)
         url = f"{VENICE_API_BASE}{model_endpoint}"
-        # Generate endpoint uses "model" key; all edit endpoints use "modelId"
-        model_key = "model" if model_endpoint == "/image/generate" else "modelId"
     else:
         # Fallback: name heuristic for unknown models
         is_edit = "-edit" in model_id or model_id == "qwen-edit"
         api_supports_mask = is_edit
         model_endpoint = "/image/multi-edit" if is_edit else "/image/generate"
         url = f"{VENICE_API_BASE}{model_endpoint}"
-        model_key = "modelId" if is_edit else "model"
 
-    if model_key == "modelId" and not cleaned_images:
+    if model_endpoint != "/image/generate" and not cleaned_images:
         return jsonify({"error": f"Load an image in the Target card to use {model_id}."}), 400
 
     multi_ref = bool(data.get('multi_ref', False))
@@ -1186,10 +1183,19 @@ def edit_image_route():
         url = f"{VENICE_API_BASE}/image/multi-edit"
         logger.info(f"[edit_image] Upgrading to /image/multi-edit for {len(cleaned_images)} reference images")
 
+    # Resolve model key from final endpoint — multi-edit still uses modelId, others use model
+    model_key = "modelId" if model_endpoint == "/image/multi-edit" else "model"
+
     payload = {
         model_key: model_id,
         "prompt": prompt
     }
+
+    payload["safe_mode"] = False
+
+    aspect_ratio = data.get('aspect_ratio')
+    if aspect_ratio:
+        payload["aspect_ratio"] = aspect_ratio
 
     # /image/edit expects a singular "image" field; /image/multi-edit and /image/generate use "images" array
     if cleaned_images:
