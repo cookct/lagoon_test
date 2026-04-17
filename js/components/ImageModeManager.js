@@ -236,8 +236,9 @@ export class ImageModeManager {
         
         const geminiParams = document.getElementById('gemini-params');
         if (geminiParams) {
-            // Only show Gemini params if it's a Gemini model AND NOT an edit model
-            geminiParams.style.display = (isGemini && !isEditModel) ? 'block' : 'none';
+            // Only show Gemini params if it's a Gemini model AND (NOT an edit model OR specifically gemini-3-pro-edit)
+            const showGemini = isGemini && (!isEditModel || selectedModel === 'gemini-3-pro-edit');
+            geminiParams.style.display = showGemini ? 'block' : 'none';
         }
 
         const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'nano-banana-pro-edit', 'grok-imagine-image-pro'];
@@ -446,7 +447,7 @@ export class ImageModeManager {
             if (ratio && ratio !== 'auto') body.aspect_ratio = ratio;
         }
 
-        if (isGemini && !editModels.includes(modelId)) {
+        if (isGemini && (!editModels.includes(modelId) || modelId === 'gemini-3-pro-edit')) {
             const ratio = document.getElementById('image-param-aspect_ratio')?.value;
             const res = document.getElementById('image-param-resolution')?.value;
             if (ratio && ratio !== 'Auto') body.aspect_ratio = ratio;

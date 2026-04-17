@@ -1421,10 +1421,13 @@ def gemini_image_generate_route():
     gen_config = {
         "response_modalities": ["TEXT", "IMAGE"]
     }
-    if aspect_ratio:
-        gen_config["aspect_ratio"] = aspect_ratio
-    if resolution:
-        gen_config["resolution"] = resolution
+    if aspect_ratio or resolution:
+        gen_config["imageConfig"] = {}
+        if aspect_ratio and aspect_ratio != 'Auto':
+            gen_config["imageConfig"]["aspectRatio"] = aspect_ratio
+        if resolution and resolution != 'Auto':
+            # Google uses 'imageSize' (1K, 2K, 4K) for generation/editing
+            gen_config["imageConfig"]["imageSize"] = resolution
 
     payload = {
         "contents": [{"parts": parts}],
