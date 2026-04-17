@@ -17,6 +17,7 @@ export class ImageModeManager {
         this.activeEditBtn = null;
         this.editSourceImage = null;
         this.editHistory = [];
+        this.abortController = null;
     }
 
     init() {
@@ -318,11 +319,12 @@ export class ImageModeManager {
     /**
      * Fire a single fetch to the image endpoint and return the final image src.
      */
-    async _fetchSingle(endpoint, body) {
+    async _fetchSingle(endpoint, body, signal) {
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            signal
         });
         const result = await response.json();
         if (result.error) throw new Error(result.error);
@@ -396,9 +398,21 @@ export class ImageModeManager {
         }
 
         const sendBtn = document.getElementById('send-btn');
+        const sendBtnOriginalHTML = sendBtn?.innerHTML;
+        const sendBtnOriginalType = sendBtn?.type;
+
+        this.abortController = new AbortController();
+        const { signal } = this.abortController;
+
+        const stopHandler = () => { this.abortController?.abort(); };
+
         if (sendBtn) {
-            sendBtn.disabled = true;
-            sendBtn.classList.add('loading');
+            sendBtn.type = 'button';
+            sendBtn.disabled = false;
+            sendBtn.classList.remove('loading');
+            sendBtn.classList.add('stop-btn');
+            sendBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
+            sendBtn.addEventListener('click', stopHandler);
         }
 
         // Clear and disable message input during generation
@@ -424,7 +438,7 @@ export class ImageModeManager {
 
         const body = (isGemini || isZai)
             ? { model: modelId, prompt, images }
-            : { modelId, prompt, images, multi_ref: refCount > 1 };
+            : { modelId, prompt, images, multi_ref: refCount > 1, single_edit: this.editModeActive };
 
         const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'nano-banana-pro-edit', 'grok-imagine-image-pro'];
         if (veniceAspectModels.includes(modelId)) {
@@ -449,11 +463,11 @@ export class ImageModeManager {
         this.showGeneratingSpinner(resultsCount);
         try {
             if (resultsCount === 1) {
-                const finalSrc = await this._fetchSingle(endpoint, body);
+                const finalSrc = await this._fetchSingle(endpoint, body, signal);
                 this.displayResult(finalSrc);
             } else {
                 const settled = await Promise.allSettled(
-                    Array.from({ length: resultsCount }, () => this._fetchSingle(endpoint, body))
+                    Array.from({ length: resultsCount }, () => this._fetchSingle(endpoint, body, signal))
                 );
                 const srcs = settled.filter(r => r.status === 'fulfilled').map(r => r.value);
                 const failed = settled.filter(r => r.status === 'rejected').length;
@@ -461,13 +475,19 @@ export class ImageModeManager {
                 if (failed > 0) console.warn(`[ImageModeManager] ${failed} image(s) failed in batch`);
             }
         } catch (err) {
-            console.error('[ImageModeManager] Generate failed:', err);
-            await lagoonAlert(`Generate failed: ${err.message}`);
+            if (err.name !== 'AbortError') {
+                console.error('[ImageModeManager] Generate failed:', err);
+                await lagoonAlert(`Generate failed: ${err.message}`);
+            }
         } finally {
             this.removeGeneratingSpinner();
+            this.abortController = null;
             if (sendBtn) {
+                sendBtn.removeEventListener('click', stopHandler);
+                sendBtn.type = sendBtnOriginalType || 'submit';
+                sendBtn.innerHTML = sendBtnOriginalHTML || '';
                 sendBtn.disabled = false;
-                sendBtn.classList.remove('loading');
+                sendBtn.classList.remove('stop-btn');
             }
             if (this.dom.messageInput) {
                 this.dom.messageInput.disabled = false;

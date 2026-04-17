@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize custom dropdowns
     const dropdowns = document.querySelectorAll(
-        '#model, #desktop_tts_provider, #desktop_tts_voice, #import-character, #image-generate-model, #image-results-count, #glm-image-size, #glm-image-quality, #upscaler-scale, #editor-model-select'
+        '#model, #desktop_tts_provider, #desktop_tts_voice, #import-character, #image-generate-model, #image-results-count, #glm-image-size, #glm-image-quality, #upscaler-scale, #editor-model-select, #venice-edit-aspect-ratio, #image-param-aspect_ratio, #image-param-resolution'
     );
     dropdowns.forEach(select => uiManager.initCustomDropdown(select));
 

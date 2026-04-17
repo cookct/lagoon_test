@@ -1120,6 +1120,7 @@ def edit_image_route():
 
     # Log incoming request
     logger.info(f"[edit_image] INCOMING - model: {model_id}, prompt: {(prompt or '')[:100]}...")
+    logger.info(f"[edit_image] single_edit: {data.get('single_edit')}, multi_ref: {data.get('multi_ref')}")
     logger.info(f"[edit_image] INCOMING IMAGES COUNT: {len(images)}")
     for i, img in enumerate(images):
         if isinstance(img, str):
@@ -1167,6 +1168,14 @@ def edit_image_route():
 
     multi_ref = bool(data.get('multi_ref', False))
 
+    # single_edit from toggle edit mode uses /image/edit
+    if data.get('single_edit') and model_endpoint == "/image/multi-edit":
+        model_endpoint = "/image/edit"
+        url = f"{VENICE_API_BASE}{model_endpoint}"
+        logger.info(f"[edit_image] single_edit mode - using /image/edit endpoint")
+
+    logger.info(f"[edit_image] Using endpoint: {model_endpoint}")
+
     # Strip the mask (second image) if the model doesn't support AI masking —
     # the frontend enforces the mask locally via compositing.
     # In multi_ref mode there is no mask — all images are reference cards, so skip the strip.
@@ -1209,7 +1218,7 @@ def edit_image_route():
             url,
             headers={"Authorization": f"Bearer {api_key}"},
             json=payload,
-            timeout=120
+            timeout=300
         )
         
         logger.info(f"[edit_image] Venice Status: {resp.status_code}, Type: {resp.headers.get('Content-Type')}")
