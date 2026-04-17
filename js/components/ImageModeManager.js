@@ -238,7 +238,7 @@ export class ImageModeManager {
         if (geminiParams) {
             // Only show Gemini params if it's a Gemini model AND (NOT an edit model OR specifically gemini-3-pro-edit)
             const showGemini = isGemini && (!isEditModel || selectedModel === 'gemini-3-pro-edit');
-            geminiParams.style.display = showGemini ? 'block' : 'none';
+            geminiParams.classList.toggle('hidden', !showGemini);
         }
 
         const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'nano-banana-pro-edit', 'grok-imagine-image-pro'];
