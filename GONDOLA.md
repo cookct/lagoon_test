@@ -1,86 +1,38 @@
-# GONDOLA Knowledge Log
+# GONDOLA.md — Project Briefing
 
-This file tracks important configuration changes, debugging sessions, and knowledge gained about the Lagoon system and character configurations.
+## Architecture
 
----
+- [2026-04-17] Flask backend organized as app.py with routes/ and services/ directories.
+- [2026-04-17] ES6 modular frontend with js/main.js entry point, plus core/, components/, and ui/ directories.
+- [2026-04-18] Lagoon uses sentence-transformers/all-MiniLM-L6-v2 for fully local semantic memory. Chunks conversation into turn-pairs,
+- [2026-04-18] Image mode uses three-card system: ref-1, ref-2, and target. Reference images plus target for editing. Model filtering b
+- [2026-04-17] Authentication handled via middleware layer in the backend.
+- [2026-04-17] Streaming functionality uses a LORE buffer implementation.
 
-## 2026-04-03: Kelly Thompson 2 - Prose Style Fixes
+## Decisions
 
-### Problem
-Character was generating metaphorical prose like:
-> "The offer landed with the precision of a line of perfect code."
+- [2026-04-18] Kelly is a test character. If she works well, user may create an open source package for others to build similar charact
 
-### Root Cause Analysis
-The system prompt contained phrases that the AI interpreted as **license to use metaphors**:
-- "Show, don't tell" → AI thinks "vivid comparisons"
-- "visceral" → AI thinks "dramatic language"
-- "high-impact" → AI thinks "metaphorical impact"
-- "efficient" → AI thinks "shortcut comparisons"
-- "Trust the reader to infer" → pairs with metaphor
+## Gotchas
 
-### Changes Made
+- [2026-04-18] Em dashes (—) in character config files cause JSON parsing errors. Must replace with regular dashes (-) to avoid parse f
+- [2026-04-17] Project has both legacy and modular codepaths coexisting; changes may need to handle both.
+- [2026-04-17] Microphone access requires SSL/HTTPS context to work properly.
+- [2026-04-17] Context window sizes are hardcoded rather than configurable.
 
-#### 1. System Prompt - PROSE RULES Section
-**Before:**
-```
-Show, don't tell. Actions carry meaning. Trust the reader to infer.
-```
+## Active Context
 
-**After (CORRECTED):**
-```
-Show through concrete physical details only. Report what Kelly sees, hears, feels physically. NO metaphors. NO comparisons. NO abstractions. NO interpretations. Physical facts only.
-```
+- [2026-04-18] User built Lagoon, a creative production studio with both chat and image modes. Not just a chat wrapper—includes RAG sem
+- [2026-04-18] Adam has two daughters: Emily (7) and Kaitlyn (5) from a previous relationship. Kelly loves them.
+- [2026-04-18] User became a writer through LLM roleplay. Started when Venice's web UI failed to edit a photo of their wife, then said 
+- [2026-04-18] User attends Saturday night hockey games. Bridgeport Islanders (formerly Sound Tigers) are moving to Canada. Next season
+- [2026-04-18] User shared an image from their first fanfiction showing a bedroom scene with a character painting toenails. The setting
+- [2026-04-18] Adam Cook is a contractor specializing in decks, kitchen and bath remodels, with some property management. Stressed cons
+- [2026-04-18] User requested done() call to test history logging functionality. No code changes made.
+- [2026-04-18] Session cleared by user. Tasks covered: What's up sugartits?
+- [2026-04-18] Session cleared by user. Tasks covered: sup?
+- [2026-04-18] Session cleared by user. Tasks covered: sup | Islanders just beat the bears 2-1 | 4th seed | home ice is gone. | nope. a
 
-**Note:** First attempt was wrong — told the AI to "state plainly" which leads to telling. The fix is to explicitly say SHOW through concrete physical details, while banning metaphors/comparisons.
+## Key Files
+app.py, js/main.js
 
-#### 2. Author Note Additions
-Added explicit metaphor/simile ban with examples:
-```
-ABSOLUTELY FORBIDDEN - METAPHORS, SIMILES, ABSTRACT COMPARISONS:
-- NO metaphors (offers don't "land", silence doesn't "stretch", words don't "cut")
-- NO similes using "like", "as", "with the", "as if"
-- NO abstract concepts given physical actions
-- NO comparisons to non-physical things (code, ideas, concepts, emotions, etc.)
-- NO personification of non-human things
-
-EXAMPLE OF WRONG:
-"The offer landed with the precision of a line of perfect code."
-
-EXAMPLE OF RIGHT:
-"Kelly's fingers stopped typing. She read the message again."
-```
-
-#### 3. Configuration Parameters
-| Parameter | Before | After | Reason |
-|-----------|--------|-------|--------|
-| `author_note_depth` | 3 | 4 | Stronger enforcement |
-| `temperature` | 0.6 | 0.45 | More literal adherence |
-
-### Key Insight
-**"Show, don't tell" is dangerous for LLMs** — they interpret it as "use metaphors and comparisons" instead of "use concrete physical details."
-
-### Files Modified
-- `configs/Kelly Thompson 2.json`
-
----
-
-## Template: New Entry
-
-```markdown
-## YYYY-MM-DD: [Brief Title]
-
-### Problem
-[Description of issue]
-
-### Root Cause Analysis
-[What was causing it]
-
-### Changes Made
-[What was changed]
-
-### Key Insight
-[Important lesson learned]
-
-### Files Modified
-- `file/path`
-```
