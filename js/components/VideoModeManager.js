@@ -549,6 +549,7 @@ refreshParameterPanel() {
             const date = new Date(f.mtime * 1000);
             const label = `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} · ${mb} MB`;
             const videoUrl = `/api/video/file/${f.filename}`;
+            const modelId = f.model || null;  // Model ID parsed from filename
 
             const row = document.createElement('div');
             row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 0; border-bottom:1px solid var(--border);';
@@ -558,7 +559,7 @@ refreshParameterPanel() {
             const ts = document.createElement('button');
             ts.style.cssText = 'background:none; border:none; padding:0; font-size:11px; color:var(--ansi-cyan); cursor:pointer; text-align:left;';
             ts.textContent = label;
-            ts.addEventListener('click', () => this.openVideoInChat(videoUrl));
+            ts.addEventListener('click', () => this.openVideoInChat(videoUrl, modelId));
             info.appendChild(ts);
 
             const del = document.createElement('button');
@@ -585,9 +586,11 @@ refreshParameterPanel() {
         });
     }
 
-    openVideoInChat(videoUrl) {
+    openVideoInChat(videoUrl, modelId = null) {
         const markerId = `vlib-${Date.now()}`;
-        addMessageToUI('assistant', `[[VIDEO_LIB_MARKER:${markerId}]]`, {});
+        // Build config with model for avatar/logo lookup
+        const msgConfig = modelId ? { model: modelId, character_name: modelId } : {};
+        addMessageToUI('assistant', `[[VIDEO_LIB_MARKER:${markerId}]]`, msgConfig);
         requestAnimationFrame(() => {
             const messages = document.querySelectorAll('.message-content');
             for (const msg of messages) {

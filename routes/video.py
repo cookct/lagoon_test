@@ -85,7 +85,10 @@ def retrieve_video():
         content_type = resp.headers.get('Content-Type', '')
 
         if 'video/mp4' in content_type:
-            filename = f"{queue_id}.mp4"
+            # Embed model ID in filename for avatar/logo lookup on load
+            # Format: {queue_id}__{model_id}.mp4
+            safe_model = model.replace('/', '--').replace('\\', '--')
+            filename = f"{queue_id}__{safe_model}.mp4"
             path = os.path.join(VIDEO_CACHE_DIR, filename)
             with open(path, 'wb') as f:
                 f.write(resp.content)
@@ -118,7 +121,22 @@ def list_video_files():
                 continue
             path = os.path.join(VIDEO_CACHE_DIR, name)
             stat = os.stat(path)
-            files.append({'filename': name, 'size': stat.st_size, 'mtime': stat.st_mtime})
+            
+            # Parse model from filename: {queue_id}__{model_id}.mp4
+            model = None
+            base = name[:-4]  # strip .mp4
+            if '__' in base:
+                parts = base.split('__', 1)
+                if len(parts) == 2:
+                    # Restore slashes in model ID
+                    model = parts[1].replace('--', '/')
+            
+            files.append({
+                'filename': name,
+                'size': stat.st_size,
+                'mtime': stat.st_mtime,
+                'model': model
+            })
         files.sort(key=lambda f: f['mtime'], reverse=True)
         return jsonify(files)
     except Exception as e:
