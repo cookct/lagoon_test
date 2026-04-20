@@ -18,6 +18,19 @@ export class VideoModeManager {
         this.abortController = null;
     }
 
+    // Helper to update balance display from video API responses
+    _updateBalance(balanceUsd) {
+        if (!balanceUsd) return;
+        const balanceEl = document.getElementById('balance-usd');
+        if (balanceEl) {
+            const val = parseFloat(balanceUsd);
+            balanceEl.textContent = isNaN(val) ? balanceUsd : val.toFixed(3);
+        }
+        // Persist to localStorage
+        localStorage.setItem('lagoon_balance_usd', balanceUsd);
+        state.lastBalanceUsd = balanceUsd;
+    }
+
     init() {
         this.cacheDom();
         this.bindEvents();
@@ -387,6 +400,9 @@ refreshParameterPanel() {
             const returnedModel = response.model || modelId;
             const queueDownloadUrl = response.download_url || null;
 
+            // Update balance if returned
+            if (response._balance) this._updateBalance(response._balance);
+
             if (queueId) {
                 const statusMsgId = `video-status-${queueId}`;
                 addMessageToUI('assistant', `[[VIDEO_STATUS_MARKER:${queueId}]]`, msgConfig);
@@ -469,6 +485,9 @@ refreshParameterPanel() {
             try {
                 const data = await retrieveVideoApi(model, queueId);
                 const status = data.status;
+
+                // Update balance if returned
+                if (data._balance) this._updateBalance(data._balance);
 
                 if (status === 'COMPLETED' || data.video_url || data.download_url) {
                     const videoUrl = data.video_url || data.download_url || queueDownloadUrl;

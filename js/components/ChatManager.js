@@ -96,9 +96,41 @@ export class ChatManager {
             if (this.sessionCost > 0 && this.dom.sessionCostEl) {
                 this.dom.sessionCostEl.textContent = `$${this.sessionCost.toFixed(4)}`;
             }
+            // Load cached balance immediately for instant display
+            this._loadCachedBalance();
+            // Refresh balance from API in background
+            this._refreshBalance();
             console.log('[ChatManager] Initialized');
         } else {
             console.warn('[ChatManager] Chat DOM elements not found');
+        }
+    }
+
+    _loadCachedBalance() {
+        // Show last known balance immediately from localStorage
+        const cached = localStorage.getItem('lagoon_balance_usd');
+        if (cached && this.dom.balanceEl) {
+            const val = parseFloat(cached);
+            this.dom.balanceEl.textContent = isNaN(val) ? cached : val.toFixed(3);
+            state.lastBalanceUsd = cached;
+        }
+    }
+
+    async _refreshBalance() {
+        // Fetch fresh balance from API in background
+        try {
+            const resp = await fetch('/api/balance');
+            const data = await resp.json();
+            if (data.success && data.balance && this.dom.balanceEl) {
+                const val = parseFloat(data.balance);
+                const displayVal = isNaN(val) ? data.balance : val.toFixed(3);
+                this.dom.balanceEl.textContent = displayVal;
+                localStorage.setItem('lagoon_balance_usd', data.balance);
+                state.lastBalanceUsd = data.balance;
+            }
+        } catch (e) {
+            // Silently fail - we already showed cached value
+            console.debug('[ChatManager] Balance refresh failed:', e.message);
         }
     }
 
@@ -706,7 +738,11 @@ export class ChatManager {
                            if (this.dom.balanceEl) {
                                if (eventData.usd) {
                                    const val = parseFloat(eventData.usd);
-                                   this.dom.balanceEl.textContent = isNaN(val) ? eventData.usd : val.toFixed(3);
+                                   const displayVal = isNaN(val) ? eventData.usd : val.toFixed(3);
+                                   this.dom.balanceEl.textContent = displayVal;
+                                   // Persist to localStorage for instant display on next load
+                                   localStorage.setItem('lagoon_balance_usd', eventData.usd);
+                                   state.lastBalanceUsd = eventData.usd;
                                }
                            }
                         } else if (eventData.event === 'search_results') {

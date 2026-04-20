@@ -15,6 +15,7 @@ export const state = {
     editingMessageIndex: null,
     isTemporaryChat: false,
     lastBalanceVcu: null,
+    lastBalanceUsd: localStorage.getItem('lagoon_balance_usd') || null,
     currentSearchResults: [],
     userScrolledAway: false,
     scrollAnimationId: null,

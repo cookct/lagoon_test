@@ -17,6 +17,12 @@ from config import VENICE_API_BASE
 from services.storage import get_api_key
 
 logger = logging.getLogger(__name__)
+
+# Optional: import the balance event emitter from chat if available
+try:
+    from routes.chat import emit_balance_event
+except ImportError:
+    emit_balance_event = None
 video_bp = Blueprint('video', __name__)
 
 VIDEO_CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'video_cache')
@@ -35,8 +41,16 @@ def queue_video():
         url = f"{VENICE_API_BASE}/video/queue"
         logger.info(f"[Video] Queue -> {url} model={data.get('model')}")
         resp = requests.post(url, json=data, headers=headers, timeout=60)
+        
+        # Extract balance from response headers
+        balance_usd = resp.headers.get('x-venice-balance-usd')
+        
         if resp.status_code == 200:
-            return jsonify(resp.json())
+            result = resp.json()
+            # Include balance in response for frontend to persist
+            if balance_usd:
+                result['_balance'] = balance_usd
+            return jsonify(result)
         logger.error(f"[Video] Queue failed: {resp.status_code} {resp.text[:500]}")
         return jsonify({
             "success": False,
@@ -83,6 +97,9 @@ def retrieve_video():
             }), resp.status_code
 
         content_type = resp.headers.get('Content-Type', '')
+        
+        # Extract balance from response headers
+        balance_usd = resp.headers.get('x-venice-balance-usd')
 
         if 'video/mp4' in content_type:
             # Embed model ID in filename for avatar/logo lookup on load
@@ -93,13 +110,19 @@ def retrieve_video():
             with open(path, 'wb') as f:
                 f.write(resp.content)
             logger.info(f"[Video] Cached {len(resp.content)} bytes to {path}")
-            return jsonify({
+            result = {
                 "status": "COMPLETED",
                 "video_url": f"/api/video/file/{filename}"
-            })
+            }
+            if balance_usd:
+                result['_balance'] = balance_usd
+            return jsonify(result)
 
         # JSON body: processing or completed-with-download_url
         body = resp.json()
+        # Include balance in response for frontend to persist
+        if balance_usd:
+            body['_balance'] = balance_usd
         return jsonify(body)
 
     except Exception as e:
@@ -226,4 +249,34 @@ def create_gif():
 
     except Exception as e:
         logger.exception("[Video] GIF creation failed")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@video_bp.route('/api/balance', methods=['GET'])
+def get_balance():
+    """Fetch current Venice balance by pinging the models endpoint (cheap, no tokens used)."""
+    api_key = get_api_key()
+    if not api_key:
+        return jsonify({"success": False, "error": "Venice API key not found"}), 401
+    
+    headers = {"Authorization": f"Bearer {api_key}"}
+    try:
+        # Ping models endpoint - it's lightweight and returns balance header
+        resp = requests.get(f"{VENICE_API_BASE}/models", headers=headers, timeout=10)
+        balance_usd = resp.headers.get('x-venice-balance-usd')
+        if balance_usd:
+            return jsonify({"success": True, "balance": balance_usd})
+        # Fallback: try chat completions with minimal request
+        resp = requests.post(
+            f"{VENICE_API_BASE}/chat/completions",
+            headers={**headers, "Content-Type": "application/json"},
+            json={"model": "llama-3.2-3b", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 1},
+            timeout=15
+        )
+        balance_usd = resp.headers.get('x-venice-balance-usd')
+        if balance_usd:
+            return jsonify({"success": True, "balance": balance_usd})
+        return jsonify({"success": False, "error": "Balance not found in response headers"}), 500
+    except Exception as e:
+        logger.exception("[Video] Balance fetch exception")
         return jsonify({"success": False, "error": str(e)}), 500
