@@ -237,7 +237,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-height: 0;
+    min-height: 120px;
     border-radius: 0; /* Removed corner radius */
 }
 
@@ -633,11 +633,29 @@
 
 /* --- Image Mode Cards --- */
 .mode-image-only {
-    display: none;
+    display: none !important;
 }
 
 body.mode-image .mode-image-only {
-    display: block;
+    display: flex !important;
+}
+
+/* --- Video Mode --- */
+.mode-video-only {
+    display: none !important;
+}
+
+body.mode-video .mode-video-only {
+    display: flex !important;
+}
+
+/* Specific overrides for block elements like parameters panel */
+body.mode-video #video-params-panel.mode-video-only {
+    display: block !important;
+}
+
+body.mode-image #image-generate-panel.mode-image-only {
+    display: block !important;
 }
 
 .image-card-container {
@@ -645,6 +663,8 @@ body.mode-image .mode-image-only {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .image-card .tool-section-header {

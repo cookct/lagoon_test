@@ -13,6 +13,7 @@ import { VENICE_VOICES, DEFAULT_VOICE, GOOGLE_VOICES, DEFAULT_GOOGLE_VOICE, DEFA
 import { VENICE_PRICING } from '../components/ChatManager.js';
 
 import { imageModeManager } from '../components/ImageModeManager.js';
+import { videoModeManager } from '../components/VideoModeManager.js';
 
 function formatPricing(m, provider) {
     let inputPrice = null;
@@ -918,6 +919,8 @@ export function showSettingsMenu(button) {
     modeToggleContainer.classList.add('mode-toggle-btns');
     modeToggleContainer.style.justifyContent = 'center';
     modeToggleContainer.style.marginTop = '6px';
+    modeToggleContainer.style.display = 'flex';
+    modeToggleContainer.style.gap = '4px';
 
     const chatBtn = document.createElement('button');
     chatBtn.classList.add('mode-btn');
@@ -930,6 +933,7 @@ export function showSettingsMenu(button) {
         localStorage.setItem('app_mode', 'chat');
         chatBtn.classList.add('active');
         imageBtn.classList.remove('active');
+        videoBtn.classList.remove('active');
         toggleAppMode();
     };
 
@@ -944,11 +948,28 @@ export function showSettingsMenu(button) {
         localStorage.setItem('app_mode', 'image');
         imageBtn.classList.add('active');
         chatBtn.classList.remove('active');
+        videoBtn.classList.remove('active');
+        toggleAppMode();
+    };
+
+    const videoBtn = document.createElement('button');
+    videoBtn.classList.add('mode-btn');
+    if (state.mode === 'video') videoBtn.classList.add('active');
+    videoBtn.textContent = 'Video';
+    videoBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (state.mode === 'video') return;
+        state.mode = 'video';
+        localStorage.setItem('app_mode', 'video');
+        videoBtn.classList.add('active');
+        chatBtn.classList.remove('active');
+        imageBtn.classList.remove('active');
         toggleAppMode();
     };
 
     modeToggleContainer.appendChild(chatBtn);
     modeToggleContainer.appendChild(imageBtn);
+    modeToggleContainer.appendChild(videoBtn);
     modeSection.appendChild(modeToggleContainer);
     menu.appendChild(modeSection);
 
@@ -1830,58 +1851,76 @@ if (document.readyState === 'loading') {
 }
 
 /**
- * Switch the application layout between 'chat' and 'image' mode.
+ * Switch the application layout between 'chat', 'image', and 'video' mode.
  */
 export function toggleAppMode() {
-    const isImageMode = state.mode === 'image';
+    // Reset all mode-specific elements first
+    const modeSpecificElements = document.querySelectorAll('.mode-image-only, .mode-video-only');
+    modeSpecificElements.forEach(el => el.style.display = ''); // Use empty string to let CSS take over
+    document.body.classList.remove('mode-image', 'mode-video');
 
-    // Left Sidebar Content
+    // Sidebar Content Elements
     const leftHeader = document.getElementById('sidebar-header');
     const leftTabs = document.querySelector('.sidebar-left .sidebar-tabs');
     const leftContent = document.getElementById('sidebar-content');
     const leftFooter = document.getElementById('sidebar-footer');
 
-    // Right Sidebar Content
     const rightHeader = document.getElementById('right-sidebar-header');
     const rightTabs = document.querySelector('.sidebar-right .sidebar-tabs');
     const rightContent = document.getElementById('right-sidebar-content');
 
-    // Note: We leave the sidebars (.sidebar-left, .sidebar-right) and 
-    // splitters visible to maintain the 3-column layout.
+    // Default: Show chat elements (will be overridden if not in chat mode)
+    const showChatElements = (show) => {
+        const display = show ? '' : 'none';
+        if (leftHeader) leftHeader.style.display = display;
+        if (leftTabs) leftTabs.style.display = display;
+        if (leftContent) leftContent.style.display = display;
+        if (leftFooter) leftFooter.style.display = display;
+        
+        // Hide rightHeader when in image mode, but video mode might need it
+        if (rightHeader) rightHeader.style.display = display;
+        if (rightTabs) rightTabs.style.display = display;
+        if (rightContent) rightContent.style.display = display;
+    };
 
-    // Image Mode Cards
-    const refCards = document.getElementById('reference-cards-container');
-    const targetCards = document.getElementById('target-card-container');
+    switch (state.mode) {
+        case 'image':
+            showChatElements(false);
+            document.body.classList.add('mode-image');
+            break;
 
-    if (isImageMode) {
-        if (leftHeader) leftHeader.style.display = 'none';
-        if (leftTabs) leftTabs.style.display = 'none';
-        if (leftContent) leftContent.style.display = 'none';
-        if (leftFooter) leftFooter.style.display = 'none';
+        case 'video':
+            showChatElements(false);
+            document.body.classList.add('mode-video');
+            // Video mode needs the right header for model selection (e.g. Wan)
+            if (rightHeader) rightHeader.style.display = '';
+            break;
 
-        if (rightHeader) rightHeader.style.display = 'none';
-        if (rightTabs) rightTabs.style.display = 'none';
-        if (rightContent) rightContent.style.display = 'none';
-
-        if (refCards) refCards.style.display = 'flex';
-        if (targetCards) targetCards.style.display = 'flex';
-
-        document.body.classList.add('mode-image');
-    } else {
-        if (leftHeader) leftHeader.style.display = '';
-        if (leftTabs) leftTabs.style.display = '';
-        if (leftContent) leftContent.style.display = '';
-        if (leftFooter) leftFooter.style.display = '';
-
-        if (rightHeader) rightHeader.style.display = '';
-        if (rightTabs) rightTabs.style.display = '';
-        if (rightContent) rightContent.style.display = '';
-
-        if (refCards) refCards.style.display = 'none';
-        if (targetCards) targetCards.style.display = 'none';
-
-        document.body.classList.remove('mode-image');
+        case 'chat':
+        default:
+            showChatElements(true);
+            break;
     }
-    imageModeManager.syncContextFileBtn();
-    console.log(`[Lagoon] Mode switched to: ${state.mode} (Tabs removed)`);
+
+    // Update model dropdown since valid models change per mode
+    import('../core/InstalledModels.js').then(models => {
+        const modelSelect = document.getElementById('model');
+        if (modelSelect) {
+            models.populateSelect(modelSelect);
+            uiManager.updateCustomDropdown(modelSelect);
+            // Auto-select first model and sync state for video mode
+            if (state.mode === 'video') {
+                if (modelSelect.value && !state.currentConfig.model) {
+                    state.currentConfig.model = modelSelect.value;
+                    import('../components/ChatManager.js').then(cm => {
+                        if (cm.chatManager) cm.chatManager.updateModelButtonText();
+                    });
+                }
+                videoModeManager.refreshParameterPanel();
+            }
+        }
+    });
+
+    if (imageModeManager) imageModeManager.syncContextFileBtn();
+    console.log(`[Lagoon] Mode switched to: ${state.mode}`);
 }

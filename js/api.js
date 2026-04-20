@@ -93,17 +93,30 @@ export async function reparentChatsApi(oldParent, newParent) {
     if (!response.ok) throw new Error('Failed to reparent chats');
     return response.json();
 }
-
 export async function saveConfigApi(filename, configData) {
     const response = await fetch('/api/save_config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename, config: configData })
     });
-    if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Failed to save.");
-    }
+    return response.json();
+}
+
+export async function queueVideoApi(payload) {
+    const response = await fetch('/api/video/queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    return response.json();
+}
+
+export async function retrieveVideoApi(model, queueId) {
+    const response = await fetch('/api/video/retrieve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, queue_id: queueId })
+    });
     return response.json();
 }
 

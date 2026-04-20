@@ -12,6 +12,7 @@ key.pem
 .venice_memory.json
 recovered_chat.txt
 installed_models.json
+video_cache/
 
 # Dev-only docs
 CLAUDE.md

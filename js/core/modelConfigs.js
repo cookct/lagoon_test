@@ -122,8 +122,38 @@ export const modelConfigs =
       "endpoint": "/video/queue",
       "display_name": "Wan 2.6 I2V",
       "category": "image-to-video",
-      "supports_reference_images": true,
+      "supports_end_image": false,
       "price_per_image": 0.83,
+      "params": {
+        "prompt": {
+          "type": "string",
+          "required": true,
+          "max_length": 2500
+        },
+        "duration": {
+          "type": "enum",
+          "options": ["5s"],
+          "default": "5s"
+        },
+        "aspect_ratio": {
+          "type": "enum",
+          "options": ["Auto", "1:1", "16:9", "9:16"],
+          "default": "Auto"
+        },
+        "negative_prompt": {
+          "type": "string",
+          "default": "low resolution, error, worst quality"
+        }
+      },
+      "ui_controls": ["duration", "aspect_ratio", "negative_prompt"]
+    },
+    "wan-2.7-image-to-video": {
+      "provider": "venice",
+      "endpoint": "/video/queue",
+      "display_name": "Wan 2.7 I2V",
+      "category": "image-to-video",
+      "supports_end_image": true,
+      "price_per_image": 0.95,
       "params": {
         "prompt": {
           "type": "string",
@@ -133,6 +163,10 @@ export const modelConfigs =
         "image_url": {
           "type": "image",
           "required": true
+        },
+        "end_image_url": {
+          "type": "image",
+          "required": false
         },
         "duration": {
           "type": "enum",
@@ -146,10 +180,110 @@ export const modelConfigs =
         },
         "negative_prompt": {
           "type": "string",
-          "default": "low resolution, error, worst quality, low quality, defects"
+          "default": "low resolution, error, worst quality"
         }
       },
       "ui_controls": ["duration", "resolution", "negative_prompt"]
+    },
+    "ovi-image-to-video": {
+      "provider": "venice",
+      "endpoint": "/video/queue",
+      "display_name": "Ovi I2V",
+      "category": "image-to-video",
+      "supports_end_image": false,
+      "params": {
+        "prompt": {
+          "type": "string",
+          "required": true,
+          "max_length": 2500
+        },
+        "image_url": {
+          "type": "image",
+          "required": true
+        },
+        "duration": {
+          "type": "enum",
+          "default": "5s",
+          "options": ["5s"]
+        }
+      },
+      "ui_controls": []
+    },
+    "wan-2-7-reference-to-video": {
+      "provider": "venice",
+      "endpoint": "/video/queue",
+      "display_name": "Wan 2.7 R2V",
+      "category": "image-to-video",
+      "supports_reference_images": true,
+      "supports_end_image": true,
+      "price_per_image": 0.95,
+      "params": {
+        "prompt": {
+          "type": "string",
+          "required": true,
+          "max_length": 2500
+        },
+        "image_url": {
+          "type": "image",
+          "required": true
+        },
+        "end_image_url": {
+          "type": "image",
+          "required": false
+        },
+        "duration": {
+          "type": "enum",
+          "options": ["5s", "10s"],
+          "default": "5s"
+        },
+        "resolution": {
+          "type": "enum",
+          "options": ["720p", "1080p"],
+          "default": "720p"
+        },
+        "negative_prompt": {
+          "type": "string",
+          "default": "low resolution, error, worst quality"
+        }
+      },
+      "ui_controls": ["duration", "resolution", "negative_prompt"]
+    },
+    "seedance-2-0-reference-to-video": {
+      "provider": "venice",
+      "endpoint": "/video/queue",
+      "display_name": "Seedance 2.0 R2V",
+      "category": "image-to-video",
+      "supports_start_image": false,
+      "supports_end_image": false,
+      "supports_reference_images": true,
+      "price_per_image": 1.50,
+      "params": {
+        "prompt": {
+          "type": "string",
+          "required": true,
+          "max_length": 3500
+        },
+        "aspect_ratio": {
+          "type": "enum",
+          "options": ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"],
+          "default": "16:9"
+        },
+        "duration": {
+          "type": "enum",
+          "options": ["4s", "5s", "8s", "10s", "12s", "15s"],
+          "default": "5s"
+        },
+        "resolution": {
+          "type": "enum",
+          "options": ["480p", "720p"],
+          "default": "720p"
+        },
+        "audio": {
+          "type": "bool",
+          "default": true
+        }
+      },
+      "ui_controls": ["aspect_ratio", "duration", "resolution", "audio"]
     },
     "qwen-image": {
       "provider": "venice",

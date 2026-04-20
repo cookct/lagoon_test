@@ -31,6 +31,7 @@ import { setupScrollDetection, handleScrollVisibility, autoScroll } from './ui/s
 import { showContextViewer, showSettingsMenu, filterModelDropdownForE2EE, toggleAppMode } from './ui/settings.js';
 
 import { imageModeManager } from './components/ImageModeManager.js';
+import { videoModeManager } from './components/VideoModeManager.js';
 import { imageEditor } from './components/ImageEditor.js';
 import { lightbox } from './components/Lightbox.js';
 
@@ -64,6 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     configManager.init();
     sessionManager.init();
     imageModeManager.init();
+    videoModeManager.init();
     imageEditor.init();
     lightbox.init();
     settingsPersistence.init();
@@ -120,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize custom dropdowns
     const dropdowns = document.querySelectorAll(
-        '#model, #desktop_tts_provider, #desktop_tts_voice, #import-character, #image-generate-model, #image-results-count, #glm-image-size, #glm-image-quality, #upscaler-scale, #editor-model-select, #venice-edit-aspect-ratio, #image-param-aspect_ratio, #image-param-resolution'
+        '#model, #desktop_tts_provider, #desktop_tts_voice, #import-character, #image-generate-model, #image-results-count, #glm-image-size, #glm-image-quality, #upscaler-scale, #editor-model-select, #venice-edit-aspect-ratio, #image-param-aspect_ratio, #image-param-resolution, #video-aspect-ratio, #video-resolution, #video-fps'
     );
     dropdowns.forEach(select => uiManager.initCustomDropdown(select));
 
@@ -307,6 +309,9 @@ function showModelSelector(button) {
                     delete state.currentConfig.custom_model_id;
                     delete state.currentConfig.custom_api_key;
                 }
+                // Sync the hidden <select> so mode managers can read the current model
+                modelSelect.value = modelName;
+                modelSelect.dispatchEvent(new Event('change'));
                 chatManager.updateModelButtonText();
                 menu.remove();
             };

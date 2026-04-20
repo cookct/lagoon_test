@@ -1,0 +1,465 @@
+Video
+Queue Video Generation
+Queue a new video generation request.
+
+Authentication: This endpoint accepts either a Bearer API key or an X-Sign-In-With-X header for x402 wallet-based authentication. When using x402, a 402 Payment Required response indicates insufficient balance and includes top-up instructions.
+
+POST
+/
+video
+/
+queue
+
+Try it
+/api/v1/video/queue
+
+import requests
+
+url = "https://api.venice.ai/api/v1/video/queue"
+
+payload = {
+    "model": "wan-2-7-text-to-video",
+    "prompt": "Commerce being conducted in the city of Venice, Italy.",
+    "duration": "5s",
+    "negative_prompt": "low resolution, error, worst quality, low quality, defects",
+    "aspect_ratio": "16:9",
+    "resolution": "720p",
+    "upscale_factor": 2,
+    "audio": True,
+    "image_url": "data:image/png;base64,iVBORw0K...",
+    "end_image_url": "data:image/png;base64,iVBORw0K...",
+    "audio_url": "data:audio/mpeg;base64,SUQzBAA...",
+    "video_url": "data:video/mp4;base64,AAAAFGZ0eXA...",
+    "reference_image_urls": ["data:image/png;base64,iVBORw0K..."],
+    "elements": [
+        {
+            "frontal_image_url": "data:image/png;base64,iVBORw0K...",
+            "reference_image_urls": ["data:image/png;base64,iVBORw0K..."]
+        }
+    ],
+    "scene_image_urls": ["data:image/png;base64,iVBORw0K..."]
+}
+headers = {
+    "Authorization": "Bearer <token>",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(url, json=payload, headers=headers)
+
+print(response.text)
+
+200
+
+400
+
+401
+
+402
+
+403
+
+413
+
+422
+
+500
+{
+  "model": "video-model-123",
+  "queue_id": "123e4567-e89b-12d3-a456-426614174000",
+  "download_url": "<string>"
+}
+Call /video/quote to get a price estimate, then poll /video/retrieve with the returned queue_id until complete.
+​
+Video upscaling
+For the topaz-video-upscale model, use upscale_factor (1, 2, or 4) instead of resolution, and provide a video_url. Duration and FPS are detected automatically from the video file. See the Video Upscaling Guide for full details and examples.
+Authorizations
+
+BearerAuth
+BearerAuth
+​
+Authorization
+stringheaderrequired
+Bearer authentication header of the form Bearer <token>, where <token> is your auth token.
+
+Body
+application/json
+Request body for video generation. Available fields and valid values vary by model.
+
+​
+model
+stringrequired
+The model to use for video generation.
+
+Example:
+"wan-2-7-text-to-video"
+
+​
+prompt
+stringrequired
+The prompt to use for video generation. Required for most models. The maximum length varies by model (default 2500 characters, up to 3500 for some models such as Seedance 2.0).
+
+Required string length: 1 - 3500
+Example:
+"Commerce being conducted in the city of Venice, Italy."
+
+​
+duration
+enum<string>required
+The duration of the video to generate. Available options vary by model.
+
+Available options: 2s, 3s, 4s, 5s, 6s, 7s, 8s, 9s, 10s, 11s, 12s, 13s, 14s, 15s, 16s, 18s, 20s, 25s, 30s, Auto 
+Example:
+"5s"
+
+​
+negative_prompt
+string
+Optional negative prompt. The maximum length varies by model (default 2500 characters, up to 3500 for some models).
+
+Maximum string length: 3500
+Example:
+"low resolution, error, worst quality, low quality, defects"
+
+​
+aspect_ratio
+enum<string>
+The aspect ratio of the video. Available options vary by model. Some models do not support aspect_ratio.
+
+Available options: 1:1, 2:3, 3:2, 3:4, 4:3, 9:16, 16:9, 21:9 
+Example:
+"16:9"
+
+​
+resolution
+enum<string>
+The resolution of the video. Available options vary by model. Some models do not support resolution. Use upscale_factor for upscale models.
+
+Available options: 256p, 360p, 480p, 540p, 580p, 720p, 1080p, 1440p, 2160p, 4k, 2x, 4x, true_1080p 
+Example:
+"720p"
+
+​
+upscale_factor
+enum<integer>default:2
+For upscale models only. 1 = quality enhancement, 2 = double resolution (default), 4 = quadruple.
+
+Available options: 1, 2, 4 
+Example:
+2
+
+​
+audio
+booleandefault:true
+For models which support audio generation and configuration. Defaults to true.
+
+Example:
+true
+
+​
+image_url
+string
+For image-to-video models, the reference image. Must be a URL (http/https) or a data URL (data:image/...).
+
+Example:
+"data:image/png;base64,iVBORw0K..."
+
+​
+end_image_url
+string
+For models that support end images or transitions, the end frame image. Must be a URL or data URL.
+
+Example:
+"data:image/png;base64,iVBORw0K..."
+
+​
+audio_url
+string
+For models that support audio input, background music. Must be a URL or data URL. Supported: WAV, MP3. Max: 30s, 15MB.
+
+Example:
+"data:audio/mpeg;base64,SUQzBAA..."
+
+​
+video_url
+string
+For models that support video input (video-to-video, upscale). Must be a URL or data URL. Supported: MP4, MOV, WebM.
+
+Example:
+"data:video/mp4;base64,AAAAFGZ0eXA..."
+
+​
+reference_image_urls
+string[]
+For models with reference image support, up to 9 images for character/style consistency. Each must be a URL or data URL.
+
+Maximum array length: 9
+Example:
+["data:image/png;base64,iVBORw0K..."]
+​
+elements
+object[]
+For models with advanced element support (e.g., Kling O3 R2V). Up to 4 elements defining characters/objects. Reference in prompt as @Element1, @Element2, etc.
+
+Maximum array length: 4
+Show child attributes
+
+Example:
+[
+  {
+    "frontal_image_url": "data:image/png;base64,iVBORw0K...",
+    "reference_image_urls": ["data:image/png;base64,iVBORw0K..."]
+  }
+]
+​
+scene_image_urls
+string[]
+For models with advanced element support. Up to 4 scene reference images. Reference in prompt as @Image1, @Image2, etc.
+
+Maximum array length: 4
+Example:
+["data:image/png;base64,iVBORw0K..."]
+Response
+
+200
+
+application/json
+Video generation request queued successfully
+
+​
+model
+stringrequired
+The ID of the model used for video generation.
+
+Example:
+"video-model-123"
+
+​
+queue_id
+stringrequired
+The ID of the video generation request.
+
+Example:
+"123e4567-e89b-12d3-a456-426614174000"
+
+​
+download_url
+string
+Pre-signed URL to download the completed video. Only present for VPS-backed models. When provided, the retrieve endpoint returns JSON status only (no video stream). Fetch this URL after status is COMPLETED to get the video/mp4 file. Valid for 24 hours.
+
+Video Generation
+Generate videos from text prompts or images using Venice’s async queue system
+
+Video generation is async. Submit a job, save queue_id, then poll /video/retrieve until the response is video/mp4.
+​
+Endpoints
+Endpoint	Purpose	Required
+POST /video/quote	Get price in USD before generating	No
+POST /video/queue	Submit generation request	Yes
+POST /video/retrieve	Poll status or download video	Yes
+POST /video/complete	Delete video from storage	No
+​
+Step 1: Queue Generation
+Request:
+POST https://api.venice.ai/api/v1/video/queue
+Authorization: Bearer $VENICE_API_KEY
+Content-Type: application/json
+
+{
+  "model": "wan-2.5-preview-text-to-video",
+  "prompt": "A gondola gliding through Venice canals at sunset",
+  "duration": "5s",
+  "resolution": "720p",
+  "aspect_ratio": "16:9"
+}
+Response (200):
+{
+  "model": "wan-2.5-preview-text-to-video",
+  "queue_id": "123e4567-e89b-12d3-a456-426614174000"
+}
+For Grok Imagine Private models, the queue response includes an extra download_url field:
+{
+  "model": "grok-imagine-text-to-video-private",
+  "queue_id": "123e4567-e89b-12d3-a456-426614174000",
+  "download_url": "https://private-share.venice.ai/v1/share/read/..."
+}
+download_url is a pre-signed URL you use to download the finished video instead of reading it from the retrieve response. It is only returned once, so persist it alongside queue_id. This applies to all four Grok Imagine Private variants:
+grok-imagine-text-to-video-private
+grok-imagine-image-to-video-private
+grok-imagine-reference-to-video-private
+grok-imagine-video-to-video-private
+Unlike the public grok-imagine-*-video variants, Grok Imagine Private models are not billed for content-moderation rejections, so you only pay for successful generations.
+Save model, queue_id, and download_url (if present) for all subsequent calls.
+​
+Step 2: Poll for Completion
+Request:
+POST https://api.venice.ai/api/v1/video/retrieve
+Authorization: Bearer $VENICE_API_KEY
+Content-Type: application/json
+
+{
+  "model": "wan-2.5-preview-text-to-video",
+  "queue_id": "123e4567-e89b-12d3-a456-426614174000"
+}
+Response depends on status:
+Content-Type	Meaning	Action
+application/json	Still processing	Wait 5s, poll again
+video/mp4	Complete	Response body is the video file
+application/json with "COMPLETED"	Complete, video not inline	GET the download_url from the queue response
+Processing response (200, application/json):
+{
+  "status": "PROCESSING",
+  "average_execution_time": 145000,
+  "execution_duration": 53200
+}
+Times are in milliseconds. Use average_execution_time to estimate remaining wait.
+Complete response (200, video/mp4): Response body is raw binary video data. Save to file.
+Complete response (200, application/json with "COMPLETED"): For models that returned a download_url at queue time, retrieve always returns JSON. Fetch the video with GET download_url. The URL is pre-signed (no auth header needed) and valid for 24 hours.
+​
+Step 3: Cleanup (Optional)
+Either auto-delete on retrieval:
+{
+  "model": "wan-2.5-preview-text-to-video",
+  "queue_id": "123e4567-e89b-12d3-a456-426614174000",
+  "delete_media_on_completion": true
+}
+Or call /video/complete after saving:
+POST https://api.venice.ai/api/v1/video/complete
+Authorization: Bearer $VENICE_API_KEY
+Content-Type: application/json
+
+{
+  "model": "wan-2.5-preview-text-to-video",
+  "queue_id": "123e4567-e89b-12d3-a456-426614174000"
+}
+Response (200):
+{
+  "success": true
+}
+​
+Complete Example
+
+Python
+
+Node.js
+import os
+import time
+import requests
+
+API_KEY = os.environ.get("VENICE_API_KEY")
+BASE_URL = "https://api.venice.ai/api/v1"
+HEADERS = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
+
+# Queue
+resp = requests.post(f"{BASE_URL}/video/queue", headers=HEADERS, json={
+    "model": "wan-2.5-preview-text-to-video",
+    "prompt": "A gondola gliding through Venice canals at sunset",
+    "duration": "5s",
+    "resolution": "720p",
+    "aspect_ratio": "16:9"
+})
+data = resp.json()
+model, queue_id = data["model"], data["queue_id"]
+download_url = data.get("download_url")
+
+# Poll
+while True:
+    resp = requests.post(f"{BASE_URL}/video/retrieve", headers=HEADERS,
+                         json={"model": model, "queue_id": queue_id})
+    if "video/mp4" in resp.headers.get("Content-Type", ""):
+        with open("output.mp4", "wb") as f:
+            f.write(resp.content)
+        break
+    if resp.json().get("status") == "COMPLETED" and download_url:
+        with open("output.mp4", "wb") as f:
+            f.write(requests.get(download_url).content)
+        break
+    time.sleep(5)
+
+# Cleanup
+requests.post(f"{BASE_URL}/video/complete", headers=HEADERS,
+              json={"model": model, "queue_id": queue_id})
+​
+Request Parameters
+​
+Queue Request
+Parameter	Type	Required	Default	Description
+model	string	Yes	-	Model ID. Use wan-2.5-preview-text-to-video for text-to-video, wan-2.5-preview-image-to-video for image-to-video
+prompt	string	Yes	-	What to generate. Max 2500 chars
+negative_prompt	string	No	"low resolution, error, worst quality, low quality, defects"	What to avoid
+duration	string	Yes	-	"5s" or "10s"
+resolution	string	No	"720p"	"480p", "720p", or "1080p"
+aspect_ratio	string	Conditional	-	Model-dependent. Required for models that expose aspect-ratio options; omit for models that do not support aspect-ratio selection
+audio	boolean	Conditional	true (when supported)	Only valid for models with supportsAudioConfig: true; omit for models without audio config support
+image_url	string	Only for image-to-video	-	URL or base64 data URL of source image
+audio_url	string	Conditional	-	URL or base64 data URL of reference audio for models that support audio input
+Queue validation is model-specific. Check /models?type=video for each model’s supported request fields before calling /video/queue.
+​
+Quote Request
+Parameter	Type	Required	Default	Description
+model	string	Yes	-	Model ID to price
+duration	string	Yes	-	"5s" or "10s"
+resolution	string	No	"720p"	"480p", "720p", or "1080p"
+aspect_ratio	string	Conditional	-	Include when the selected model supports or requires aspect-ratio selection
+audio	boolean	Conditional	true (when supported)	Only valid for models with supportsAudioConfig: true
+​
+Retrieve Request
+Parameter	Type	Required	Default	Description
+model	string	Yes	-	From queue response
+queue_id	string	Yes	-	From queue response
+delete_media_on_completion	boolean	No	false	Delete video after successful retrieval
+​
+Complete Request
+Parameter	Type	Required	Description
+model	string	Yes	From queue response
+queue_id	string	Yes	From queue response
+​
+Image to Video
+For image-to-video models, pass source image via image_url. The prompt describes desired motion, not the image content.
+{
+  "model": "wan-2.5-preview-image-to-video",
+  "prompt": "Camera slowly zooms in as leaves rustle in the wind",
+  "image_url": "https://example.com/image.jpg",
+  "duration": "5s"
+}
+Or with base64:
+{
+  "model": "wan-2.5-preview-image-to-video",
+  "prompt": "Camera slowly zooms in as leaves rustle in the wind",
+  "image_url": "data:image/jpeg;base64,/9j/4AAQ...",
+  "duration": "5s"
+}
+​
+Price Quote
+Get exact cost before generating. Send only pricing inputs (model, duration, and optional resolution, aspect_ratio, audio):
+Request:
+{
+  "model": "wan-2.5-preview-text-to-video",
+  "duration": "10s",
+  "resolution": "1080p"
+}
+Response:
+{
+  "quote": 0.085
+}
+Quote is in USD.
+​
+Errors
+Status	Returned By	Meaning	Action
+400	queue, quote, retrieve, complete	Invalid parameters	Check request body against schema
+401	queue, retrieve, complete	Auth failed	Check API key
+402	queue	Insufficient balance	Add funds
+404	retrieve, download_url	Media not found (invalid, expired, or deleted)	Verify model/queue_id or re-queue
+410	download_url	Pre-signed URL expired (>24h)	Re-queue the generation
+413	queue	Payload too large	Reduce image/audio size
+422	queue, retrieve	Content violation	Modify prompt
+500	queue, retrieve, complete	Inference/processing failed	Retry with backoff; contact support if persistent
+503	retrieve	Model at capacity	Retry with backoff
+​
+Polling Strategy
+Poll /video/retrieve on an interval (for example, every 5 seconds)
+If Content-Type is application/json and status is "PROCESSING", wait and poll again. Use average_execution_time and execution_duration (milliseconds) to estimate remaining time
+If Content-Type is video/mp4, save the response body as your output file
+If Content-Type is application/json and status is "COMPLETED", GET the download_url from the queue response to fetch the video
+Optional cleanup: set delete_media_on_completion: true on retrieve, or call /video/complete after download
+Handle 404 as invalid, expired, or deleted media; handle 500/503 with retries/backoff
+

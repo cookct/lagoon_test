@@ -89,6 +89,95 @@
                 </div>
             </div>
 
+            <!-- Video Mode Reference Cards -->
+            <div class="image-card-container mode-video-only" id="video-cards-container">
+                <div class="tool-section image-card" id="card-video-source">
+                    <div class="tool-section-header">
+                        <label class="image-card-toggle" title="Include in generation">
+                            <input type="checkbox" class="image-card-checkbox" data-target="video-source">
+                        </label>
+                        <span class="tool-section-title">Start Frame</span>
+                        <button type="button" class="image-card-clear-btn" data-target="video-source" title="Clear image">&times;</button>
+                    </div>
+                    <div class="tool-section-body">
+                        <div class="image-card-preview" id="preview-video-source"></div>
+                        <div class="image-card-actions">
+                            <button type="button" class="image-card-btn upload-btn" data-target="video-source">Upload</button>
+                            <button type="button" class="image-card-btn paste-btn" data-target="video-source">Paste</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-section image-card" id="card-video-end">
+                    <div class="tool-section-header">
+                        <label class="image-card-toggle" title="Include in generation">
+                            <input type="checkbox" class="image-card-checkbox" data-target="video-end">
+                        </label>
+                        <span class="tool-section-title">End Frame</span>
+                        <button type="button" class="image-card-clear-btn" data-target="video-end" title="Clear image">&times;</button>
+                    </div>
+                    <div class="tool-section-body">
+                        <div class="image-card-preview" id="preview-video-end"></div>
+                        <div class="image-card-actions">
+                            <button type="button" class="image-card-btn upload-btn" data-target="video-end">Upload</button>
+                            <button type="button" class="image-card-btn paste-btn" data-target="video-end">Paste</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reference image cards — hidden unless model supports reference_image_urls -->
+                <div id="video-ref-cards" style="display:none; flex-direction:column; gap:10px;">
+                    <div class="tool-section image-card" id="card-video-ref-1">
+                        <div class="tool-section-header">
+                            <label class="image-card-toggle" title="Include in generation">
+                                <input type="checkbox" class="image-card-checkbox" data-target="video-ref-1">
+                            </label>
+                            <span class="tool-section-title">Ref 1</span>
+                            <button type="button" class="image-card-clear-btn" data-target="video-ref-1" title="Clear image">&times;</button>
+                        </div>
+                        <div class="tool-section-body">
+                            <div class="image-card-preview" id="preview-video-ref-1"></div>
+                            <div class="image-card-actions">
+                                <button type="button" class="image-card-btn upload-btn" data-target="video-ref-1">Upload</button>
+                                <button type="button" class="image-card-btn paste-btn" data-target="video-ref-1">Paste</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tool-section image-card" id="card-video-ref-2">
+                        <div class="tool-section-header">
+                            <label class="image-card-toggle" title="Include in generation">
+                                <input type="checkbox" class="image-card-checkbox" data-target="video-ref-2">
+                            </label>
+                            <span class="tool-section-title">Ref 2</span>
+                            <button type="button" class="image-card-clear-btn" data-target="video-ref-2" title="Clear image">&times;</button>
+                        </div>
+                        <div class="tool-section-body">
+                            <div class="image-card-preview" id="preview-video-ref-2"></div>
+                            <div class="image-card-actions">
+                                <button type="button" class="image-card-btn upload-btn" data-target="video-ref-2">Upload</button>
+                                <button type="button" class="image-card-btn paste-btn" data-target="video-ref-2">Paste</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tool-section image-card" id="card-video-ref-3">
+                        <div class="tool-section-header">
+                            <label class="image-card-toggle" title="Include in generation">
+                                <input type="checkbox" class="image-card-checkbox" data-target="video-ref-3">
+                            </label>
+                            <span class="tool-section-title">Ref 3</span>
+                            <button type="button" class="image-card-clear-btn" data-target="video-ref-3" title="Clear image">&times;</button>
+                        </div>
+                        <div class="tool-section-body">
+                            <div class="image-card-preview" id="preview-video-ref-3"></div>
+                            <div class="image-card-actions">
+                                <button type="button" class="image-card-btn upload-btn" data-target="video-ref-3">Upload</button>
+                                <button type="button" class="image-card-btn paste-btn" data-target="video-ref-3">Paste</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="sidebar-header">
                 <button id="quick-chat-btn">New Chat</button>
                 <button id="create-char-btn" class="secondary-btn">Create Character</button>
@@ -345,6 +434,26 @@
                 <button class="tab-btn active" data-tab="tools">Tools</button>
                 <button class="tab-btn" data-tab="prompt">Prompt</button>
             </div>
+
+            <!-- Video Mode Parameters — direct child so rightContent hide doesn't affect it -->
+            <div id="video-params-panel" class="mode-video-only" style="margin-top:10px;">
+                <div class="tool-section">
+                    <div class="tool-section-header">
+                        <span class="tool-section-title">Video Settings</span>
+                        <span id="video-cost-estimate" style="font-size:11px; color:var(--text-dim);"></span>
+                    </div>
+                    <div class="tool-section-body">
+                    </div>
+                </div>
+                <div class="tool-section" style="margin-top:10px;">
+                    <div class="tool-section-header">
+                        <span class="tool-section-title">Generated Videos</span>
+                    </div>
+                    <div class="tool-section-body" id="video-library-body">
+                    </div>
+                </div>
+            </div>
+
             <div id="right-sidebar-content">
                 <div class="tab-panel" id="tab-overseer">
                     <div class="tool-section">
@@ -395,6 +504,7 @@
                                 <div class="cost-tokens" id="cost-tokens"></div>
                             </div>
                         </div>
+
                         <!-- Author's Note + Anchors (character chats only) -->
                         <div id="writing-tools-panel" class="hidden">
                             <div class="tool-section">

@@ -157,23 +157,25 @@ class UIManager {
             });
 
             if (!isShowing) {
-                // Measure the container width to ensure the list matches
                 const rect = container.getBoundingClientRect();
-                optionsList.style.width = `${rect.width}px`;
-                
-                // Smart positioning: check if there's enough room below
                 const viewportHeight = window.innerHeight;
                 const spaceBelow = viewportHeight - rect.bottom;
                 const spaceAbove = rect.top;
-                
-                // Estimate dropdown height (max-height is usually 300px in CSS)
-                const maxDropdownHeight = 300;
-                const needsDropup = spaceBelow < maxDropdownHeight && spaceAbove > spaceBelow;
-                
+                const needsDropup = spaceBelow < 300 && spaceAbove > spaceBelow;
+
+                // Fixed positioning escapes any overflow:hidden ancestor
+                optionsList.style.position = 'fixed';
+                optionsList.style.width = `${rect.width}px`;
+                optionsList.style.left = `${rect.left}px`;
+
                 if (needsDropup) {
+                    optionsList.style.top = 'auto';
+                    optionsList.style.bottom = `${viewportHeight - rect.top}px`;
                     optionsList.classList.add('show', 'dropup');
                     selected.style.borderRadius = '0 0 4px 4px';
                 } else {
+                    optionsList.style.top = `${rect.bottom}px`;
+                    optionsList.style.bottom = 'auto';
                     optionsList.classList.add('show');
                     selected.style.borderRadius = '4px 4px 0 0';
                 }

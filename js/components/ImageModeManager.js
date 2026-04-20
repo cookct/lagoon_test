@@ -64,6 +64,7 @@ export class ImageModeManager {
         // Upload button logic
         this.dom.uploadBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
+                if (window.state.mode !== 'image') return;
                 e.stopPropagation();
                 this.currentActiveTarget = btn.dataset.target;
                 this.dom.fileInput.click();
@@ -72,6 +73,7 @@ export class ImageModeManager {
 
         // File input change
         this.dom.fileInput.addEventListener('change', (e) => {
+            if (window.state.mode !== 'image') return;
             const file = e.target.files[0];
             if (file) {
                 this.handleFile(file, this.currentActiveTarget);
@@ -83,6 +85,7 @@ export class ImageModeManager {
         // Paste button logic
         this.dom.pasteBtns.forEach(btn => {
             btn.addEventListener('click', async (e) => {
+                if (window.state.mode !== 'image') return;
                 e.stopPropagation();
                 const target = btn.dataset.target;
                 try {
@@ -134,6 +137,7 @@ export class ImageModeManager {
     bindClearEvents() {
         // Use event delegation for clear buttons inside previews
         document.addEventListener('click', (e) => {
+            if (window.state.mode !== 'image') return;
             const clearBtn = e.target.closest('.image-card-clear-btn');
             if (clearBtn) {
                 e.stopPropagation();
