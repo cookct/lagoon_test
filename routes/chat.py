@@ -1118,16 +1118,6 @@ def edit_image_route():
     prompt = data.get('prompt')
     images = data.get('images', []) # Array: [base, mask]
 
-    # Log incoming request
-    logger.info(f"[edit_image] INCOMING - model: {model_id}, prompt: {(prompt or '')[:100]}...")
-    logger.info(f"[edit_image] single_edit: {data.get('single_edit')}, multi_ref: {data.get('multi_ref')}")
-    logger.info(f"[edit_image] INCOMING IMAGES COUNT: {len(images)}")
-    for i, img in enumerate(images):
-        if isinstance(img, str):
-            logger.info(f"[edit_image]   Image {i}: {img[:60]}... (len={len(img)})")
-        else:
-            logger.info(f"[edit_image]   Image {i}: {type(img)}")
-
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
 
@@ -1172,14 +1162,11 @@ def edit_image_route():
     if data.get('single_edit') and model_endpoint == "/image/multi-edit":
         model_endpoint = "/image/edit"
         url = f"{VENICE_API_BASE}{model_endpoint}"
-        logger.info(f"[edit_image] single_edit mode - using /image/edit endpoint")
-
-    logger.info(f"[edit_image] Using endpoint: {model_endpoint}")
 
     # Strip the mask (second image) if the model doesn't support AI masking —
     # the frontend enforces the mask locally via compositing.
-    # In multi_ref mode there is no mask — all images are reference cards, so skip the strip.
-    if not api_supports_mask and not multi_ref and len(cleaned_images) > 1:
+    # Skip for /image/multi-edit (no mask workflow) and when multi_ref is set.
+    if model_endpoint != "/image/multi-edit" and not api_supports_mask and not multi_ref and len(cleaned_images) > 1:
         cleaned_images = cleaned_images[:1]
 
     # Upgrade /image/edit → /image/multi-edit when the caller is sending multiple
@@ -1190,7 +1177,6 @@ def edit_image_route():
     if model_endpoint == "/image/edit" and supports_multi_edit and multi_ref and len(cleaned_images) > 1:
         model_endpoint = "/image/multi-edit"
         url = f"{VENICE_API_BASE}/image/multi-edit"
-        logger.info(f"[edit_image] Upgrading to /image/multi-edit for {len(cleaned_images)} reference images")
 
     # Resolve model key from final endpoint — multi-edit still uses modelId, others use model
     model_key = "modelId" if model_endpoint == "/image/multi-edit" else "model"
@@ -1202,16 +1188,31 @@ def edit_image_route():
 
     payload["safe_mode"] = False
 
-    aspect_ratio = data.get('aspect_ratio')
-    if aspect_ratio:
-        payload["aspect_ratio"] = aspect_ratio
+    # aspect_ratio is not valid for /image/multi-edit (strict Zod schema)
+    if model_endpoint != "/image/multi-edit":
+        aspect_ratio = data.get('aspect_ratio')
+        if aspect_ratio:
+            payload["aspect_ratio"] = aspect_ratio
 
-    # /image/edit expects a singular "image" field; /image/multi-edit and /image/generate use "images" array
+    # Route images to the correct field per endpoint:
+    #   /image/edit       → singular "image" (first only)
+    #   /image/multi-edit → "images" array
+    #   /image/generate   → no reference images (generate is text-to-image only)
     if cleaned_images:
         if model_endpoint == "/image/edit":
             payload["image"] = cleaned_images[0]
-        else:
+        elif model_endpoint == "/image/multi-edit":
             payload["images"] = cleaned_images
+
+    def _trunc(v):
+        if isinstance(v, str) and len(v) > 80:
+            return f"{v[:80]}…({len(v)} chars)"
+        if isinstance(v, list):
+            return [_trunc(i) for i in v]
+        return v
+    import json as _json
+    log_payload = {k: _trunc(v) for k, v in payload.items()}
+    logger.info(f"[edit_image] POST {url}\n{_json.dumps(log_payload, indent=2)}")
 
     try:
         resp = requests.post(
@@ -1220,11 +1221,9 @@ def edit_image_route():
             json=payload,
             timeout=300
         )
-        
-        logger.info(f"[edit_image] Venice Status: {resp.status_code}, Type: {resp.headers.get('Content-Type')}")
 
         if resp.status_code != 200:
-            logger.error(f"[edit_image] Venice Error Response: {resp.text}")
+            logger.error(f"[edit_image] Venice {resp.status_code}: {resp.text}")
             resp.raise_for_status()
 
         # Check if the response is JSON or Binary

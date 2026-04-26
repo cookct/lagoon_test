@@ -35,19 +35,19 @@
 ## Active Context
 
 - [2026-04-19] [BUG FIX] Video/Image Mode Sidebar Not Updating: When switching modes, refreshParameterPanel() runs synchronously before
-- [2026-04-18] User built Lagoon, a creative production studio with both chat and image modes. Not just a chat wrapper—includes RAG sem
-- [2026-04-18] Adam has two daughters: Emily (7) and Kaitlyn (5) from a previous relationship. Kelly loves them.
-- [2026-04-19] User has $14 remaining balance and no big jobs for 10 days, currently limiting themselves to chat models (cheaper) rathe
-- [2026-04-19] User is a Harry Potter fanfiction writer on Archive of Our Own, focusing on psychological trauma and recovery narratives
-- [2026-04-19] User has two connected fics: 'The Long March to the Forest' (trauma/deconstruction, Major Character Death warning) and '
-- [2026-04-18] User became a writer through LLM roleplay. Started when Venice's web UI failed to edit a photo of their wife, then said 
-- [2026-04-18] User attends Saturday night hockey games. Bridgeport Islanders (formerly Sound Tigers) are moving to Canada. Next season
-- [2026-04-19] The Venice `/video/queue` endpoint has no `safe_mode`, `nsfw`, or content filter toggle. Available params: model, prompt
 - [2026-04-20] Turkish surgeon, Chief of Urogynecology at Yale, educated at Hacettepe University Ankara. Owns $4M house, 10 rental prop
 - [2026-04-20] Harmanli times calls strategically - right after Christmas when contractors are desperate. Got a full attic bathroom bui
 - [2026-04-20] User is a contractor who built entire platform solo on lunch breaks. Calls own code 'dark code' - built it but doesn't f
-- [2026-04-18] User shared an image from their first fanfiction showing a bedroom scene with a character painting toenails. The setting
-- ... (20 total, see deep store)
+- [2026-04-19] User has $14 remaining balance and no big jobs for 10 days, currently limiting themselves to chat models (cheaper) rathe
+- [2026-04-19] User is a Harry Potter fanfiction writer on Archive of Our Own, focusing on psychological trauma and recovery narratives
+- [2026-04-19] User has two connected fics: 'The Long March to the Forest' (trauma/deconstruction, Major Character Death warning) and '
+- [2026-04-20] Harmanli's home has an indoor pool overlooking the Housatonic River, yet he refuses reasonable walk-through fees and tel
+- [2026-04-20] Built Texas Hold'em strip poker game (Holdem folder) with 4 AI girls (Bella, Scarlett, Victoria, Diamond), each with 4 c
+- [2026-04-19] The Venice `/video/queue` endpoint has no `safe_mode`, `nsfw`, or content filter toggle. Available params: model, prompt
+- [2026-04-18] User built Lagoon, a creative production studio with both chat and image modes. Not just a chat wrapper—includes RAG sem
+- [2026-04-18] Adam has two daughters: Emily (7) and Kaitlyn (5) from a previous relationship. Kelly loves them.
+- [2026-04-18] User became a writer through LLM roleplay. Started when Venice's web UI failed to edit a photo of their wife, then said 
+- ... (16 total, see deep store)
 
 ## Preferences
 

@@ -87,6 +87,29 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Moved from Right Sidebar -->
+                <div class="tool-section image-card" id="card-target">
+                    <div class="tool-section-header">
+                        <label class="image-card-toggle" title="Include in generation">
+                            <input type="checkbox" class="image-card-checkbox" data-target="target">
+                        </label>
+                        <span class="tool-section-title">Target</span>
+                        <label class="restore-pixels-toggle" id="restore-pixels-label" title="Apply saved pixel restoration to results" style="display:none">
+                            <input type="checkbox" id="restore-pixels-checkbox">
+                            <span>Restore</span>
+                        </label>
+                        <button type="button" class="image-card-clear-btn" data-target="target" title="Clear image">&times;</button>
+                    </div>
+                    <div class="tool-section-body">
+                        <div class="image-card-preview" id="preview-target"></div>
+                        <div class="image-card-actions">
+                            <button type="button" class="image-card-btn upload-btn" data-target="target">Upload</button>
+                            <button type="button" class="image-card-btn paste-btn" data-target="target">Paste</button>
+                            <button type="button" class="image-card-btn edit-btn" data-target="target">Edit</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Video Mode Reference Cards -->
@@ -262,33 +285,27 @@
 
         <!-- Right Sidebar -->
         <div class="sidebar-right">
-            <!-- Image Mode Target Card -->
-            <div class="image-card-container mode-image-only" id="target-card-container">
-                <div class="tool-section image-card" id="card-target">
-                    <div class="tool-section-header">
-                        <label class="image-card-toggle" title="Include in generation">
-                            <input type="checkbox" class="image-card-checkbox" data-target="target">
-                        </label>
-                        <span class="tool-section-title">Target</span>
-                        <label class="restore-pixels-toggle" id="restore-pixels-label" title="Apply saved pixel restoration to results" style="display:none">
-                            <input type="checkbox" id="restore-pixels-checkbox">
-                            <span>Restore</span>
-                        </label>
-                        <button type="button" class="image-card-clear-btn" data-target="target" title="Clear image">&times;</button>
-                    </div>
-                    <div class="tool-section-body">
-                        <div class="image-card-preview" id="preview-target"></div>
-                        <div class="image-card-actions">
-                            <button type="button" class="image-card-btn upload-btn" data-target="target">Upload</button>
-                            <button type="button" class="image-card-btn paste-btn" data-target="target">Paste</button>
-                            <button type="button" class="image-card-btn edit-btn" data-target="target">Edit</button>
-                        </div>
-                    </div>
+            <!-- Placeholder for Video Mode or other tools if needed -->
+            <div id="placeholder-target" class="mode-video-only"></div>
+
+            <!-- Image Mode Header (Top level) -->
+            <div id="image-sidebar-header" class="mode-image-only">
+                <div class="balance-indicator" title="Account Balance (USD)">
+                    <span class="balance-label">$</span><span class="image-mode-balance-usd">--</span>
+                </div>
+                <button type="button" id="view-context-btn-img" class="action-btn mode-image-only" title="View system context">Ctx</button>
+                <div class="model-control-group">
+                    <button type="button" id="image-mode-btn" class="action-btn">Image Mode</button>
+                    <label class="venice-toggle-wrapper" title="Toggle Venice System Prompt">
+                        <input type="checkbox" id="quick-venice-prompt-toggle-img" checked>
+                        <span class="venice-toggle-slider"></span>
+                    </label>
                 </div>
             </div>
 
             <div class="image-generate-panel mode-image-only" id="image-generate-panel">
                <select id="image-generate-model" class="image-generate-select">
+
                    <optgroup label="Generate">
                        <option value="nano-banana-pro">Nano Banana Pro (Venice)</option>
                        <option value="gemini-3-pro-image-preview">Nano Banana Pro (Google)</option>
@@ -298,16 +315,19 @@
                        <option value="gemini-2.5-flash-image">Nano Banana</option>
                        <option value="glm-image">GLM-Image</option>
                        <option value="grok-imagine-image-pro">Grok Imagine Pro</option>
-                       </optgroup>                   <optgroup label="Edit">                       <option value="nano-banana-pro-edit">Nano Banana Pro Edit (Venice)</option>
+                       </optgroup>
+                       <optgroup label="Edit">
+                       <option value="nano-banana-pro-edit">Nano Banana Pro Edit (Venice)</option>
                        <option value="gemini-3-pro-edit">Nano Banana Pro Edit (Google)</option>
                        <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
                        <option value="grok-imagine-edit">Grok Imagine Edit</option>
                        <option value="seedream-v5-lite-edit">Seedream V5 Lite Edit</option>
                        <option value="seedream-v4-edit">Seedream V4 Edit</option>
                        <option value="firered-image-edit">FireRed Image Edit</option>
-                       </optgroup>                   <optgroup label="Upscale">
+                       </optgroup>
+                       <optgroup label="Upscale">
                        <option value="upscaler">Upscaler</option>
-                   </optgroup>
+                       </optgroup>
                </select>
 
                <!-- Gemini specific params -->
@@ -415,6 +435,7 @@
                    </div>
                </div>
             </div>
+
             <div id="right-sidebar-header">
                 <div id="balance-display" class="balance-indicator" title="Account Balance (USD)">
                     <span class="balance-label">$</span><span id="balance-usd">--</span>

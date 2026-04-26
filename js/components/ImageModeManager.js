@@ -6,8 +6,9 @@
 import { lagoonAlert } from '../ui/dialog.js';
 import { imageEditor } from './ImageEditor.js';
 import { lightbox } from './Lightbox.js';
-import { dom, addToPromptHistory } from '../state.js';
+import { dom, state, addToPromptHistory } from '../state.js';
 import { addMessageToUI } from '../ui/messages.js';
+import { showContextViewer } from '../ui/settings.js';
 
 export class ImageModeManager {
     constructor() {
@@ -29,6 +30,7 @@ export class ImageModeManager {
         this.bindGenerateEvents();
         this.bindLightboxEvents();
         this.bindUpscalerEvents();
+        this.updateCardLabels();
         console.log('[ImageModeManager] Initialized');
     }
 
@@ -130,6 +132,19 @@ export class ImageModeManager {
                         this.toggleEditMode(this.editSourceImage, this.activeEditBtn);
                     }
                 }
+            });
+        }
+
+        // Image Mode Header Events
+        const viewCtxBtn = document.getElementById('view-context-btn-img');
+        if (viewCtxBtn) {
+            viewCtxBtn.addEventListener('click', () => showContextViewer());
+        }
+
+        const promptToggle = document.getElementById('quick-venice-prompt-toggle-img');
+        if (promptToggle) {
+            promptToggle.addEventListener('change', (e) => {
+                state.currentConfig.include_venice_system_prompt = e.target.checked;
             });
         }
     }
@@ -319,6 +334,46 @@ export class ImageModeManager {
 
     updateModelFilter() {
         // Disabled - users can select any model regardless of loaded images
+        this.updateCardLabels();
+    }
+
+    updateCardLabels() {
+        const order = ['target', 'ref-2', 'ref-1'];
+        const labels = ["First Image", "Second Image", "Third Image"];
+        let checkedCount = 0;
+
+        order.forEach(id => {
+            const card = document.getElementById(`card-${id}`);
+            const titleSpan = card?.querySelector('.tool-section-title');
+            if (!titleSpan) return;
+
+            const checkbox = document.querySelector(`.image-card-checkbox[data-target="${id}"]`);
+            if (checkbox && checkbox.checked) {
+                titleSpan.textContent = labels[checkedCount] || "Reference Image";
+                checkedCount++;
+            } else {
+                titleSpan.textContent = "Reference Image";
+            }
+        });
+    }
+
+    _updateBalance(balanceUsd) {
+        if (!balanceUsd) return;
+        const floatVal = parseFloat(balanceUsd);
+        const displayVal = isNaN(floatVal) ? balanceUsd : floatVal.toFixed(3);
+        
+        const elements = [
+            document.getElementById('balance-usd'),
+            document.querySelector('.image-mode-balance-usd')
+        ];
+        
+        elements.forEach(el => {
+            if (el) el.textContent = displayVal;
+        });
+
+        // Persist to localStorage
+        localStorage.setItem('lagoon_balance_usd', balanceUsd);
+        state.lastBalanceUsd = balanceUsd;
     }
 
     /**
@@ -333,6 +388,11 @@ export class ImageModeManager {
         });
         const result = await response.json();
         if (result.error) throw new Error(result.error);
+
+        // Update balance if present in response
+        if (result._balance) {
+            this._updateBalance(result._balance);
+        }
 
         const newB64 = result.images ? result.images[0] : result.image;
         if (!newB64) throw new Error('No image returned from model.');
@@ -434,7 +494,7 @@ export class ImageModeManager {
         if (isGemini) endpoint = '/api/image/generate/gemini';
         if (isZai) endpoint = '/api/image/generate/zai';
 
-        // multi_ref = true only when 2 reference cards are checked+loaded (not counting target)
+        // multi_ref = true whenever any reference card is checked+loaded
         const refCount = ['ref-1', 'ref-2'].filter(id => {
             const cb = document.querySelector(`.image-card-checkbox[data-target="${id}"]`);
             const img = document.querySelector(`#preview-${id} img`);
@@ -443,7 +503,7 @@ export class ImageModeManager {
 
         const body = (isGemini || isZai)
             ? { model: modelId, prompt, images }
-            : { modelId, prompt, images, multi_ref: refCount > 1, single_edit: this.editModeActive };
+            : { modelId, prompt, images, multi_ref: refCount >= 1, single_edit: this.editModeActive };
 
         const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'nano-banana-pro-edit', 'grok-imagine-image-pro'];
         if (veniceAspectModels.includes(modelId)) {

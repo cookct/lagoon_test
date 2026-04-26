@@ -21,11 +21,18 @@ export class VideoModeManager {
     // Helper to update balance display from video API responses
     _updateBalance(balanceUsd) {
         if (!balanceUsd) return;
-        const balanceEl = document.getElementById('balance-usd');
-        if (balanceEl) {
-            const val = parseFloat(balanceUsd);
-            balanceEl.textContent = isNaN(val) ? balanceUsd : val.toFixed(3);
-        }
+        const floatVal = parseFloat(balanceUsd);
+        const displayVal = isNaN(floatVal) ? balanceUsd : floatVal.toFixed(3);
+        
+        const elements = [
+            document.getElementById('balance-usd'),
+            document.querySelector('.image-mode-balance-usd')
+        ];
+        
+        elements.forEach(el => {
+            if (el) el.textContent = displayVal;
+        });
+
         // Persist to localStorage
         localStorage.setItem('lagoon_balance_usd', balanceUsd);
         state.lastBalanceUsd = balanceUsd;

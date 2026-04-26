@@ -109,11 +109,25 @@ export class ChatManager {
     _loadCachedBalance() {
         // Show last known balance immediately from localStorage
         const cached = localStorage.getItem('lagoon_balance_usd');
-        if (cached && this.dom.balanceEl) {
-            const val = parseFloat(cached);
-            this.dom.balanceEl.textContent = isNaN(val) ? cached : val.toFixed(3);
+        if (cached) {
+            this._updateBalanceDisplay(cached);
             state.lastBalanceUsd = cached;
         }
+    }
+
+    _updateBalanceDisplay(val) {
+        const floatVal = parseFloat(val);
+        const displayVal = isNaN(floatVal) ? val : floatVal.toFixed(3);
+        
+        // Update both main and image mode headers
+        const elements = [
+            document.getElementById('balance-usd'),
+            document.querySelector('.image-mode-balance-usd')
+        ];
+        
+        elements.forEach(el => {
+            if (el) el.textContent = displayVal;
+        });
     }
 
     async _refreshBalance() {
@@ -121,10 +135,8 @@ export class ChatManager {
         try {
             const resp = await fetch('/api/balance');
             const data = await resp.json();
-            if (data.success && data.balance && this.dom.balanceEl) {
-                const val = parseFloat(data.balance);
-                const displayVal = isNaN(val) ? data.balance : val.toFixed(3);
-                this.dom.balanceEl.textContent = displayVal;
+            if (data.success && data.balance) {
+                this._updateBalanceDisplay(data.balance);
                 localStorage.setItem('lagoon_balance_usd', data.balance);
                 state.lastBalanceUsd = data.balance;
             }

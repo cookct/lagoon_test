@@ -1866,6 +1866,7 @@ export function toggleAppMode() {
     const leftFooter = document.getElementById('sidebar-footer');
 
     const rightHeader = document.getElementById('right-sidebar-header');
+    const imageHeader = document.getElementById('image-sidebar-header');
     const rightTabs = document.querySelector('.sidebar-right .sidebar-tabs');
     const rightContent = document.getElementById('right-sidebar-content');
 
@@ -1877,8 +1878,10 @@ export function toggleAppMode() {
         if (leftContent) leftContent.style.display = display;
         if (leftFooter) leftFooter.style.display = display;
         
-        // Hide rightHeader when in image mode, but video mode might need it
+        // Hide right headers by default
         if (rightHeader) rightHeader.style.display = display;
+        if (imageHeader) imageHeader.style.display = 'none';
+        
         if (rightTabs) rightTabs.style.display = display;
         if (rightContent) rightContent.style.display = display;
     };
@@ -1887,6 +1890,7 @@ export function toggleAppMode() {
         case 'image':
             showChatElements(false);
             document.body.classList.add('mode-image');
+            if (imageHeader) imageHeader.style.display = '';
             break;
 
         case 'video':
