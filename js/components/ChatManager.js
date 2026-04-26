@@ -118,16 +118,10 @@ export class ChatManager {
     _updateBalanceDisplay(val) {
         const floatVal = parseFloat(val);
         const displayVal = isNaN(floatVal) ? val : floatVal.toFixed(3);
-        
-        // Update both main and image mode headers
-        const elements = [
-            document.getElementById('balance-usd'),
-            document.querySelector('.image-mode-balance-usd')
-        ];
-        
-        elements.forEach(el => {
-            if (el) el.textContent = displayVal;
-        });
+
+        // Update shared header balance display
+        const balanceEl = document.getElementById('balance-usd');
+        if (balanceEl) balanceEl.textContent = displayVal;
     }
 
     async _refreshBalance() {

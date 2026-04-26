@@ -23,15 +23,9 @@ export class VideoModeManager {
         if (!balanceUsd) return;
         const floatVal = parseFloat(balanceUsd);
         const displayVal = isNaN(floatVal) ? balanceUsd : floatVal.toFixed(3);
-        
-        const elements = [
-            document.getElementById('balance-usd'),
-            document.querySelector('.image-mode-balance-usd')
-        ];
-        
-        elements.forEach(el => {
-            if (el) el.textContent = displayVal;
-        });
+
+        const balanceEl = document.getElementById('balance-usd');
+        if (balanceEl) balanceEl.textContent = displayVal;
 
         // Persist to localStorage
         localStorage.setItem('lagoon_balance_usd', balanceUsd);

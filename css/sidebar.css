@@ -136,7 +136,7 @@
     grid-column: span 2;
 }
 
-#right-sidebar-header, #image-sidebar-header {
+#right-sidebar-header {
     padding: 12px;
     border-bottom: 1px solid var(--border);
     display: grid;
@@ -146,8 +146,7 @@
     flex-shrink: 0;
 }
 
-#right-sidebar-header .balance-indicator, 
-#image-sidebar-header .balance-indicator {
+#right-sidebar-header .balance-indicator {
     margin: 0;
     justify-content: center;
     font-size: 11px;
@@ -159,8 +158,7 @@
     border-radius: 4px;
 }
 
-#right-sidebar-header .action-btn,
-#image-sidebar-header .action-btn {
+#right-sidebar-header .action-btn {
     padding: 6px 8px;
     font-size: 11px;
     width: 100%;
@@ -168,21 +166,12 @@
     height: auto; /* Allow padding to define height */
 }
 
-#right-sidebar-header .model-control-group,
-#image-sidebar-header .model-control-group {
+#right-sidebar-header .model-control-group {
     grid-column: span 2;
 }
 
-#right-sidebar-header #change-model-btn,
-#image-sidebar-header #image-mode-btn {
+#right-sidebar-header #change-model-btn {
     grid-column: span 1; /* In the grid, it takes 1 but group takes 2 */
-}
-
-/* Reset specific overrides if they exist */
-#image-sidebar-header #image-mode-btn {
-    background-color: var(--accent);
-    color: white;
-    font-weight: 600;
 }
 
 .sidebar-label {

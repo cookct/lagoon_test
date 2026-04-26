@@ -135,13 +135,13 @@ export class ImageModeManager {
             });
         }
 
-        // Image Mode Header Events
-        const viewCtxBtn = document.getElementById('view-context-btn-img');
+        // Image Mode Header Events (uses shared #right-sidebar-header)
+        const viewCtxBtn = document.getElementById('view-context-btn');
         if (viewCtxBtn) {
             viewCtxBtn.addEventListener('click', () => showContextViewer());
         }
 
-        const promptToggle = document.getElementById('quick-venice-prompt-toggle-img');
+        const promptToggle = document.getElementById('quick-venice-prompt-toggle');
         if (promptToggle) {
             promptToggle.addEventListener('change', (e) => {
                 state.currentConfig.include_venice_system_prompt = e.target.checked;
@@ -361,15 +361,9 @@ export class ImageModeManager {
         if (!balanceUsd) return;
         const floatVal = parseFloat(balanceUsd);
         const displayVal = isNaN(floatVal) ? balanceUsd : floatVal.toFixed(3);
-        
-        const elements = [
-            document.getElementById('balance-usd'),
-            document.querySelector('.image-mode-balance-usd')
-        ];
-        
-        elements.forEach(el => {
-            if (el) el.textContent = displayVal;
-        });
+
+        const balanceEl = document.getElementById('balance-usd');
+        if (balanceEl) balanceEl.textContent = displayVal;
 
         // Persist to localStorage
         localStorage.setItem('lagoon_balance_usd', balanceUsd);
