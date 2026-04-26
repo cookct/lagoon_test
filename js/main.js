@@ -262,8 +262,15 @@ function showModelSelector(button) {
     const rect = button.getBoundingClientRect();
     menu.style.left = `${rect.left}px`;
 
-    // Access native select from dom populated by populateLegacyDom
-    const modelSelect = document.getElementById('model');
+    // Use appropriate model select based on current mode
+    let modelSelect;
+    if (state.mode === 'image') {
+        modelSelect = document.getElementById('image-generate-model');
+    } else if (state.mode === 'video') {
+        modelSelect = document.getElementById('video-model-select');
+    } else {
+        modelSelect = document.getElementById('model');
+    }
     if (!modelSelect) return;
 
     const createItem = (opt) => {
@@ -271,14 +278,27 @@ function showModelSelector(button) {
         const item = document.createElement('button');
         item.textContent = getDisplayName(modelName);
         item.classList.add('context-menu-item');
-        
+
         // Handle separator/disabled items
         if (opt.disabled || modelName.startsWith('separator-')) {
             item.disabled = true;
         } else {
-            if (state.currentConfig.model === modelName) item.style.fontWeight = 'bold';
+            // Highlight current selection based on mode
+            const currentModel = state.mode === 'image' || state.mode === 'video'
+                ? modelSelect.value
+                : state.currentConfig.model;
+            if (currentModel === modelName) item.style.fontWeight = 'bold';
+
             item.onclick = () => {
-                // Update character name if it's a Quick Chat or currently matches a model name.
+                // For image/video modes, just update the select and let mode manager handle it
+                if (state.mode === 'image' || state.mode === 'video') {
+                    modelSelect.value = modelName;
+                    modelSelect.dispatchEvent(new Event('change'));
+                    menu.remove();
+                    return;
+                }
+
+                // Chat mode: update character name if it's a Quick Chat or currently matches a model name.
                 const currentName = state.currentConfig.character_name;
                 const installed = getInstalledModels();
                 const isModelName = installed.some(m => m.id === currentName || m.name === currentName);
@@ -286,7 +306,7 @@ function showModelSelector(button) {
                 if (state.isTemporaryChat || isModelName) {
                     state.currentConfig.character_name = getDisplayName(modelName);
                 }
-                
+
                 state.currentConfig.model = modelName;
                 if (opt.dataset.provider === 'ollama') {
                     state.currentConfig.provider = 'ollama';
