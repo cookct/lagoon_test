@@ -21,6 +21,11 @@ export class DualModelManager {
         this.characters = []; // Loaded character configs
         this._turnChainActive = false; // guard against concurrent chains
         this._sessionId = 0; // incremented on restart to kill stale stream loops
+        this._modalInitialized = false;
+        this._modeA = 'character';
+        this._modeB = 'character';
+        this._changeHandlerA = null;
+        this._changeHandlerB = null;
     }
 
     init() {
@@ -29,18 +34,15 @@ export class DualModelManager {
     }
 
     bindModalEvents() {
-        // Modal close
-        const modal = document.getElementById('dual-model-modal');
-        const closeBtn = modal?.querySelector('.close-btn');
-
-        closeBtn?.addEventListener('click', () => this.closeModal());
-        modal?.addEventListener('click', (e) => {
-            if (e.target === modal) this.closeModal();
-        });
+        // Modal close — button only, no backdrop click
+        document.getElementById('dual-modal-close-btn')?.addEventListener('click', () => this.closeModal());
 
         // Start button
         const startBtn = document.getElementById('dual-start-btn');
         startBtn?.addEventListener('click', () => this.handleStart());
+
+        // Save config button
+        document.getElementById('dual-save-config-btn')?.addEventListener('click', () => this.saveConfig());
 
         // Control buttons (in Tools panel)
         document.getElementById('dual-tool-start-btn')?.addEventListener('click', () => this.openModal());
@@ -79,7 +81,7 @@ export class DualModelManager {
 
         closeBtn?.addEventListener('click', () => this.hideContinueModal());
         cancelBtn?.addEventListener('click', () => this.hideContinueModal());
-        modal?.addEventListener('click', (e) => {
+        modal?.addEventListener('mousedown', (e) => {
             if (e.target === modal) this.hideContinueModal();
         });
         confirmBtn?.addEventListener('click', () => this.handleContinue());
@@ -182,11 +184,11 @@ export class DualModelManager {
 
         // Load characters
         this.characters = await this.loadCharacters();
-        
+
         // Clear and populate character dropdowns
         selectA.innerHTML = '<option value="">-- Select Character --</option>';
         selectB.innerHTML = '<option value="">-- Select Character --</option>';
-        
+
         this.characters.forEach(char => {
             const optA = document.createElement('option');
             optA.value = char.filename;
@@ -205,28 +207,39 @@ export class DualModelManager {
             populateSelect(select, { includeBlank: true, blankLabel: "Use Character's Model" });
         });
 
-        // Initialize/Update custom dropdowns
-        [selectA, selectB, overrideA, overrideB].forEach(select => {
-            if (select) {
-                uiManager.initCustomDropdown(select);
-                uiManager.updateCustomDropdown(select);
-            }
-        });
+        if (!this._modalInitialized) {
+            // First open: init custom dropdowns and register listeners once
+            [selectA, selectB, overrideA, overrideB].forEach(select => {
+                if (select) uiManager.initCustomDropdown(select);
+            });
 
-        // Set different defaults if we have at least 2 characters
-        if (this.characters.length >= 2) {
-            selectA.value = this.characters[0].filename;
-            selectB.value = this.characters[1].filename;
-            this.onCharacterSelect('A');
-            this.onCharacterSelect('B');
-        } else if (this.characters.length === 1) {
-            selectA.value = this.characters[0].filename;
-            this.onCharacterSelect('A');
+            this._changeHandlerA = () => this.onCharacterSelect('A');
+            this._changeHandlerB = () => this.onCharacterSelect('B');
+            selectA.addEventListener('change', this._changeHandlerA);
+            selectB.addEventListener('change', this._changeHandlerB);
+
+            this.bindModeToggles();
+            this._modalInitialized = true;
+        } else {
+            // Subsequent opens: just refresh dropdown displays
+            [selectA, selectB, overrideA, overrideB].forEach(select => {
+                if (select) uiManager.updateCustomDropdown(select);
+            });
         }
 
-        // Bind character selection events
-        selectA?.addEventListener('change', () => this.onCharacterSelect('A'));
-        selectB?.addEventListener('change', () => this.onCharacterSelect('B'));
+        // Restore saved config or set defaults
+        const restored = this.loadConfig();
+        if (!restored) {
+            if (this.characters.length >= 2) {
+                selectA.value = this.characters[0].filename;
+                selectB.value = this.characters[1].filename;
+                this.onCharacterSelect('A');
+                this.onCharacterSelect('B');
+            } else if (this.characters.length === 1) {
+                selectA.value = this.characters[0].filename;
+                this.onCharacterSelect('A');
+            }
+        }
     }
 
     onCharacterSelect(modelKey) {
@@ -286,6 +299,149 @@ export class DualModelManager {
         }
     }
 
+    bindModeToggles() {
+        ['a', 'b'].forEach(side => {
+            const toggleEl = document.getElementById(`dual-mode-toggle-${side}`);
+            if (!toggleEl) return;
+            toggleEl.querySelectorAll('.dual-mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mode = btn.dataset.mode;
+                    this[`_mode${side.toUpperCase()}`] = mode;
+                    toggleEl.querySelectorAll('.dual-mode-btn').forEach(b => b.classList.toggle('active', b === btn));
+                    this.applyModeToUI(side.toUpperCase(), mode);
+                });
+            });
+        });
+    }
+
+    applyModeToUI(side, mode) {
+        const s = side.toLowerCase();
+        const charFields = document.getElementById(`dual-char-${s}-fields`);
+        const overrideLabel = document.getElementById(`dual-model-${s}-override-label`);
+        const overrideEl = document.getElementById(`dual-model-${s}-override`);
+        const promptEl = document.getElementById(`dual-model-${s}-prompt`);
+
+        if (mode === 'quickchat') {
+            if (charFields) charFields.style.display = 'none';
+            if (overrideLabel) overrideLabel.textContent = 'Model';
+            if (overrideEl) {
+                // Swap blank option label for quick chat
+                const blank = overrideEl.querySelector('option[value=""]');
+                if (blank) blank.textContent = '-- Select Model --';
+                uiManager.updateCustomDropdown(overrideEl);
+            }
+            if (promptEl) promptEl.placeholder = 'System prompt...';
+        } else {
+            if (charFields) charFields.style.display = '';
+            if (overrideLabel) overrideLabel.textContent = 'Model Override';
+            if (overrideEl) {
+                const blank = overrideEl.querySelector('option[value=""]');
+                if (blank) blank.textContent = "Use Character's Model";
+                uiManager.updateCustomDropdown(overrideEl);
+            }
+            if (promptEl) promptEl.placeholder = "Character's system prompt will appear here...";
+        }
+    }
+
+    saveConfig() {
+        const cfg = {
+            modeA: this._modeA,
+            modeB: this._modeB,
+            charA: document.getElementById('dual-char-a-select')?.value || '',
+            charB: document.getElementById('dual-char-b-select')?.value || '',
+            overrideA: document.getElementById('dual-model-a-override')?.value || '',
+            overrideB: document.getElementById('dual-model-b-override')?.value || '',
+            promptA: document.getElementById('dual-model-a-prompt')?.value || '',
+            promptB: document.getElementById('dual-model-b-prompt')?.value || '',
+            tempA: document.getElementById('dual-model-a-temp')?.value || '0.7',
+            tempB: document.getElementById('dual-model-b-temp')?.value || '0.7',
+            maxTurns: document.getElementById('dual-max-turns')?.value || '10',
+            venicePrompt: document.getElementById('dual-venice-prompt')?.checked ?? true,
+        };
+        localStorage.setItem('dual_model_config', JSON.stringify(cfg));
+        const btn = document.getElementById('dual-save-config-btn');
+        if (btn) {
+            const orig = btn.textContent;
+            btn.textContent = 'Saved ✓';
+            setTimeout(() => { btn.textContent = orig; }, 1500);
+        }
+    }
+
+    loadConfig() {
+        const raw = localStorage.getItem('dual_model_config');
+        if (!raw) return false;
+        try {
+            const cfg = JSON.parse(raw);
+
+            // Restore modes
+            ['A', 'B'].forEach(side => {
+                const mode = cfg[`mode${side}`] || 'character';
+                this[`_mode${side}`] = mode;
+                const toggleEl = document.getElementById(`dual-mode-toggle-${side.toLowerCase()}`);
+                if (toggleEl) {
+                    toggleEl.querySelectorAll('.dual-mode-btn').forEach(b => {
+                        b.classList.toggle('active', b.dataset.mode === mode);
+                    });
+                }
+                this.applyModeToUI(side, mode);
+            });
+
+            // Restore selects
+            const selectA = document.getElementById('dual-char-a-select');
+            const selectB = document.getElementById('dual-char-b-select');
+            const overrideA = document.getElementById('dual-model-a-override');
+            const overrideB = document.getElementById('dual-model-b-override');
+
+            if (selectA && cfg.charA) {
+                selectA.value = cfg.charA;
+                uiManager.updateCustomDropdown(selectA);
+                if (selectA.value) this.onCharacterSelect('A');
+            }
+            if (selectB && cfg.charB) {
+                selectB.value = cfg.charB;
+                uiManager.updateCustomDropdown(selectB);
+                if (selectB.value) this.onCharacterSelect('B');
+            }
+            if (overrideA && cfg.overrideA) {
+                overrideA.value = cfg.overrideA;
+                uiManager.updateCustomDropdown(overrideA);
+            }
+            if (overrideB && cfg.overrideB) {
+                overrideB.value = cfg.overrideB;
+                uiManager.updateCustomDropdown(overrideB);
+            }
+
+            // Restore prompts and temps (overrides onCharacterSelect population)
+            if (cfg.promptA) {
+                const el = document.getElementById('dual-model-a-prompt');
+                if (el) el.value = cfg.promptA;
+            }
+            if (cfg.promptB) {
+                const el = document.getElementById('dual-model-b-prompt');
+                if (el) el.value = cfg.promptB;
+            }
+
+            const tempA = document.getElementById('dual-model-a-temp');
+            const tempAVal = document.getElementById('dual-model-a-temp-value');
+            if (tempA && cfg.tempA) { tempA.value = cfg.tempA; if (tempAVal) tempAVal.textContent = cfg.tempA; }
+
+            const tempB = document.getElementById('dual-model-b-temp');
+            const tempBVal = document.getElementById('dual-model-b-temp-value');
+            if (tempB && cfg.tempB) { tempB.value = cfg.tempB; if (tempBVal) tempBVal.textContent = cfg.tempB; }
+
+            const maxTurns = document.getElementById('dual-max-turns');
+            if (maxTurns && cfg.maxTurns) maxTurns.value = cfg.maxTurns;
+
+            const venicePrompt = document.getElementById('dual-venice-prompt');
+            if (venicePrompt && cfg.venicePrompt !== undefined) venicePrompt.checked = cfg.venicePrompt;
+
+            return true;
+        } catch (e) {
+            console.warn('[DualModel] Failed to restore config:', e);
+            return false;
+        }
+    }
+
     handleStart() {
         const selectA = document.getElementById('dual-char-a-select');
         const selectB = document.getElementById('dual-char-b-select');
@@ -299,62 +455,75 @@ export class DualModelManager {
         const venicePrompt = document.getElementById('dual-venice-prompt');
         const initialPrompt = document.getElementById('dual-initial-prompt');
 
+        const isQuickA = this._modeA === 'quickchat';
+        const isQuickB = this._modeB === 'quickchat';
+
         // Validation
-        if (!selectA?.value || !selectB?.value) {
-            lagoonAlert('Please select both characters');
+        if (!isQuickA && !selectA?.value) {
+            lagoonAlert('Please select a character for A (or switch to Quick Chat)');
             return;
         }
-
-        if (selectA.value === selectB.value) {
+        if (!isQuickB && !selectB?.value) {
+            lagoonAlert('Please select a character for B (or switch to Quick Chat)');
+            return;
+        }
+        if (isQuickA && !overrideA?.value) {
+            lagoonAlert('Please select a model for Quick Chat A');
+            return;
+        }
+        if (isQuickB && !overrideB?.value) {
+            lagoonAlert('Please select a model for Quick Chat B');
+            return;
+        }
+        if (!isQuickA && !isQuickB && selectA.value === selectB.value) {
             lagoonAlert('Please select two different characters');
             return;
         }
-
         if (!initialPrompt?.value?.trim()) {
             lagoonAlert('Please enter an initial prompt to start the conversation');
             return;
         }
 
-        const charA = this.characters.find(c => c.filename === selectA.value);
-        const charB = this.characters.find(c => c.filename === selectB.value);
+        const charA = isQuickA ? null : this.characters.find(c => c.filename === selectA.value);
+        const charB = isQuickB ? null : this.characters.find(c => c.filename === selectB.value);
 
-        if (!charA || !charB) {
-            lagoonAlert('Failed to load character configurations');
-            return;
-        }
+        if (!isQuickA && !charA) { lagoonAlert('Failed to load Character A config'); return; }
+        if (!isQuickB && !charB) { lagoonAlert('Failed to load Character B config'); return; }
 
-        // Build full config for each character
+        const buildSide = (isQuick, char, overrideEl, promptEl, tempEl, fallbackName) => {
+            if (isQuick) {
+                return {
+                    id: overrideEl?.value,
+                    name: fallbackName,
+                    filename: null,
+                    systemPrompt: promptEl?.value || '',
+                    temperature: parseFloat(tempEl?.value) || 0.7,
+                    topP: 1, repetitionPenalty: 1, maxTokens: 20000,
+                    enableWebSearch: false, uncensoredMode: false, stripThinking: false,
+                    avatarUrl: null, introStatement: ''
+                };
+            }
+            return {
+                id: overrideEl?.value || char.model,
+                name: char.character_name || fallbackName,
+                filename: char.filename,
+                systemPrompt: promptEl?.value || char.system_prompt || '',
+                temperature: parseFloat(tempEl?.value) || char.temperature || 0.7,
+                topP: char.top_p || 1,
+                repetitionPenalty: char.repetition_penalty || 1,
+                maxTokens: char.max_tokens || 20000,
+                enableWebSearch: char.enable_web_search || false,
+                uncensoredMode: char.uncensored_mode || false,
+                stripThinking: char.strip_thinking || false,
+                avatarUrl: char.avatar_url || null,
+                introStatement: char.intro_statement || ''
+            };
+        };
+
+        // Build full config for each participant
         state.dualModelConfig = {
-            modelA: {
-                id: overrideA?.value || charA.model,
-                name: charA.character_name || 'Character A',
-                filename: charA.filename,
-                systemPrompt: promptA?.value || charA.system_prompt || '',
-                temperature: parseFloat(tempA?.value) || charA.temperature || 0.7,
-                topP: charA.top_p || 1,
-                repetitionPenalty: charA.repetition_penalty || 1,
-                maxTokens: charA.max_tokens || 4096,
-                enableWebSearch: charA.enable_web_search || false,
-                uncensoredMode: charA.uncensored_mode || false,
-                stripThinking: charA.strip_thinking || false,
-                avatarUrl: charA.avatar_url || null,
-                introStatement: charA.intro_statement || ''
-            },
-            modelB: {
-                id: overrideB?.value || charB.model,
-                name: charB.character_name || 'Character B',
-                filename: charB.filename,
-                systemPrompt: promptB?.value || charB.system_prompt || '',
-                temperature: parseFloat(tempB?.value) || charB.temperature || 0.7,
-                topP: charB.top_p || 1,
-                repetitionPenalty: charB.repetition_penalty || 1,
-                maxTokens: charB.max_tokens || 4096,
-                enableWebSearch: charB.enable_web_search || false,
-                uncensoredMode: charB.uncensored_mode || false,
-                stripThinking: charB.strip_thinking || false,
-                avatarUrl: charB.avatar_url || null,
-                introStatement: charB.intro_statement || ''
-            },
+            modelA: buildSide(isQuickA, charA, overrideA, promptA, tempA, 'Quick Chat A'),
+            modelB: buildSide(isQuickB, charB, overrideB, promptB, tempB, 'Quick Chat B'),
             maxTurns: parseInt(maxTurns?.value) || 10,
             currentTurn: 0,
             includeVenicePrompt: venicePrompt?.checked ?? true

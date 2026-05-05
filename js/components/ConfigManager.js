@@ -4,7 +4,7 @@
  */
 
 import { state, dom } from '../state.js';
-import { DEFAULT_USER_AVATAR_IMAGE_PATH } from '../core/Constants.js';
+import { DEFAULT_AVATAR_URI } from '../core/Constants.js';
 import { saveConfigApi, uploadAvatarApi, fetchConfig, parseFileApi, deleteConfigApi, reparentChatsApi } from '../api.js';
 import { lagoonAlert, lagoonConfirm } from '../ui/dialog.js';
 import { refreshSidebar } from '../ui/sidebar.js';
@@ -176,7 +176,7 @@ export class ConfigManager {
         this._editingConfigFilename = null;
         this.dom.configForm.reset();
         this.dom.configName.value = '';
-        this.dom.avatarPreview.src = DEFAULT_USER_AVATAR_IMAGE_PATH;
+        this.dom.avatarPreview.src = DEFAULT_AVATAR_URI;
         state.selectedAvatarFile = null;
         
         if (this.dom.systemContextTextarea) {
@@ -293,6 +293,7 @@ export class ConfigManager {
                 if (newConfig) {
                     const { chatManager } = await import('./ChatManager.js');
                     chatManager.applyCharacterConfig(newConfig);
+                    chatManager.updateModelButtonText();
                     updateMessageAvatars(newConfig);
                     if (state.currentChatId) {
                         const { saveChatApi } = await import('../api.js');
@@ -351,7 +352,7 @@ export class ConfigManager {
         this.dom.uncensoredMode.checked = configData.uncensored_mode || false;
         this.dom.stripThinking.checked = configData.strip_thinking || false;
         if (this.dom.styleOverseer) this.dom.styleOverseer.checked = configData.style_overseer || false;
-        this.dom.avatarPreview.src = configData.avatar_url || DEFAULT_USER_AVATAR_IMAGE_PATH;
+        this.dom.avatarPreview.src = configData.avatar_url || DEFAULT_AVATAR_URI;
         state.selectedAvatarFile = null;
 
         this.dom.tempValue.textContent = parseFloat(this.dom.temperature.value).toFixed(2);

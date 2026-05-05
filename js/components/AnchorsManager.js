@@ -63,7 +63,7 @@ export class AnchorsManager {
 
     _bindEvents() {
         this.closeBtn?.addEventListener('click', () => this.close());
-        this.modal?.addEventListener('click', (e) => {
+        this.modal?.addEventListener('mousedown', (e) => {
             if (e.target === this.modal) this.close();
         });
         this.addBtn?.addEventListener('click', () => this._openEditor(null));

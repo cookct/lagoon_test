@@ -124,13 +124,19 @@ def encrypt_message(plaintext, model_pub_hex):
 
 
 def encrypt_messages(messages, model_pub_hex):
-    """Encrypt all user/system messages. File uploads not supported in E2EE —
-    list-content messages have image parts dropped, text parts flattened and encrypted.
+    """Encrypt all messages for Venice E2EE. Venice decrypts every content field
+    in the payload — user, system, and assistant alike.
+    File uploads not supported — list-content messages have image parts dropped,
+    text parts flattened and encrypted.
     """
     out = []
     for msg in messages:
         role = msg.get('role')
         content = msg.get('content') or ''  # None-safe: null key returns None, not default
+        
+        # Surgical message object for Venice E2EE. 
+        # For GLM-5 and strict TEE gateways, EVERY message in the array 
+        # (user, system, AND assistant) must be encrypted hex.
         if isinstance(content, list):
             # File uploads not supported — extract text parts only
             content = ' '.join(
@@ -140,7 +146,18 @@ def encrypt_messages(messages, model_pub_hex):
         elif not isinstance(content, str):
             logger.warning(f"[E2EE] Unexpected content type {type(content).__name__} for role={role}, coercing to str")
             content = str(content)
-        out.append({**msg, 'content': encrypt_message(content, model_pub_hex)})
+        
+        # Encrypt the content regardless of role
+        encrypted_content = encrypt_message(content, model_pub_hex)
+        new_msg = {
+            'role': role,
+            'content': encrypted_content
+        }
+
+        if 'name' in msg:
+            new_msg['name'] = msg['name']
+            
+        out.append(new_msg)
     return out
 
 

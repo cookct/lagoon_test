@@ -7,7 +7,8 @@
 import { state, dom, toggleKeepMessage, addToPromptHistory } from '../state.js';
 import { CONTEXT_WINDOWS } from '../core/Constants.js';
 import { getDisplayName } from '../core/InstalledModels.js';
-import { streamChat, saveChatApi, fetchChat, analyzeEditApi, contextStatusApi } from '../api.js';
+import { modelConfigs } from '../core/modelConfigs.js';
+import { streamChat, saveChatApi, fetchChat, analyzeEditApi, contextStatusApi, refreshBalance, updateBalanceDisplay } from '../api.js';
 import { parseMarkdown, estimateTokens, CODE_EXTENSIONS } from '../utils.js';
 import { addMessageToUI, renderMessages as renderMessagesUI, createAssistantMessageActions, showSummarizedNotification } from '../ui/messages.js';
 import { autoScroll, scrollToBottom } from '../ui/scroll.js';
@@ -96,47 +97,12 @@ export class ChatManager {
             if (this.sessionCost > 0 && this.dom.sessionCostEl) {
                 this.dom.sessionCostEl.textContent = `$${this.sessionCost.toFixed(4)}`;
             }
-            // Load cached balance immediately for instant display
-            this._loadCachedBalance();
-            // Refresh balance from API in background
-            this._refreshBalance();
+            const cached = localStorage.getItem('lagoon_balance_usd');
+            if (cached) updateBalanceDisplay(cached);
+            refreshBalance();
             console.log('[ChatManager] Initialized');
         } else {
             console.warn('[ChatManager] Chat DOM elements not found');
-        }
-    }
-
-    _loadCachedBalance() {
-        // Show last known balance immediately from localStorage
-        const cached = localStorage.getItem('lagoon_balance_usd');
-        if (cached) {
-            this._updateBalanceDisplay(cached);
-            state.lastBalanceUsd = cached;
-        }
-    }
-
-    _updateBalanceDisplay(val) {
-        const floatVal = parseFloat(val);
-        const displayVal = isNaN(floatVal) ? val : floatVal.toFixed(3);
-
-        // Update shared header balance display
-        const balanceEl = document.getElementById('balance-usd');
-        if (balanceEl) balanceEl.textContent = displayVal;
-    }
-
-    async _refreshBalance() {
-        // Fetch fresh balance from API in background
-        try {
-            const resp = await fetch('/api/balance');
-            const data = await resp.json();
-            if (data.success && data.balance) {
-                this._updateBalanceDisplay(data.balance);
-                localStorage.setItem('lagoon_balance_usd', data.balance);
-                state.lastBalanceUsd = data.balance;
-            }
-        } catch (e) {
-            // Silently fail - we already showed cached value
-            console.debug('[ChatManager] Balance refresh failed:', e.message);
         }
     }
 
@@ -165,7 +131,7 @@ export class ChatManager {
             this.dom.resetSessionCostBtn.addEventListener('click', () => this._resetSessionCost());
         }
 
-        // Venice Prompt Toggle
+        // Venice Prompt Toggle (chat/video modes only - hidden in image mode via CSS)
         if (this.dom.veniceToggle) {
             this.dom.veniceToggle.addEventListener('change', (e) => {
                 state.currentConfig.include_venice_system_prompt = e.target.checked;
@@ -186,9 +152,6 @@ export class ChatManager {
             this.dom.messageInput.style.height = '44px';
             if (this.dom.messageInput.scrollHeight > 44) {
                 this.dom.messageInput.style.height = this.dom.messageInput.scrollHeight + 'px';
-                this.dom.messageInput.style.overflowY = 'auto';
-            } else {
-                this.dom.messageInput.style.overflowY = 'hidden';
             }
             toggleSendButtonState();
         });
@@ -472,7 +435,7 @@ export class ChatManager {
             'author_note', 'author_note_depth',
             'uncensored_mode', 'strip_thinking', 'style_overseer',
             'fiction_prompt_text', 'include_venice_system_prompt',
-            'character_name', 'avatar'
+            'character_name', 'avatar', 'model'
         ];
         for (const field of liveFields) {
             if (newConfig[field] !== undefined) {
@@ -741,15 +704,9 @@ export class ChatManager {
                             if (isNewChat) state.currentChatId = eventData.chat_id;
                             assistantMessageDiv.innerHTML = `<div style="display: flex; align-items: center; gap: 10px;"><span class="generating-spinner"></span><i style="opacity: 0.5;">Streaming...</i></div>`;
                         } else if (eventData.event === 'balance') {
-                           if (this.dom.balanceEl) {
-                               if (eventData.usd) {
-                                   const val = parseFloat(eventData.usd);
-                                   const displayVal = isNaN(val) ? eventData.usd : val.toFixed(3);
-                                   this.dom.balanceEl.textContent = displayVal;
-                                   // Persist to localStorage for instant display on next load
-                                   localStorage.setItem('lagoon_balance_usd', eventData.usd);
-                                   state.lastBalanceUsd = eventData.usd;
-                               }
+                           if (eventData.usd) {
+                               updateBalanceDisplay(eventData.usd);
+                               localStorage.setItem('lagoon_balance_usd', eventData.usd);
                            }
                         } else if (eventData.event === 'search_results') {
                             state.currentSearchResults = eventData.data;
@@ -812,7 +769,9 @@ export class ChatManager {
                         } else if (eventData.event === 'review_needed') {
                             this._showReviewNeededBanner();
                         } else if (eventData.event === 'e2ee_active') {
-                            this._showToast('\uD83D\uDD12 E2EE verified');
+                            document.body.classList.add('e2ee-active');
+                            assistantMessage.e2ee = true;
+                            assistantMessageGroup.classList.add('e2ee-verified');
                             const badge = document.createElement('span');
                             badge.className = 'e2ee-badge';
                             badge.title = 'End-to-end encrypted via Venice TEE';
@@ -845,11 +804,18 @@ export class ChatManager {
                             if (isNewChat) await refreshSidebar();
                             this._refreshPromptMonitor();
                             this._runStyleOverseer();
+                            if (eventData.balance_usd) {
+                                updateBalanceDisplay(eventData.balance_usd);
+                                localStorage.setItem('lagoon_balance_usd', eventData.balance_usd);
+                            } else {
+                                refreshBalance();
+                            }
                             return;
                         } else if (eventData.event === 'error') {
                             throw new Error(eventData.error);
                         }
                     } catch (e) {
+                        if (!(e instanceof SyntaxError)) throw e;
                         console.warn("Failed to parse SSE line", trimmedLine, e);
                     }
                 }
@@ -863,6 +829,11 @@ export class ChatManager {
                     this.saveChat();
                 }
             } else {
+                // Remove placeholder assistant message if nothing was streamed
+                if (assistantMessage.content === '...') {
+                    state.messages.pop();
+                    assistantMessageGroup.remove();
+                }
                 addMessageToUI('system', `Error: ${error.message}`);
             }
         } finally {
@@ -870,6 +841,7 @@ export class ChatManager {
             state.abortController = null;
             this.setStreamingState(false);
             assistantMessageDiv.classList.remove('streaming');
+            document.body.classList.remove('e2ee-active');
             
             if (assistantMessage.content && assistantMessage.content !== '...') {
                 // Use the same helper for final render to maintain consistency
@@ -1093,10 +1065,27 @@ export class ChatManager {
     }
 
     updateModelButtonText() {
-         if (this.dom.changeModelBtn && state.currentConfig.model) {
-            this.dom.changeModelBtn.textContent = getDisplayName(state.currentConfig.model);
-        } else if (this.dom.changeModelBtn) {
-            this.dom.changeModelBtn.textContent = 'Model';
+         if (this.dom.changeModelBtn) {
+            let modelId = null;
+            if (state.mode === 'image') {
+                modelId = document.getElementById('image-generate-model')?.value;
+            } else if (state.mode === 'video') {
+                modelId = state.videoProvider === 'together'
+                    ? document.getElementById('together-video-model-select')?.value
+                    : document.getElementById('video-model-select')?.value;
+            } else {
+                modelId = state.currentConfig.model;
+            }
+
+            if (modelId) {
+                const fromInstalled = getDisplayName(modelId);
+                const displayName = (fromInstalled === modelId)
+                    ? (modelConfigs.models?.[modelId]?.display_name || modelId)
+                    : fromInstalled;
+                this.dom.changeModelBtn.textContent = displayName;
+            } else {
+                this.dom.changeModelBtn.textContent = 'Model';
+            }
         }
     }
 

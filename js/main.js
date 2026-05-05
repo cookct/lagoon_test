@@ -11,7 +11,6 @@ import { configManager } from './components/ConfigManager.js';
 import { sessionManager } from './components/SessionManager.js';
 import { initModalDraggability } from './utils/Draggable.js';
 import { initMarkdown } from './utils.js';
-import { DEFAULT_USER_AVATAR_IMAGE_PATH } from './core/Constants.js';
 import { initInstalledModels, populateSelect, getDisplayName, getInstalledModels, getDefaultModel } from './core/InstalledModels.js';
 import { showModelManager } from './ui/settings.js';
 import { initDialog } from './ui/dialog.js';
@@ -32,6 +31,7 @@ import { showContextViewer, showSettingsMenu, filterModelDropdownForE2EE, toggle
 
 import { imageModeManager } from './components/ImageModeManager.js';
 import { videoModeManager } from './components/VideoModeManager.js';
+import { togetherVideoModeManager } from './components/TogetherVideoModeManager.js';
 import { imageEditor } from './components/ImageEditor.js';
 import { lightbox } from './components/Lightbox.js';
 
@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     sessionManager.init();
     imageModeManager.init();
     videoModeManager.init();
+    togetherVideoModeManager.init();
     imageEditor.init();
     lightbox.init();
     settingsPersistence.init();
@@ -94,6 +95,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     initModalDraggability();
     initDesignMode();
+
+    // Video provider toggle (Venice / Together)
+    state.videoProvider = localStorage.getItem('video_provider') || 'venice';
+    const vpVenice = document.getElementById('video-provider-venice');
+    const vpTogether = document.getElementById('video-provider-together');
+    function _applyVideoProvider(provider) {
+        state.videoProvider = provider;
+        localStorage.setItem('video_provider', provider);
+        vpVenice?.classList.toggle('active', provider === 'venice');
+        vpTogether?.classList.toggle('active', provider === 'together');
+        if (state.mode === 'video') {
+            if (provider === 'together') {
+                togetherVideoModeManager.refreshParameterPanel();
+            } else {
+                videoModeManager.refreshParameterPanel();
+            }
+        }
+    }
+    vpVenice?.addEventListener('click', () => _applyVideoProvider('venice'));
+    vpTogether?.addEventListener('click', () => _applyVideoProvider('together'));
+    // Apply persisted state on load (after video mode manager init)
+    if (state.videoProvider === 'together') {
+        vpVenice?.classList.remove('active');
+        vpTogether?.classList.add('active');
+    }
 
     // 4. Restore Theme & Mode
     const savedTheme = localStorage.getItem('theme') || 'hacker';
@@ -267,7 +293,9 @@ function showModelSelector(button) {
     if (state.mode === 'image') {
         modelSelect = document.getElementById('image-generate-model');
     } else if (state.mode === 'video') {
-        modelSelect = document.getElementById('video-model-select');
+        modelSelect = state.videoProvider === 'together'
+            ? document.getElementById('together-video-model-select')
+            : document.getElementById('video-model-select');
     } else {
         modelSelect = document.getElementById('model');
     }
@@ -294,6 +322,7 @@ function showModelSelector(button) {
                 if (state.mode === 'image' || state.mode === 'video') {
                     modelSelect.value = modelName;
                     modelSelect.dispatchEvent(new Event('change'));
+                    chatManager.updateModelButtonText();
                     menu.remove();
                     return;
                 }
@@ -308,6 +337,8 @@ function showModelSelector(button) {
                 }
 
                 state.currentConfig.model = modelName;
+                localStorage.setItem('quickchat_model', modelName);
+                
                 if (opt.dataset.provider === 'ollama') {
                     state.currentConfig.provider = 'ollama';
                     delete state.currentConfig.custom_base_url;

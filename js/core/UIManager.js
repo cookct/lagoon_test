@@ -95,7 +95,7 @@ class UIManager {
     initCustomDropdown(select) {
         if (!select) return;
         // Prevent double initialization
-        if (select.previousElementSibling?.className === 'custom-dropdown-container') return;
+        if (select.previousElementSibling?.classList.contains('custom-dropdown-container')) return;
 
         const container = document.createElement('div');
         container.className = 'custom-dropdown-container ' + select.className;
@@ -223,7 +223,7 @@ class UIManager {
         label.textContent = opt.textContent;
         item.appendChild(label);
 
-        label.onclick = (e) => {
+        item.onclick = (e) => {
             e.stopPropagation();
             select.selectedIndex = idx;
             select.dispatchEvent(new Event('change'));
@@ -242,8 +242,8 @@ class UIManager {
      */
     updateCustomDropdown(select) {
         if (!select) return;
-        const container = select.previousSibling;
-        if (!container || container.className !== 'custom-dropdown-container') return;
+        const container = select.previousElementSibling;
+        if (!container || !container.classList.contains('custom-dropdown-container')) return;
 
         const selected = container.querySelector('.custom-dropdown-selected');
         const optionsList = container.querySelector('.custom-dropdown-options');

@@ -49,7 +49,7 @@ const lightbox = {
         });
 
         // Overlay click to close (only when not zoomed)
-        this.el.querySelector('.lightbox-overlay')?.addEventListener('click', () => {
+        this.el.querySelector('.lightbox-overlay')?.addEventListener('mousedown', () => {
             if (this.scale <= 1) this.close();
         });
 

@@ -3,7 +3,7 @@
  * All model dropdowns in the app populate from this module.
  */
 
-import { state } from '../state.js';
+import { state, MODEL_LOGOS } from '../state.js';
 import { modelConfigs } from './modelConfigs.js';
 
 let _models = [];
@@ -43,6 +43,29 @@ export function filterModels() {
 
 export function getInstalledModels() {
     return filterModels();
+}
+
+export function getInstalledModel(id) {
+    return _models.find(m => m.id === id) ?? null;
+}
+
+export function inferLogoKey(modelId) {
+    if (!modelId) return null;
+    if (MODEL_LOGOS[modelId]) return modelId;
+
+    const parts = modelId.split('-');
+    for (let i = parts.length - 1; i >= 1; i--) {
+        const prefix = parts.slice(0, i).join('-');
+        if (MODEL_LOGOS[prefix]) return prefix;
+    }
+
+    if (modelId.includes('/')) {
+        const org = modelId.split('/')[0].toLowerCase();
+        const match = Object.keys(MODEL_LOGOS).find(key => org.includes(key) || key.includes(org));
+        if (match) return match;
+    }
+
+    return null;
 }
 
 export function getDisplayName(id) {

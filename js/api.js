@@ -120,6 +120,20 @@ export async function retrieveVideoApi(model, queueId) {
     return response.json();
 }
 
+export async function queueTogetherVideoApi(payload) {
+    const response = await fetch('/api/together/video/queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    return response.json();
+}
+
+export async function retrieveTogetherVideoApi(jobId) {
+    const response = await fetch(`/api/together/video/retrieve/${encodeURIComponent(jobId)}`);
+    return response.json();
+}
+
 export async function saveChatApi(chatId, messages, config, parentConfig, displayName, keptMessages = null) {
     // Use provided keptMessages or import from state (with  to match other imports)
     let kept = keptMessages;
@@ -311,5 +325,25 @@ export async function previewPrompt(chatId, messages, config, parentConfig) {
     } catch (e) {
         console.warn('[API] previewPrompt failed:', e);
         return null;
+    }
+}
+
+export function updateBalanceDisplay(val) {
+    const floatVal = parseFloat(val);
+    const displayVal = isNaN(floatVal) ? val : floatVal.toFixed(2);
+    const balanceEl = document.getElementById('balance-usd');
+    if (balanceEl) balanceEl.textContent = displayVal;
+}
+
+export async function refreshBalance() {
+    try {
+        const resp = await fetch('/api/balance');
+        const data = await resp.json();
+        if (data.success && data.balance) {
+            updateBalanceDisplay(data.balance);
+            localStorage.setItem('lagoon_balance_usd', data.balance);
+        }
+    } catch (e) {
+        console.debug('[API] refreshBalance failed:', e.message);
     }
 }

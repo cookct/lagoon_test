@@ -368,12 +368,15 @@ export const designMode = {
     },
 
     openModal(el, selector) {
+        console.log('[DesignMode] openModal called with:', el, selector);
         this._closePanel();
         this._targetEl      = el;
         this._targetSelector = selector;
         this._currentStyles  = {};
         this._currentState   = '';
+        console.log('[DesignMode] calling _buildPanel...');
         this._buildPanel();
+        console.log('[DesignMode] _buildPanel complete, panelEl:', this._panelEl);
     },
 
     _closePanel() {
@@ -401,9 +404,12 @@ export const designMode = {
     },
 
 _buildPanel() {
+        console.log('[DesignMode] _buildPanel starting...');
+        try {
         // Get styles from stylesheets first (avoids hover-tainted computed styles)
         // Fall back to computed styles only when no stylesheet rule exists
         const sheetStyles = this._getStylesFromStylesheets(this._targetSelector, '') || {};
+        console.log('[DesignMode] sheetStyles:', sheetStyles);
         const cs = window.getComputedStyle(this._targetEl);
         
         // Helper to get style value: stylesheet > computed
@@ -629,6 +635,11 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
             const initHex = isTransparent(rawVal) ? null : rgbToHex(rawVal);
             body.appendChild(this._makeColorRow(prop, label, initHex));
         }
+
+        // --- FOOTER ---
+        const footer = document.createElement('div');
+        footer.className = 'dm-footer';
+
         const cancelBtn = document.createElement('button');
         cancelBtn.className = 'dm-btn dm-btn-cancel';
         cancelBtn.textContent = 'Cancel';
@@ -662,6 +673,10 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
         }
         
         this._updateContrastBadge();
+        console.log('[DesignMode] _buildPanel complete, panel appended to body');
+        } catch (err) {
+            console.error('[DesignMode] _buildPanel error:', err);
+        }
     },
 
     _makeSectionHeader(text) {

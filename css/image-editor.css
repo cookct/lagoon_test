@@ -272,6 +272,17 @@
     z-index: 4;
 }
 
+#image-edit-pen-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 6;
+    pointer-events: none;
+    image-rendering: auto;
+}
+
 /* Custom Cursor */
 .image-editor-cursor {
     position: fixed;

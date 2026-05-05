@@ -3,12 +3,30 @@
  * Handles image card logic, uploads, pasting, and the generate panel.
  */
 
-import { lagoonAlert } from '../ui/dialog.js';
+import { lagoonAlert, lagoonConfirm } from '../ui/dialog.js';
+import { refreshBalance, updateBalanceDisplay } from '../api.js';
 import { imageEditor } from './ImageEditor.js';
 import { lightbox } from './Lightbox.js';
 import { dom, state, addToPromptHistory } from '../state.js';
 import { addMessageToUI } from '../ui/messages.js';
-import { showContextViewer } from '../ui/settings.js';
+import { toggleSendButtonState } from '../ui/sendButton.js';
+
+const IMAGE_PRICES = {
+    'nano-banana-pro': 0.18,
+    'nano-banana-pro-edit': 0.18,
+    'grok-imagine-image': 0.03,
+    'grok-imagine-image-pro': 0.09,
+    'grok-imagine-edit': 0.03,
+    'wan-2-7-text-to-image': 0.04,
+    'wan-2-7-pro-text-to-image': 0.09,
+    'wan-2-7-pro-edit': 0.09,
+    'qwen-image-2-edit': 0.05,
+    'qwen-image-2-pro-edit': 0.10,
+    'seedream-v5-lite-edit': 0.05,
+    'seedream-v4-edit': 0.05,
+    'firered-image-edit': 0.04,
+};
+const UPSCALER_PRICES = { 2: 0.02, 4: 0.08 };
 
 export class ImageModeManager {
     constructor() {
@@ -44,6 +62,7 @@ export class ImageModeManager {
             messagesContainer: document.getElementById('messages-container'),
             chatForm: document.getElementById('chat-form'),
             contextFileBtn: document.getElementById('context-file-btn'),
+            priceDisplay: document.getElementById('img-price-display'),
         };
     }
 
@@ -135,18 +154,6 @@ export class ImageModeManager {
             });
         }
 
-        // Image Mode Header Events (uses shared #right-sidebar-header)
-        const viewCtxBtn = document.getElementById('view-context-btn');
-        if (viewCtxBtn) {
-            viewCtxBtn.addEventListener('click', () => showContextViewer());
-        }
-
-        const promptToggle = document.getElementById('quick-venice-prompt-toggle');
-        if (promptToggle) {
-            promptToggle.addEventListener('change', (e) => {
-                state.currentConfig.include_venice_system_prompt = e.target.checked;
-            });
-        }
     }
 
     bindClearEvents() {
@@ -208,7 +215,13 @@ export class ImageModeManager {
         if (this.dom.generateModel) {
             this.dom.generateModel.addEventListener('change', () => {
                 this.toggleUpscalerParams();
+                toggleSendButtonState();
+                this.updatePriceDisplay();
             });
+        }
+
+        if (this.dom.upscalerScale) {
+            this.dom.upscalerScale.addEventListener('change', () => this.updatePriceDisplay());
         }
 
         // Enhance checkbox - show/hide enhance-only params
@@ -234,6 +247,22 @@ export class ImageModeManager {
 
         // Initial state
         this.toggleUpscalerParams();
+        this.updatePriceDisplay();
+    }
+
+    updatePriceDisplay() {
+        if (!this.dom.priceDisplay) return;
+        const model = this.dom.generateModel?.value;
+        if (!model) { this.dom.priceDisplay.textContent = ''; return; }
+        if (model === 'upscaler') {
+            const scale = parseInt(this.dom.upscalerScale?.value || '2', 10);
+            const price = UPSCALER_PRICES[scale] ?? 0.02;
+            this.dom.priceDisplay.textContent = `$${price.toFixed(2)}`;
+        } else if (model in IMAGE_PRICES) {
+            this.dom.priceDisplay.textContent = `$${IMAGE_PRICES[model].toFixed(2)}`;
+        } else {
+            this.dom.priceDisplay.textContent = '';
+        }
     }
 
     toggleUpscalerParams() {
@@ -260,12 +289,22 @@ export class ImageModeManager {
             geminiParams.classList.toggle('hidden', !showGemini);
         }
 
-        const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'nano-banana-pro-edit', 'grok-imagine-image-pro'];
+        const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'seedream-v5-lite-edit', 'nano-banana-pro-edit', 'grok-imagine-image', 'grok-imagine-image-pro', 'wan-2-7-text-to-image', 'wan-2-7-pro-text-to-image'];
+        const veniceSeedModels = ['wan-2-7-text-to-image', 'wan-2-7-pro-text-to-image'];
+        const veniceResolutionModels = ['grok-imagine-edit'];
         const veniceEditParams = document.getElementById('venice-edit-params');
         if (veniceEditParams) {
             veniceEditParams.style.display = veniceAspectModels.includes(selectedModel) ? 'block' : 'none';
         }
-        
+        const seedRow = document.getElementById('venice-seed-row');
+        if (seedRow) {
+            seedRow.style.display = veniceSeedModels.includes(selectedModel) ? 'flex' : 'none';
+        }
+        const resolutionRow = document.getElementById('venice-resolution-row');
+        if (resolutionRow) {
+            resolutionRow.style.display = veniceResolutionModels.includes(selectedModel) ? 'flex' : 'none';
+        }
+
         // Hide message input for upscaler (no prompt needed)
         if (this.dom.messageInput) {
             this.dom.messageInput.placeholder = isUpscaler ? 'Optional style prompt for enhancement...' : 'Type your message...';
@@ -332,6 +371,14 @@ export class ImageModeManager {
         console.log(`[ImageModeManager] Cleared preview for: ${target}`);
     }
 
+    pushToRef(src) {
+        const ref1Img = document.querySelector('#preview-ref-1 img');
+        if (ref1Img?.src) {
+            this.updatePreview('ref-2', ref1Img.src);
+        }
+        this.updatePreview('ref-1', src);
+    }
+
     updateModelFilter() {
         // Disabled - users can select any model regardless of loaded images
         this.updateCardLabels();
@@ -357,18 +404,7 @@ export class ImageModeManager {
         });
     }
 
-    _updateBalance(balanceUsd) {
-        if (!balanceUsd) return;
-        const floatVal = parseFloat(balanceUsd);
-        const displayVal = isNaN(floatVal) ? balanceUsd : floatVal.toFixed(3);
 
-        const balanceEl = document.getElementById('balance-usd');
-        if (balanceEl) balanceEl.textContent = displayVal;
-
-        // Persist to localStorage
-        localStorage.setItem('lagoon_balance_usd', balanceUsd);
-        state.lastBalanceUsd = balanceUsd;
-    }
 
     /**
      * Fire a single fetch to the image endpoint and return the final image src.
@@ -383,9 +419,11 @@ export class ImageModeManager {
         const result = await response.json();
         if (result.error) throw new Error(result.error);
 
-        // Update balance if present in response
         if (result._balance) {
-            this._updateBalance(result._balance);
+            updateBalanceDisplay(result._balance);
+            localStorage.setItem('lagoon_balance_usd', result._balance);
+        } else {
+            refreshBalance();
         }
 
         const newB64 = result.images ? result.images[0] : result.image;
@@ -395,8 +433,8 @@ export class ImageModeManager {
             ? newB64
             : `data:image/png;base64,${newB64}`;
 
-        const restoreCheckbox = document.getElementById('restore-pixels-checkbox');
-        if (imageEditor.savedPixels && restoreCheckbox?.checked) {
+        const restoreCheckbox = document.querySelector('.restore-pixels-checkbox:checked');
+        if (imageEditor.savedPixels && restoreCheckbox) {
             finalSrc = await imageEditor.restorePixels(finalSrc);
         }
         return finalSrc;
@@ -428,7 +466,7 @@ export class ImageModeManager {
 
         // Target-only models in the main area — no reference cards, just the target card.
         // Separate from masking modal models (editor-model-select in index.html).
-        const editModels = ['qwen-image-2-edit', 'firered-image-edit'];
+        const editModels = ['qwen-image-2-edit', 'firered-image-edit', 'gemini-3-pro-edit'];
 
         // Gather images based on model type
         let images = [];
@@ -437,13 +475,17 @@ export class ImageModeManager {
             // Edit mode: use the stored source image directly — no card needed
             images = [this.editSourceImage];
         } else if (editModels.includes(modelId)) {
-            // Edit models only use the target image card
-            const targetImg = document.querySelector(`#preview-target img`);
-            if (!targetImg || !targetImg.src) {
-                await lagoonAlert(`Load an image in the Target card for ${modelId}.`);
+            // Edit models use the first loaded card: target → ref-1 → ref-2
+            let editImg = null;
+            for (const cardId of ['target', 'ref-1', 'ref-2']) {
+                const img = document.querySelector(`#preview-${cardId} img`);
+                if (img?.src) { editImg = img; break; }
+            }
+            if (!editImg) {
+                await lagoonAlert(`Load an image in any card to use ${modelId}.`);
                 return;
             }
-            images = [targetImg.src];
+            images = [editImg.src];
         } else {
             // Generate models: gather images from all cards with checked checkboxes.
             // Card order: target first, then references (reversed for API).
@@ -499,10 +541,20 @@ export class ImageModeManager {
             ? { model: modelId, prompt, images }
             : { modelId, prompt, images, multi_ref: refCount >= 1, single_edit: this.editModeActive };
 
-        const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'nano-banana-pro-edit', 'grok-imagine-image-pro'];
+        const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'seedream-v5-lite-edit', 'nano-banana-pro-edit', 'grok-imagine-image', 'grok-imagine-image-pro', 'wan-2-7-text-to-image', 'wan-2-7-pro-text-to-image'];
+        const veniceSeedModels = ['wan-2-7-text-to-image', 'wan-2-7-pro-text-to-image'];
+        const veniceResolutionModels = ['grok-imagine-edit'];
         if (veniceAspectModels.includes(modelId)) {
             const ratio = document.getElementById('venice-edit-aspect-ratio')?.value;
             if (ratio && ratio !== 'auto') body.aspect_ratio = ratio;
+        }
+        if (veniceSeedModels.includes(modelId)) {
+            const seedVal = document.getElementById('venice-seed')?.value;
+            if (seedVal !== '' && seedVal !== null && seedVal !== undefined) body.seed = parseInt(seedVal, 10);
+        }
+        if (veniceResolutionModels.includes(modelId)) {
+            const res = document.getElementById('venice-edit-resolution')?.value;
+            if (res) body.resolution = res;
         }
 
         if (isGemini && (!editModels.includes(modelId) || modelId === 'gemini-3-pro-edit')) {
@@ -519,19 +571,38 @@ export class ImageModeManager {
 
         const resultsCount = parseInt(document.getElementById('image-results-count')?.value || '1', 10);
 
+        document.body.classList.add('image-generating');
         this.showGeneratingSpinner(resultsCount);
+        let spinnerConsumed = false;
         try {
             if (resultsCount === 1) {
-                const finalSrc = await this._fetchSingle(endpoint, body, signal);
-                this.displayResult(finalSrc);
+                try {
+                    const finalSrc = await this._fetchSingle(endpoint, body, signal);
+                    this.removeGeneratingSpinner();
+                    spinnerConsumed = true;
+                    this.displayResult(finalSrc);
+                } catch (err) {
+                    if (err.name === 'AbortError') throw err;
+                    this._rejectCell(0);
+                    spinnerConsumed = true;
+                    console.warn('[ImageModeManager] Generation refused/failed:', err.message);
+                }
             } else {
-                const settled = await Promise.allSettled(
-                    Array.from({ length: resultsCount }, () => this._fetchSingle(endpoint, body, signal))
+                const indexed = await Promise.all(
+                    Array.from({ length: resultsCount }, (_, i) =>
+                        this._fetchSingle(endpoint, body, signal)
+                            .then(src => ({ index: i, src, ok: true }))
+                            .catch(err => ({ index: i, err, ok: false }))
+                    )
                 );
-                const srcs = settled.filter(r => r.status === 'fulfilled').map(r => r.value);
-                const failed = settled.filter(r => r.status === 'rejected').length;
-                if (srcs.length > 0) this.displayMultipleResults(srcs);
-                if (failed > 0) console.warn(`[ImageModeManager] ${failed} image(s) failed in batch`);
+                const allAborted = indexed.every(r => !r.ok && r.err?.name === 'AbortError');
+                if (!allAborted) {
+                    indexed.forEach(r => {
+                        if (r.ok) this._resolveCell(r.index, r.src);
+                        else this._rejectCell(r.index);
+                    });
+                    spinnerConsumed = true;
+                }
             }
         } catch (err) {
             if (err.name !== 'AbortError') {
@@ -539,7 +610,8 @@ export class ImageModeManager {
                 await lagoonAlert(`Generate failed: ${err.message}`);
             }
         } finally {
-            this.removeGeneratingSpinner();
+            document.body.classList.remove('image-generating');
+            if (!spinnerConsumed) this.removeGeneratingSpinner();
             this.abortController = null;
             if (sendBtn) {
                 sendBtn.removeEventListener('click', stopHandler);
@@ -559,15 +631,39 @@ export class ImageModeManager {
      * Upscale image using Venice's dedicated upscale endpoint.
      */
     async upscaleImage() {
-        // Get target image - always use target card regardless of checkbox
-        const targetPreview = document.getElementById('preview-target');
-        const targetImg = targetPreview?.querySelector('img');
-        
-        console.log('[ImageModeManager] upscaleImage - targetPreview:', !!targetPreview, 'targetImg:', !!targetImg, 'src:', !!targetImg?.src);
-        
-        if (!targetImg || !targetImg.src) {
-            await lagoonAlert('Load an image in the Target card to upscale.');
+        // Use whichever card has an image — target first, then refs
+        let targetImg = null;
+        for (const cardId of ['target', 'ref-1', 'ref-2']) {
+            const img = document.querySelector(`#preview-${cardId} img`);
+            if (img?.src) { targetImg = img; break; }
+        }
+
+        if (!targetImg) {
+            await lagoonAlert('Load an image in any card to upscale.');
             return;
+        }
+
+        // Venice requires at least 65,536 pixels (e.g. 256×256)
+        const px = targetImg.naturalWidth * targetImg.naturalHeight;
+        if (px > 0 && px < 65536) {
+            const ok = await lagoonConfirm(
+                `Image is too small to upscale (${targetImg.naturalWidth}×${targetImg.naturalHeight}). Resize to meet Venice's minimum?`
+            );
+            if (!ok) return;
+
+            // Scale up so the shorter side hits 256, preserving aspect ratio
+            const scale = 256 / Math.min(targetImg.naturalWidth, targetImg.naturalHeight);
+            const newW = Math.round(targetImg.naturalWidth * scale);
+            const newH = Math.round(targetImg.naturalHeight * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = newW;
+            canvas.height = newH;
+            canvas.getContext('2d').drawImage(targetImg, 0, 0, newW, newH);
+            const resizedSrc = canvas.toDataURL('image/png');
+
+            // Update the card preview with the resized image
+            targetImg.src = resizedSrc;
+            await new Promise(r => { targetImg.onload = r; targetImg.onerror = r; });
         }
 
         // Get upscaler parameters
@@ -585,9 +681,20 @@ export class ImageModeManager {
         }
 
         const sendBtn = document.getElementById('send-btn');
+        const sendBtnOriginalHTML = sendBtn?.innerHTML;
+        const sendBtnOriginalType = sendBtn?.type;
+
+        this.abortController = new AbortController();
+        const { signal } = this.abortController;
+        const stopHandler = () => { this.abortController?.abort(); };
+
         if (sendBtn) {
-            sendBtn.disabled = true;
-            sendBtn.classList.add('loading');
+            sendBtn.type = 'button';
+            sendBtn.disabled = false;
+            sendBtn.classList.remove('loading');
+            sendBtn.classList.add('stop-btn');
+            sendBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
+            sendBtn.addEventListener('click', stopHandler);
         }
 
         // Strip data URI prefix for the image
@@ -596,7 +703,7 @@ export class ImageModeManager {
             imageData = imageData.split(',')[1];
         }
         
-        console.log('[ImageModeManager] Upscaling image, data length:', imageData?.length);
+;
 
         const body = {
             image: imageData,
@@ -613,55 +720,91 @@ export class ImageModeManager {
             }
         }
 
-        this.showGeneratingSpinner();
+        const resultsCount = parseInt(document.getElementById('image-results-count')?.value || '1', 10);
+        document.body.classList.add('image-generating');
+        this.showGeneratingSpinner(resultsCount);
+        let spinnerConsumed = false;
         try {
-            const response = await fetch('/api/image/upscale', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-
-            // Handle binary response (image/png)
-            const contentType = response.headers.get('Content-Type') || '';
-            
-            if (contentType.includes('image/')) {
-                const blob = await response.blob();
-                // Convert blob to base64 data URL so "set as target" works correctly
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const finalSrc = reader.result;
-                    console.log('[ImageModeManager] Upscaled image received');
+            if (resultsCount === 1) {
+                try {
+                    const finalSrc = await this._fetchUpscaleSingle(body, signal);
+                    this.removeGeneratingSpinner();
+                    spinnerConsumed = true;
                     this.displayResult(finalSrc);
-                };
-                reader.readAsDataURL(blob);
+                } catch (err) {
+                    if (err.name === 'AbortError') throw err;
+                    this._rejectCell(0);
+                    spinnerConsumed = true;
+                    console.warn('[ImageModeManager] Upscale refused/failed:', err.message);
+                }
             } else {
-                // JSON response (error or base64)
-                const result = await response.json();
-                console.log('[ImageModeManager] Upscale response:', response.status, result);
-                
-                if (result.error) throw new Error(result.error);
-                
-                const newB64 = result.images ? result.images[0] : result.image;
-                if (!newB64) throw new Error('No image returned from upscaler.');
-                
-                let finalSrc = newB64.startsWith('data:') ? newB64 : `data:image/png;base64,${newB64}`;
-                this.displayResult(finalSrc);
+                const indexed = await Promise.all(
+                    Array.from({ length: resultsCount }, (_, i) =>
+                        this._fetchUpscaleSingle(body, signal)
+                            .then(src => ({ index: i, src, ok: true }))
+                            .catch(err => ({ index: i, err, ok: false }))
+                    )
+                );
+                const allAborted = indexed.every(r => !r.ok && r.err?.name === 'AbortError');
+                if (!allAborted) {
+                    indexed.forEach(r => {
+                        if (r.ok) this._resolveCell(r.index, r.src);
+                        else this._rejectCell(r.index);
+                    });
+                    spinnerConsumed = true;
+                }
             }
-
         } catch (err) {
-            console.error('[ImageModeManager] Upscale failed:', err);
-            await lagoonAlert(`Upscale failed: ${err.message}`);
+            if (err.name !== 'AbortError') {
+                console.error('[ImageModeManager] Upscale failed:', err);
+                await lagoonAlert(`Upscale failed: ${err.message}`);
+            }
         } finally {
-            this.removeGeneratingSpinner();
+            document.body.classList.remove('image-generating');
+            if (!spinnerConsumed) this.removeGeneratingSpinner();
+            this.abortController = null;
             if (sendBtn) {
+                sendBtn.removeEventListener('click', stopHandler);
+                sendBtn.type = sendBtnOriginalType || 'submit';
+                sendBtn.innerHTML = sendBtnOriginalHTML || '';
                 sendBtn.disabled = false;
-                sendBtn.classList.remove('loading');
+                sendBtn.classList.remove('stop-btn');
             }
             if (this.dom.messageInput) {
                 this.dom.messageInput.disabled = false;
                 this.dom.messageInput.focus();
             }
         }
+    }
+
+    async _fetchUpscaleSingle(body, signal) {
+        const response = await fetch('/api/image/upscale', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            signal
+        });
+        const contentType = response.headers.get('Content-Type') || '';
+        if (contentType.includes('image/')) {
+            const blob = await response.blob();
+            return await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+        if (result._balance) {
+            updateBalanceDisplay(result._balance);
+            localStorage.setItem('lagoon_balance_usd', result._balance);
+        } else {
+            refreshBalance();
+        }
+        const newB64 = result.images ? result.images[0] : result.image;
+        if (!newB64) throw new Error('No image returned from upscaler.');
+        return newB64.startsWith('data:') ? newB64 : `data:image/png;base64,${newB64}`;
     }
 
     toggleEditMode(src, btn) {
@@ -750,13 +893,13 @@ export class ImageModeManager {
         wrap.className = 'image-gen-placeholder' + (count > 1 ? ' multi' : '');
 
         if (count === 1) {
-            wrap.innerHTML = `<div class="placeholder-cell">
+            wrap.innerHTML = `<div class="placeholder-cell" id="placeholder-cell-0">
                 ${spinnerHtml}
                 <span class="image-gen-label">Generating Image...</span>
             </div>`;
         } else {
-            wrap.innerHTML = Array.from({ length: count }, () =>
-                `<div class="placeholder-cell">${spinnerHtml}</div>`
+            wrap.innerHTML = Array.from({ length: count }, (_, i) =>
+                `<div class="placeholder-cell" id="placeholder-cell-${i}">${spinnerHtml}</div>`
             ).join('');
         }
 
@@ -766,6 +909,53 @@ export class ImageModeManager {
 
     removeGeneratingSpinner() {
         document.getElementById('image-gen-loading')?.remove();
+    }
+
+    _rejectCell(index) {
+        const cell = document.getElementById(`placeholder-cell-${index}`);
+        if (!cell) return;
+        cell.className = 'grid-cell refused';
+        cell.removeAttribute('id');
+        cell.innerHTML = '<span class="refused-label">Refused</span>';
+        const wrap = cell.closest('#image-gen-loading');
+        if (wrap) {
+            wrap.removeAttribute('id');
+            wrap.classList.add('image-result');
+        }
+    }
+
+    _resolveCell(index, src) {
+        const cell = document.getElementById(`placeholder-cell-${index}`);
+        if (!cell) return;
+        cell.className = 'grid-cell';
+        cell.removeAttribute('id');
+        cell.innerHTML = `
+            <img src="${src}" alt="Generated result">
+            <div class="assistant-actions image-actions">
+                <button type="button" class="action-btn set-ref-btn" title="Set as Reference">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
+                <button type="button" class="action-btn edit-mode-btn" title="Edit with Grok Imagine">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button type="button" class="action-btn delete-image-btn" title="Delete">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </div>`;
+        cell.querySelector('.set-ref-btn').onclick = () => this.pushToRef(src);
+        const editBtn = cell.querySelector('.edit-mode-btn');
+        editBtn.onclick = () => this.toggleEditMode(src, editBtn);
+        cell.querySelector('.delete-image-btn').onclick = () => {
+            const wrap = cell.closest('#image-gen-loading');
+            const remaining = wrap ? wrap.querySelectorAll('.grid-cell').length : 1;
+            if (remaining <= 1) {
+                (wrap || cell).remove();
+            } else {
+                cell.remove();
+            }
+        };
+        // Mark container so lightbox click handler picks up images
+        cell.closest('#image-gen-loading')?.classList.add('image-result');
     }
 
     /**
@@ -788,11 +978,8 @@ export class ImageModeManager {
             cell.innerHTML = `
                 <img src="${src}" alt="Generated result">
                 <div class="assistant-actions image-actions">
-                    <button type="button" class="action-btn set-ref-btn" title="Set as Reference 1">
+                    <button type="button" class="action-btn set-ref-btn" title="Set as Reference">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                    </button>
-                    <button type="button" class="action-btn set-target-btn" title="Set as Target Card">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </button>
                     <button type="button" class="action-btn edit-mode-btn" title="Edit with Grok Imagine">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -803,8 +990,7 @@ export class ImageModeManager {
                 </div>`;
 
             const editBtn = cell.querySelector('.edit-mode-btn');
-            cell.querySelector('.set-ref-btn').onclick = () => this.updatePreview('ref-1', src);
-            cell.querySelector('.set-target-btn').onclick = () => this.updatePreview('target', src);
+            cell.querySelector('.set-ref-btn').onclick = () => this.pushToRef(src);
             cell.querySelector('.edit-mode-btn').onclick = () => this.toggleEditMode(src, editBtn);
             cell.querySelector('.delete-image-btn').onclick = () => {
                 if (this.editModeActive) {
@@ -862,11 +1048,8 @@ export class ImageModeManager {
                             <img src="${finalSrc}" alt="Generated result">
                         </div>
                         <div class="assistant-actions image-actions">
-                            <button type="button" class="action-btn set-ref-btn" title="Set as Reference 1">
+                            <button type="button" class="action-btn set-ref-btn" title="Set as Reference">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                            </button>
-                            <button type="button" class="action-btn set-target-btn" title="Set as Target Card">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                             </button>
                             <button type="button" class="action-btn edit-mode-btn" title="Edit with Grok Imagine">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -879,8 +1062,7 @@ export class ImageModeManager {
                 </div>`;
 
             // Bind actions
-            resultGroup.querySelector('.set-ref-btn').onclick = () => this.updatePreview('ref-1', finalSrc);
-            resultGroup.querySelector('.set-target-btn').onclick = () => this.updatePreview('target', finalSrc);
+            resultGroup.querySelector('.set-ref-btn').onclick = () => this.pushToRef(finalSrc);
             resultGroup.querySelector('.delete-image-btn').onclick = () => {
                 if (this.editModeActive) {
                     if (this.activeEditBtn === editBtn) {

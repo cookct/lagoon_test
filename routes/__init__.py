@@ -10,5 +10,6 @@ from .anchors import anchors_bp
 from .custom_endpoints import custom_endpoints_bp
 from .design import design_bp
 from .video import video_bp
+from .video_together import together_video_bp
 
-__all__ = ['configs_bp', 'chats_bp', 'system_prompts_bp', 'files_bp', 'chat_bp', 'macros_bp', 'models_bp', 'anchors_bp', 'custom_endpoints_bp', 'design_bp', 'video_bp']
+__all__ = ['configs_bp', 'chats_bp', 'system_prompts_bp', 'files_bp', 'chat_bp', 'macros_bp', 'models_bp', 'anchors_bp', 'custom_endpoints_bp', 'design_bp', 'video_bp', 'together_video_bp']

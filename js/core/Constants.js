@@ -108,8 +108,11 @@ export const CONTEXT_WINDOWS = {
     'olafangensan-glm-4.7-flash-heretic': 128000,
     'llama-3.2-3b': 128000,
     'kimi-k2-5': 262144,
-    'minimax-m21': 64000
+    'minimax-m21': 64000,
+    'gemma-4-uncensored': 256000,
+    'qwen-3-6-plus': 1000000
 };
 
-export const DEFAULT_USER_AVATAR_IMAGE_PATH = '/images/default-avatar-2.png';
+export const DEFAULT_AVATAR_SVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="11.5" fill="#2e2e2e" stroke="#3872aa" stroke-width="1"/><circle cx="12" cy="8" r="3.5" stroke="#3872aa" stroke-width="1.5"/><path d="M5 20c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="#3872aa" stroke-width="1.5"/></svg>`;
+export const DEFAULT_AVATAR_URI = `data:image/svg+xml,${encodeURIComponent(DEFAULT_AVATAR_SVG)}`;
 export const DEFAULT_SYSTEM_PROMPT = "You are a helpful ai assistant";

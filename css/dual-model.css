@@ -621,3 +621,33 @@
 .tool-btn.hidden {
     display: none;
 }
+
+/* Participant mode toggle (Character / Quick Chat) */
+.dual-participant-mode-toggle {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.dual-mode-btn {
+    flex: 1;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.dual-mode-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.dual-mode-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.07);
+    color: var(--text);
+}

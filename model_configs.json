@@ -21,6 +21,12 @@
             "auth_header": "Authorization",
             "auth_prefix": "Bearer",
             "api_key_name": "zai"
+        },
+        "together": {
+            "base_url": "https://api.together.xyz/v1",
+            "auth_header": "Authorization",
+            "auth_prefix": "Bearer",
+            "api_key_name": "together"
         }
     },
     "models": {
@@ -184,10 +190,30 @@
             "price_per_image": 0.04,
             "ui_controls": []
         },
+        "qwen-image-2-pro-edit": {
+            "provider": "venice",
+            "endpoint": "/image/edit",
+            "display_name": "Qwen Image 2 Pro",
+            "category": "edit",
+            "supports_ai_mask": false,
+            "supports_multi_edit": true,
+            "price_per_image": 0.04,
+            "ui_controls": []
+        },
         "seedream-v4-edit": {
             "provider": "venice",
             "endpoint": "/image/multi-edit",
             "display_name": "Seedream V4 Edit",
+            "category": "edit",
+            "supports_ai_mask": true,
+            "supports_multi_edit": true,
+            "price_per_image": 0.04,
+            "ui_controls": []
+        },
+        "seedream-v5-lite-edit": {
+            "provider": "venice",
+            "endpoint": "/image/edit",
+            "display_name": "Seedream V5 Lite Edit",
             "category": "edit",
             "supports_ai_mask": true,
             "supports_multi_edit": true,
@@ -203,6 +229,33 @@
             "supports_multi_edit": true,
             "price_per_image": 0.04,
             "ui_controls": []
+        },
+        "wan-2-7-pro-edit": {
+            "provider": "venice",
+            "endpoint": "/image/edit",
+            "display_name": "Wan 2.7 Pro Edit",
+            "category": "edit",
+            "supports_ai_mask": false,
+            "supports_multi_edit": true,
+            "price_per_image": 0.04,
+            "ui_controls": []
+        },
+        "wan-2-7-text-to-image": {
+            "provider": "venice",
+            "endpoint": "/image/generate",
+            "display_name": "Wan 2.7",
+            "category": "generate",
+            "price_per_image": 0.04,
+            "ui_controls": ["aspect_ratio", "seed"]
+        },
+        "wan-2-7-pro-text-to-image": {
+            "provider": "venice",
+            "endpoint": "/image/generate",
+            "display_name": "Wan 2.7 Pro",
+            "category": "generate",
+            "edit_variant": "wan-2-7-pro-edit",
+            "price_per_image": 0.09,
+            "ui_controls": ["aspect_ratio", "seed"]
         },
         "e2ee-gemma-3-27b-p": {
             "provider": "venice",
@@ -309,6 +362,24 @@
         "venice-uncensored-role-play": {
             "provider": "venice",
             "display_name": "Venice Uncensored (Roleplay)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "openai-gpt-oss-20b": {
+            "provider": "together",
+            "display_name": "GPT OSS 20B (Together)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "openai-gpt-oss-120b": {
+            "provider": "together",
+            "display_name": "GPT OSS 120B (Together)",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "glm-5-1": {
+            "provider": "together",
+            "display_name": "GLM 5.1 (Together)",
             "category": "chat",
             "price_per_token": 0.0
         }

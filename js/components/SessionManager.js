@@ -88,6 +88,10 @@ export class SessionManager {
         // Export
         this.dom.exportBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (state.mode === 'video') {
+                import('./VideoModeManager.js').then(({ videoModeManager }) => videoModeManager.showWebmPicker(null));
+                return;
+            }
             this.showExportMenu(e.currentTarget);
         });
     }
@@ -342,6 +346,12 @@ export class SessionManager {
 
     updateExportButton() {
         if (!this.dom.exportBtn || !this.dom.exportCount) return;
+        // In video mode the button is repurposed — always enabled, no count badge
+        if (state.mode === 'video') {
+            this.dom.exportBtn.disabled = false;
+            this.dom.exportCount.style.display = 'none';
+            return;
+        }
         const count = state.keptMessages.size;
         if (count > 0) {
             this.dom.exportBtn.disabled = false;

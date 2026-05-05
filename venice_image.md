@@ -129,3 +129,100 @@ Other edit-capable models can be discovered via the Models API filtered by `type
 | `402` | Insufficient API balance |
 | `429` | Rate limiting — check `Retry-After` header |
 | `503` | Model capacity constraints |
+
+Images
+Multi-Edit Image
+Edit or modify an image using up to three layered inputs (base image plus masks/overlays).
+
+Supported input formats by Content-Type:
+
+multipart/form-data: Only file uploads are supported. Send images as form file fields.
+
+application/json: Base64 strings and URLs are supported:
+
+Raw base64 string: "iVBORw0KGgoAAAANSUhEUgAA..."
+Data URL: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+HTTP/HTTPS URL: "https://example.com/image.png"
+Authentication: This endpoint accepts either a Bearer API key or an X-Sign-In-With-X header for x402 wallet-based authentication. When using x402, a 402 Payment Required response indicates insufficient balance and includes top-up instructions.
+
+POST
+/
+image
+/
+multi-edit
+
+Try it
+Pricing: Multi-edit pricing varies by model. See the Pricing overview for current per-edit prices.
+Authorizations
+
+BearerAuth
+BearerAuth
+​
+Authorization
+stringheaderrequired
+Bearer authentication header of the form Bearer <token>, where <token> is your auth token.
+
+Body
+
+application/json
+application/json
+Edit an image by compositing up to three layered images with a single prompt. Supports base64-encoded strings and URLs.
+
+​
+prompt
+stringrequired
+The text directions to edit or modify the image. Short, descriptive prompts work best (e.g., "remove the tree", "change the sky to sunrise"). Character limit is model specific and is listed in the promptCharacterLimit setting in the model list endpoint.
+
+Required string length: 1 - 32768
+​
+images
+(string<uri> | string)[]required
+Array of 1 to 3 images used for multi-editing. The first image is treated as the base image, and the remaining images are used as edit layers/masks. Each image can be a base64-encoded string or a URL starting with http:// or https://. Image dimensions must be at least 65536 pixels and must not exceed 33177600 pixels. File size must be less than 25MB.
+
+Required array length: 1 - 3 elements
+Image as a base64-encoded string or a URL starting with http:// or https://
+
+​
+modelId
+enum<string>default:qwen-edit
+The model ID to use for multi-edit.
+
+Available options: qwen-edit, grok-imagine-edit, qwen-image-2-edit, qwen-image-2-pro-edit, wan-2-7-pro-edit, flux-2-max-edit, gpt-image-2-edit, gpt-image-1-5-edit, nano-banana-2-edit, nano-banana-pro-edit, seedream-v5-lite-edit, seedream-v4-edit 
+Minimum string length: 1
+​
+safe_mode
+booleandefault:true
+Whether to use safe mode. If enabled, this will blur images that are classified as having adult content.
+
+Example:
+false
+
+Response
+
+200
+
+image/png
+OK
+
+The response is of type file.
+
+example:
+
+import requests
+
+url = "https://api.venice.ai/api/v1/image/multi-edit"
+
+payload = {
+    "prompt": "<string>",
+    "images": ["<string>"],
+    "modelId": "grok-imagine-edit",
+    "safe_mode": False
+}
+headers = {
+    "Authorization": "Bearer <token>",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(url, json=payload, headers=headers)
+
+print(response.text)

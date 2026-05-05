@@ -221,6 +221,7 @@ def stream_chat():
 
     # Context management - may block for synchronous summarization if over 75% threshold
     pre_tokens = count_message_tokens(messages)
+    
     messages, was_summarized, needs_review = manage_context(messages, model_name, api_key, chat_id=chat_id, summarize_mode=summarize_mode)
     post_tokens = count_message_tokens(messages)
 
@@ -239,6 +240,8 @@ def stream_chat():
         venice_params = {
             "enable_web_search": "on" if config.get('enable_web_search', False) else "off",
             "enable_web_scraping": config.get('enable_web_scraping', False),
+            "enable_x_search": config.get('enable_x_search', False),
+            "disable_thinking": config.get('disable_thinking', False),
             "include_venice_system_prompt": config.get('include_venice_system_prompt', False),
             "include_search_results_in_stream": False,
             "return_search_results_as_documents": True,
@@ -252,6 +255,22 @@ def stream_chat():
         strip_thinking = config.get('strip_thinking', False)
         payload["thinking"] = {"type": "disabled" if strip_thinking else "enabled"}
 
+    # Log full request payload (mask sensitive content)
+    log_payload = {
+        "model": payload.get("model"),
+        "temperature": payload.get("temperature"),
+        "top_p": payload.get("top_p"),
+        "max_tokens": payload.get("max_tokens"),
+        "stream": payload.get("stream"),
+        "message_count": len(payload.get("messages", [])),
+        "first_msg_preview": str(payload.get("messages", [{}])[0].get("content", ""))[:100] + "..." if payload.get("messages") else None,
+    }
+    if "venice_parameters" in payload:
+        log_payload["venice_parameters"] = payload["venice_parameters"]
+    if "thinking" in payload:
+        log_payload["thinking"] = payload["thinking"]
+    logger.info(f"[API] Request Payload: {json.dumps(log_payload, indent=2)}")
+
     def generate():
         import time
         import re
@@ -260,6 +279,8 @@ def stream_chat():
         full_response = ""
         lore_buf = [""]  # mutable buffer for lore signal boundary detection
         last_usage = {}
+        balance_usd = None
+        balance_diem = None
         MAX_RETRIES = 5
 
         # COT stripping toggle (from config)
@@ -294,20 +315,54 @@ def stream_chat():
                     from services.e2ee import generate_session_keypair, fetch_attestation, encrypt_messages, is_hex_encrypted, decrypt_chunk
                     e2ee_session_priv, e2ee_session_pub_hex = generate_session_keypair()
                     model_pub_key = fetch_attestation(model_name, target_api_key, target_api_base)
+                    
                     pre_enc = payload['messages']
-                    logger.info(f"[E2EE] Encrypting {len(pre_enc)} messages: {[(m.get('role'), type(m.get('content')).__name__) for m in pre_enc]}")
+                    
+                    # TEE Consolidation: Combine all system messages into a SINGLE message.
+                    # Per user instruction: Lore at the top, then Main Prompt, then others.
+                    lore_content = []
+                    main_content = []
+                    other_system_content = []
+                    conversation_msgs = []
+                    
+                    for _m in pre_enc:
+                        if _m.get('role') == 'system':
+                            _c = _m.get('content') or ''
+                            if isinstance(_c, list):
+                                _c = ' '.join(p.get('text', '') for p in _c if isinstance(p, dict) and p.get('type') == 'text')
+                            _c_str = str(_c)
+                            
+                            # Categorize system content
+                            if _c_str.startswith('[Lore]') or _c_str.startswith('[Lore |'):
+                                lore_content.append(_c_str)
+                            elif _c_str.startswith('[Relevant past') or _c_str.startswith('[Context from past') or _c_str.startswith("[Author's Note]"):
+                                other_system_content.append(_c_str)
+                            else:
+                                main_content.append(_c_str)
+                        else:
+                            conversation_msgs.append(_m)
+                    
+                    # Build the single consolidated system message
+                    combined_system = "\n\n".join(lore_content + main_content + other_system_content)
+                    if combined_system:
+                        pre_enc = [{'role': 'system', 'content': combined_system}] + conversation_msgs
+                    else:
+                        pre_enc = conversation_msgs
+
+                    logger.info(f"[E2EE] Consolidated {len(payload['messages'])} -> {len(pre_enc)} messages for TEE (Lore at top).")
+                    
+                    # Use the updated service that encrypts every role
                     payload['messages'] = encrypt_messages(pre_enc, model_pub_key)
-                    # Strip features incompatible with E2EE
+                    
+                    # Strip features incompatible with E2EE from top-level payload
                     payload.pop('image', None)
                     payload.pop('image_mime', None)
+                    
+                    # CRITICAL: Strip venice_parameters completely for E2EE. 
                     if 'venice_parameters' in payload:
-                        vp = payload['venice_parameters']
-                        vp['enable_web_search'] = 'off'
-                        vp['enable_web_scraping'] = False
-                        vp['include_venice_system_prompt'] = False
-                        vp['return_search_results_as_documents'] = False
-                        vp['include_search_results_in_stream'] = False
-                        vp['enable_web_citations'] = False
+                        logger.info("[E2EE] Stripping venice_parameters from payload")
+                        payload.pop('venice_parameters')
+                    
                     logger.info(f"[E2EE] Session established for {model_name}")
                     yield f"data: {json.dumps({'event': 'e2ee_active', 'model': model_name})}\n\n"
                 except Exception as e:
@@ -332,6 +387,16 @@ def stream_chat():
 
                         logger.info(f"[Chat] Sending to {provider} ({target_api_base}) | {len(payload.get('messages', []))} messages")
 
+                        # Log headers (mask API key for security)
+                        safe_headers = {k: ('***MASKED***' if 'Authorization' in k or 'Key' in k else v) for k, v in {
+                            "Authorization": f"Bearer {target_api_key}",
+                            "Content-Type": "application/json",
+                            **({"X-Venice-TEE-Client-Pub-Key": e2ee_session_pub_hex} if is_e2ee else {}),
+                            **({"X-Venice-TEE-Model-Pub-Key": model_pub_key} if is_e2ee else {}),
+                            **({"X-Venice-TEE-Signing-Algo": "ecdsa"} if is_e2ee else {})
+                        }.items()}
+                        logger.info(f"[API] Headers: {safe_headers}")
+
                         headers = {
                             "Authorization": f"Bearer {target_api_key}",
                             "Content-Type": "application/json"
@@ -350,24 +415,24 @@ def stream_chat():
                             if response.status_code >= 400:
                                 error_body = response.read().decode('utf-8', errors='replace')
                                 logger.error(f"[Chat] HTTP {response.status_code} from {provider}: {error_body[:500]}")
-                                yield f"data: {json.dumps({'event': 'error', 'error': f'{provider} {response.status_code}: {error_body[:200]}'})}\n\n"
+                                try:
+                                    err_json = json.loads(error_body)
+                                    err_msg = err_json.get('error', error_body[:200])
+                                    if isinstance(err_msg, dict):
+                                        err_msg = err_msg.get('message', str(err_msg))
+                                except Exception:
+                                    err_msg = error_body[:200]
+                                if response.status_code == 429:
+                                    err_msg = f"Model overloaded — please try again in a moment."
+                                elif response.status_code == 401:
+                                    err_msg = "Authentication failed — check your API key."
+                                elif response.status_code == 503:
+                                    err_msg = f"Service unavailable — {err_msg}"
+                                yield f"data: {json.dumps({'event': 'error', 'error': err_msg})}\n\n"
                                 return
 
-                            # Extract balance from headers (Venice only - Together AI has no balance API)
-                            if is_venice:
-                                balance_usd = response.headers.get('x-venice-balance-usd')
-                                if balance_usd:
-                                    try:
-                                        balance_event = {
-                                            "event": "balance",
-                                            "usd": f"{float(balance_usd):.4f}",
-                                            "provider": "venice"
-                                        }
-                                        yield f"data: {json.dumps(balance_event)}\n\n"
-                                    except ValueError:
-                                        pass
-                            else:
-                                yield f"data: {json.dumps({'event': 'balance', 'usd': None, 'provider': provider})}\n\n"
+                            balance_usd = response.headers.get('x-venice-balance-usd')
+                            balance_diem = response.headers.get('x-venice-balance-diem')
 
                             # Process SSE stream
                             buffer = ""
@@ -552,6 +617,10 @@ def stream_chat():
             end_event = {'event': 'end', 'model': model_name}
             if last_usage:
                 end_event['usage'] = last_usage
+            if balance_usd is not None:
+                end_event['balance_usd'] = balance_usd
+            if balance_diem is not None:
+                end_event['balance_diem'] = balance_diem
             yield f"data: {json.dumps(end_event)}\n\n"
 
         except Exception as e:
@@ -1154,7 +1223,7 @@ def edit_image_route():
         url = f"{VENICE_API_BASE}{model_endpoint}"
 
     if model_endpoint != "/image/generate" and not cleaned_images:
-        return jsonify({"error": f"Load an image in the Target card to use {model_id}."}), 400
+        return jsonify({"error": f"Load an image in any card to use {model_id}."}), 400
 
     multi_ref = bool(data.get('multi_ref', False))
 
@@ -1188,11 +1257,20 @@ def edit_image_route():
 
     payload["safe_mode"] = False
 
-    # aspect_ratio is not valid for /image/multi-edit (strict Zod schema)
-    if model_endpoint != "/image/multi-edit":
-        aspect_ratio = data.get('aspect_ratio')
-        if aspect_ratio:
-            payload["aspect_ratio"] = aspect_ratio
+    aspect_ratio = data.get('aspect_ratio')
+    if aspect_ratio:
+        payload["aspect_ratio"] = aspect_ratio
+
+    resolution = data.get('resolution')
+    if resolution:
+        payload["resolution"] = resolution
+
+    seed = data.get('seed')
+    if seed is not None:
+        payload["seed"] = int(seed)
+    elif model_config and 'seed' in model_config.get('ui_controls', []):
+        import random
+        payload["seed"] = random.randint(0, 2147483647)
 
     # Route images to the correct field per endpoint:
     #   /image/edit       → singular "image" (first only)
@@ -1224,25 +1302,34 @@ def edit_image_route():
 
         if resp.status_code != 200:
             logger.error(f"[edit_image] Venice {resp.status_code}: {resp.text}")
-            resp.raise_for_status()
+            try:
+                error_msg = resp.json().get('error', resp.text)
+            except Exception:
+                error_msg = resp.text
+            return jsonify({"error": error_msg}), resp.status_code
 
         # Check if the response is JSON or Binary
         content_type = resp.headers.get('Content-Type', '')
+        balance_usd = resp.headers.get('x-venice-balance-usd')
         if 'application/json' in content_type:
             try:
-                return jsonify(resp.json())
+                data = resp.json()
+                if balance_usd:
+                    data['_balance'] = balance_usd
+                return jsonify(data)
             except Exception as json_err:
                 logger.error(f"[edit_image] JSON Parse Error: {json_err}. Raw: {resp.text[:100]}...")
                 return jsonify({"error": "Invalid JSON response from Venice", "raw": resp.text}), 500
-        
+
         elif 'image/' in content_type:
             # If it's binary, convert to B64 so the frontend can handle it normally
             import base64
             b64_data = base64.b64encode(resp.content).decode('utf-8')
             mime = content_type.split(';')[0]
-            return jsonify({
-                "images": [f"data:{mime};base64,{b64_data}"]
-            })
+            result = {"images": [f"data:{mime};base64,{b64_data}"]}
+            if balance_usd:
+                result['_balance'] = balance_usd
+            return jsonify(result)
         
         else:
             # Fallback for unexpected types
@@ -1328,16 +1415,25 @@ def upscale_image_route():
 
         # Check if the response is JSON or Binary
         content_type = resp.headers.get('Content-Type', '')
+        balance_usd = resp.headers.get('x-venice-balance-usd')
         if 'application/json' in content_type:
             try:
-                return jsonify(resp.json())
+                data = resp.json()
+                if balance_usd:
+                    data['_balance'] = balance_usd
+                return jsonify(data)
             except Exception as json_err:
                 logger.error(f"[upscale_image] JSON Parse Error: {json_err}. Raw: {resp.text[:100]}...")
                 return jsonify({"error": "Invalid JSON response from Venice", "raw": resp.text}), 500
-        
+
         elif 'image/' in content_type:
-            # Return binary image directly
-            return resp.content, 200, {'Content-Type': content_type}
+            import base64 as _b64
+            b64_data = _b64.b64encode(resp.content).decode('utf-8')
+            mime = content_type.split(';')[0]
+            result = {"images": [f"data:{mime};base64,{b64_data}"]}
+            if balance_usd:
+                result['_balance'] = balance_usd
+            return jsonify(result)
         
         else:
             # Fallback for unexpected types

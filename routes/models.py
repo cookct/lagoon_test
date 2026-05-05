@@ -82,15 +82,31 @@ def add_installed_model():
     data = request.json or {}
     model_id = data.get('id', '').strip()
     name = data.get('name', '').strip()
+    provider = data.get('provider', 'venice')
     if not model_id or not name:
         return jsonify({"error": "id and name required"}), 400
+    
+    # Check for duplicate ID with different provider
+    existing = installed_models.load()
+    for m in existing.get('models', []):
+        if m['id'] == model_id and m.get('provider') != provider:
+            return jsonify({
+                "error": "duplicate_id",
+                "message": f"Model ID '{model_id}' already installed with provider '{m.get('provider')}'. Remove it first or use a different model.",
+                "existing_provider": m.get('provider')
+            }), 409
+    
     added = installed_models.add_model({
         "id": model_id,
         "name": name,
-        "provider": data.get('provider', 'venice'),
+        "provider": provider,
         "pricing": data.get('pricing')
     })
-    return jsonify({"added": added, **installed_models.load()})
+    
+    if not added:
+        return jsonify({"error": "already_exists", "message": f"Model '{model_id}' already installed for provider '{provider}'"}), 409
+    
+    return jsonify({"added": True, **installed_models.load()})
 
 
 @models_bp.route('/api/installed_models/<path:model_id>', methods=['DELETE'])
@@ -107,6 +123,8 @@ def get_venice_models():
     api_key = get_api_key()
     if not api_key:
         return jsonify({"error": "no_key"}), 403
+    # Log headers (mask API key)
+    logger.info(f"[Venice] Models API Headers: {{'Authorization': '***MASKED***'}}")
     try:
         resp = httpx.get(
             'https://api.venice.ai/api/v1/models',
@@ -191,6 +209,8 @@ def get_together_models():
     api_key = get_together_api_key()
     if not api_key:
         return jsonify({"error": "no_key"}), 403
+    # Log headers (mask API key)
+    logger.info(f"[Together] Models API Headers: {{'Authorization': '***MASKED***'}}")
     try:
         # 1. Fetch all models
         # 2. Fetch dedicated models only

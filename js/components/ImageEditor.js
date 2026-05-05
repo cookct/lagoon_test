@@ -6,6 +6,8 @@
 import { state } from '../state.js';
 import { lagoonAlert } from '../ui/dialog.js';
 
+const PEN_CURSOR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13'%3E%3Cline x1='6' y1='0' x2='6' y2='5' stroke='%23ff2222' stroke-width='2'/%3E%3Cline x1='6' y1='8' x2='6' y2='13' stroke='%23ff2222' stroke-width='2'/%3E%3Cline x1='0' y1='6' x2='5' y2='6' stroke='%23ff2222' stroke-width='2'/%3E%3Cline x1='8' y1='6' x2='13' y2='6' stroke='%23ff2222' stroke-width='2'/%3E%3Cline x1='6' y1='0' x2='6' y2='5' stroke='white' stroke-width='1'/%3E%3Cline x1='6' y1='8' x2='6' y2='13' stroke='white' stroke-width='1'/%3E%3Cline x1='0' y1='6' x2='5' y2='6' stroke='white' stroke-width='1'/%3E%3Cline x1='8' y1='6' x2='13' y2='6' stroke='white' stroke-width='1'/%3E%3C/svg%3E") 6 6, crosshair`;
+
 export class ImageEditor {
     constructor() {
         this.active = false;
@@ -43,7 +45,16 @@ export class ImageEditor {
 
         this.maskVisible = true;
 
+        // Pen tool state
+        this.penPath = [];       // [{x, y, cp1x, cp1y, cp2x, cp2y}]
+        this.penMousePos = null;
+        this.isPenDragging = false;
+        this.isPenClosing = false;  // dragging the closing click to set last anchor's outgoing handle
+        this.penDragAnchorIdx = null;
+        this.penDragHandle = null; // {anchorIdx, type:'cp1'|'cp2'} when shift-dragging existing handle
+
         this.dom = {};
+        this.ctxPen = null;
     }
 
     init() {
@@ -63,6 +74,9 @@ export class ImageEditor {
 
         this.dom.drawBtn = document.getElementById('editor-draw-btn');
         this.dom.eraseBtn = document.getElementById('editor-erase-btn');
+        this.dom.penBtn = document.getElementById('editor-pen-btn');
+        this.dom.penOverlay = document.getElementById('image-edit-pen-overlay');
+        this.ctxPen = this.dom.penOverlay?.getContext('2d');
         this.dom.brushSlider = document.getElementById('editor-brush-slider');
         this.dom.brushValue = document.getElementById('editor-brush-value');
         this.dom.promptWrapper = document.getElementById('editor-prompt-wrapper');
@@ -96,6 +110,7 @@ export class ImageEditor {
         // Tools
         this.dom.drawBtn.onclick = () => this.setTool('draw');
         this.dom.eraseBtn.onclick = () => this.setTool('erase');
+        if (this.dom.penBtn) this.dom.penBtn.onclick = () => this.setTool('pen');
 
         // Brush
         this.dom.brushSlider.oninput = (e) => {
@@ -146,8 +161,9 @@ export class ImageEditor {
             if (e.button === 1) { // Middle Click Panning
                 e.preventDefault();
                 this.startPanning(e);
-            } else if (e.button === 0) { // Left Click Drawing
-                this.startDrawing(e);
+            } else if (e.button === 0) {
+                if (this.tool === 'pen') { e.preventDefault(); this.penMouseDown(e); }
+                else this.startDrawing(e);
             }
         });
 
@@ -159,7 +175,10 @@ export class ImageEditor {
 
         window.addEventListener('mouseup', (e) => {
             if (e.button === 1) this.stopPanning();
-            if (e.button === 0) this.stopDrawing();
+            if (e.button === 0) {
+                if (this.tool === 'pen') this.penMouseUp(e);
+                else this.stopDrawing();
+            }
         });
 
         // Zoom to cursor
@@ -196,9 +215,40 @@ export class ImageEditor {
             const key = e.key.toLowerCase();
             if (key === 'd') this.setTool('draw');
             if (key === 'e') this.setTool('erase');
+            if (key === 'p') this.setTool('pen');
+            if (key === 'z' && (e.ctrlKey || e.metaKey)) {
+                if (this.tool === 'pen' && this.penPath.length > 0) {
+                    e.preventDefault();
+                    this.penPath.pop();
+                    this.renderPenOverlay();
+                }
+                return;
+            }
             if (key === '[') this.setBrushSize(this.brushSize - 5);
             if (key === ']') this.setBrushSize(this.brushSize + 5);
-            if (e.key === 'Escape') this.cancel();
+            if (e.key === 'Escape') {
+                if (this.tool === 'pen' && this.penPath.length > 0) this.cancelPen();
+                else this.cancel();
+            }
+        });
+
+        // Shift held while pen active → arrow cursor (handle-drag mode)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Shift' && this.tool === 'pen' && this.active && this.dom.workspace)
+                this.dom.workspace.style.cursor = 'default';
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Shift' && this.tool === 'pen' && this.active && this.dom.workspace)
+                this.dom.workspace.style.cursor = this.isPenDragging ? 'default' : PEN_CURSOR;
+        });
+
+        // Mutual exclusion: checking one restore toggle unchecks the others
+        document.addEventListener('change', (e) => {
+            const cb = e.target.closest('.restore-pixels-checkbox');
+            if (!cb || !cb.checked) return;
+            document.querySelectorAll('.restore-pixels-checkbox').forEach(other => {
+                if (other !== cb) other.checked = false;
+            });
         });
     }
 
@@ -239,6 +289,7 @@ export class ImageEditor {
                 this.dom.maskCanvas.height = h;
                 this.dom.previewCanvas.width = w;
                 this.dom.previewCanvas.height = h;
+                this._resizePenOverlay();
                 this.ctx.clearRect(0, 0, w, h);
                 this.ctxPreview.clearRect(0, 0, w, h);
             }
@@ -264,6 +315,15 @@ export class ImageEditor {
 
     close() {
         this.active = false;
+        this.cancelPen();
+        if (this.tool === 'pen') {
+            this.tool = 'draw';
+            if (this.dom.penBtn) this.dom.penBtn.classList.remove('active');
+            if (this.dom.drawBtn) this.dom.drawBtn.classList.add('active');
+            const brushGroup = this.dom.brushSlider?.closest('.editor-tool-group');
+            if (brushGroup) brushGroup.style.display = '';
+            if (this.dom.workspace) this.dom.workspace.style.cursor = 'none';
+        }
         // Always restore mask visibility for the next open
         if (!this.maskVisible) this.toggleMaskVisibility();
         this.dom.modal.classList.remove('hidden'); // Ensure working state doesn't stick
@@ -292,10 +352,8 @@ export class ImageEditor {
     clearMaskState() {
         this.savedPixels = null;
         this.postEditSrc = null;
-        const rpLabel = document.getElementById('restore-pixels-label');
-        const rpCheck = document.getElementById('restore-pixels-checkbox');
-        if (rpLabel) rpLabel.style.display = 'none';
-        if (rpCheck) rpCheck.checked = false;
+        document.querySelectorAll('.restore-pixels-label').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.restore-pixels-checkbox').forEach(el => el.checked = false);
         if (this.dom.maskCanvas && this.dom.maskCanvas.width) {
             this.ctx.clearRect(0, 0, this.dom.maskCanvas.width, this.dom.maskCanvas.height);
             this.ctxPreview.clearRect(0, 0, this.dom.previewCanvas.width, this.dom.previewCanvas.height);
@@ -310,19 +368,25 @@ export class ImageEditor {
         }
         this.savedPixels = null;
         this.originalCardSrc = null;
-        const rpLabel = document.getElementById('restore-pixels-label');
-        const rpCheck = document.getElementById('restore-pixels-checkbox');
-        if (rpLabel) rpLabel.style.display = 'none';
-        if (rpCheck) rpCheck.checked = false;
+        document.querySelectorAll('.restore-pixels-label').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.restore-pixels-checkbox').forEach(el => el.checked = false);
         this.dom.originalBtn.classList.add('hidden');
         this.close();
     }
 
     setTool(tool) {
+        if (this.tool === 'pen' && tool !== 'pen') this.cancelPen();
+        if (tool === 'pen') this.isDrawing = false;
         this.tool = tool;
         this.dom.drawBtn.classList.toggle('active', tool === 'draw');
         this.dom.eraseBtn.classList.toggle('active', tool === 'erase');
-        this.updateCursor();
+        if (this.dom.penBtn) this.dom.penBtn.classList.toggle('active', tool === 'pen');
+        // Hide brush slider for pen (irrelevant), restore for others
+        const brushGroup = this.dom.brushSlider?.closest('.editor-tool-group');
+        if (brushGroup) brushGroup.style.display = tool === 'pen' ? 'none' : '';
+        // Pen uses custom crosshair; brush tools use hidden cursor (custom circle)
+        this.dom.workspace.style.cursor = tool === 'pen' ? PEN_CURSOR : 'none';
+        if (tool !== 'pen') this.updateCursor();
     }
 
     setBrushSize(size) {
@@ -342,7 +406,10 @@ export class ImageEditor {
         
         this.dom.container.style.width = `${w}px`;
         this.dom.container.style.height = `${h}px`;
-        
+
+        this._resizePenOverlay();
+        if (this.penPath.length > 0) this.renderPenOverlay();
+
         this.updateCursor();
     }
 
@@ -368,6 +435,13 @@ export class ImageEditor {
     }
 
     handleMouseMove(e) {
+        if (this.tool === 'pen') {
+            this.dom.cursor.style.display = 'none';
+            if (this.isPanning) this.doPanning(e);
+            else this.penMouseMove(e);
+            return;
+        }
+
         // Only show custom cursor in workspace
         const overWorkspace = e.target.closest('#image-edit-workspace');
         this.dom.cursor.style.display = overWorkspace ? 'block' : 'none';
@@ -403,7 +477,7 @@ export class ImageEditor {
 
     stopPanning() {
         this.isPanning = false;
-        this.dom.workspace.style.cursor = 'none';
+        this.dom.workspace.style.cursor = this.tool === 'pen' ? PEN_CURSOR : 'none';
     }
 
     getCanvasCoords(e) {
@@ -431,6 +505,247 @@ export class ImageEditor {
             this.updatePreviewMask();
         }
     }
+
+    // ── Pen Tool ─────────────────────────────────────────────────────────────
+
+    penMouseDown(e) {
+        const pt = this.getCanvasCoords(e);
+
+        // Shift held: handle-drag mode — drag nearest handle, no new anchor
+        if (e.shiftKey) {
+            const hit = this._penHitTestHandles(pt);
+            if (hit) {
+                if (hit.type === 'anchor') {
+                    const a = this.penPath[hit.anchorIdx];
+                    a.cp1x = a.x; a.cp1y = a.y;
+                    this.renderPenOverlay();
+                } else {
+                    this.penDragHandle = hit;
+                    this.isPenDragging = true;
+                }
+            }
+            return;
+        }
+
+        // Click near first anchor → begin closing drag; commit on mouseup
+        if (this.penPath.length >= 2) {
+            const first = this.penPath[0];
+            const threshold = 14 / this.zoom;
+            if (Math.hypot(pt.x - first.x, pt.y - first.y) < threshold) {
+                this.isPenClosing = true;
+                this.isPenDragging = true;
+                this.penDragAnchorIdx = this.penPath.length - 1;
+                this.renderPenOverlay();
+                return;
+            }
+        }
+
+        // Place new anchor; start dragging to pull handles
+        this.penPath.push({ x: pt.x, y: pt.y, cp1x: pt.x, cp1y: pt.y, cp2x: pt.x, cp2y: pt.y });
+        this.penDragAnchorIdx = this.penPath.length - 1;
+        this.isPenDragging = true;
+        this.renderPenOverlay();
+    }
+
+    _penHitTestHandles(pt) {
+        const threshold = 12 / this.zoom;
+        for (let i = 0; i < this.penPath.length; i++) {
+            const p = this.penPath[i];
+            if ((p.cp1x !== p.x || p.cp1y !== p.y) &&
+                Math.hypot(pt.x - p.cp1x, pt.y - p.cp1y) < threshold)
+                return { anchorIdx: i, type: 'cp1' };
+            if ((p.cp2x !== p.x || p.cp2y !== p.y) &&
+                Math.hypot(pt.x - p.cp2x, pt.y - p.cp2y) < threshold)
+                return { anchorIdx: i, type: 'cp2' };
+            if (Math.hypot(pt.x - p.x, pt.y - p.y) < threshold)
+                return { anchorIdx: i, type: 'anchor' };
+        }
+        return null;
+    }
+
+    penMouseMove(e) {
+        const pt = this.getCanvasCoords(e);
+        this.penMousePos = pt;
+
+        if (this.isPenDragging) {
+            if (this.penDragHandle !== null) {
+                // Shift-drag: move one specific handle independently
+                const a = this.penPath[this.penDragHandle.anchorIdx];
+                a[this.penDragHandle.type + 'x'] = pt.x;
+                a[this.penDragHandle.type + 'y'] = pt.y;
+            } else if (this.penDragAnchorIdx !== null) {
+                const a = this.penPath[this.penDragAnchorIdx];
+                const dx = pt.x - a.x;
+                const dy = pt.y - a.y;
+                if (this.isPenClosing) {
+                    // Closing drag: only set outgoing handle (cp1); preserve incoming (cp2)
+                    a.cp1x = a.x + dx;
+                    a.cp1y = a.y + dy;
+                } else {
+                    // Normal drag: pull out symmetric handles from new anchor
+                    a.cp1x = a.x + dx;
+                    a.cp1y = a.y + dy;
+                    a.cp2x = a.x - dx;
+                    a.cp2y = a.y - dy;
+                }
+            }
+        }
+
+        this.renderPenOverlay();
+    }
+
+    penMouseUp(e) {
+        const wasClosing = this.isPenClosing;
+        this.isPenDragging = false;
+        this.isPenClosing = false;
+        this.penDragAnchorIdx = null;
+        this.penDragHandle = null;
+        if (this.tool === 'pen' && this.dom.workspace)
+            this.dom.workspace.style.cursor = e.shiftKey ? 'default' : PEN_CURSOR;
+        if (wasClosing) this.commitPenPath();
+    }
+
+    cancelPen() {
+        this.penPath = [];
+        this.penMousePos = null;
+        this.isPenDragging = false;
+        this.isPenClosing = false;
+        this.penDragAnchorIdx = null;
+        this.penDragHandle = null;
+        this.clearPenOverlay();
+    }
+
+    clearPenOverlay() {
+        if (this.ctxPen && this.dom.penOverlay) {
+            this.ctxPen.clearRect(0, 0, this.dom.penOverlay.width, this.dom.penOverlay.height);
+        }
+    }
+
+    _resizePenOverlay() {
+        if (!this.dom.penOverlay || !this.dom.baseImg.naturalWidth) return;
+        this.dom.penOverlay.width  = Math.round(this.dom.baseImg.naturalWidth  * this.zoom);
+        this.dom.penOverlay.height = Math.round(this.dom.baseImg.naturalHeight * this.zoom);
+    }
+
+    renderPenOverlay() {
+        if (!this.ctxPen || !this.dom.penOverlay) return;
+        const ctx = this.ctxPen;
+        ctx.clearRect(0, 0, this.dom.penOverlay.width, this.dom.penOverlay.height);
+
+        const pts = this.penPath;
+        if (pts.length === 0) return;
+
+        // All pen coords are in image-pixel space; s converts to screen pixels 1:1
+        const s = this.zoom;
+
+        // Committed path segments
+        if (pts.length >= 2) {
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x * s, pts[0].y * s);
+            for (let i = 1; i < pts.length; i++) {
+                ctx.bezierCurveTo(
+                    pts[i-1].cp1x * s, pts[i-1].cp1y * s,
+                    pts[i].cp2x * s,   pts[i].cp2y * s,
+                    pts[i].x * s,      pts[i].y * s
+                );
+            }
+            ctx.strokeStyle = 'rgba(0, 140, 255, 0.85)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([]);
+            ctx.stroke();
+        }
+
+        // Preview segment from last anchor to mouse (dashed)
+        if (this.penMousePos && !this.isPenDragging) {
+            const last = pts[pts.length - 1];
+            const mp = this.penMousePos;
+            ctx.beginPath();
+            ctx.moveTo(last.x * s, last.y * s);
+            ctx.bezierCurveTo(last.cp1x * s, last.cp1y * s, mp.x * s, mp.y * s, mp.x * s, mp.y * s);
+            ctx.strokeStyle = 'rgba(0, 140, 255, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Closing-drag preview: dashed bezier from last to first
+        if (this.isPenClosing && pts.length >= 2) {
+            const last = pts[pts.length - 1];
+            const first = pts[0];
+            ctx.beginPath();
+            ctx.moveTo(last.x * s, last.y * s);
+            ctx.bezierCurveTo(last.cp1x * s, last.cp1y * s, first.cp2x * s, first.cp2y * s, first.x * s, first.y * s);
+            ctx.strokeStyle = 'rgba(255, 165, 0, 0.7)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Handle lines + dots
+        for (let i = 0; i < pts.length; i++) {
+            const p = pts[i];
+            const hasOut = p.cp1x !== p.x || p.cp1y !== p.y;
+            const hasIn  = p.cp2x !== p.x || p.cp2y !== p.y;
+
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(0, 140, 255, 0.55)';
+            ctx.setLineDash([]);
+
+            if (hasOut) {
+                ctx.beginPath(); ctx.moveTo(p.x * s, p.y * s); ctx.lineTo(p.cp1x * s, p.cp1y * s); ctx.stroke();
+                ctx.beginPath(); ctx.arc(p.cp1x * s, p.cp1y * s, 2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 140, 255, 0.85)'; ctx.fill();
+            }
+            if (hasIn && i > 0) {
+                ctx.beginPath(); ctx.moveTo(p.x * s, p.y * s); ctx.lineTo(p.cp2x * s, p.cp2y * s); ctx.stroke();
+                ctx.beginPath(); ctx.arc(p.cp2x * s, p.cp2y * s, 2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 140, 255, 0.85)'; ctx.fill();
+            }
+        }
+
+        // Anchor squares — highlight when cursor is within 14 screen px of first anchor
+        const nearFirst = pts.length >= 2 && this.penMousePos &&
+            s * Math.hypot(this.penMousePos.x - pts[0].x, this.penMousePos.y - pts[0].y) < 14;
+
+        for (let i = 0; i < pts.length; i++) {
+            const p = pts[i];
+            const highlight = i === 0 && nearFirst;
+            const size = highlight ? 5 : 3;
+            ctx.beginPath();
+            ctx.rect(p.x * s - size / 2, p.y * s - size / 2, size, size);
+            ctx.fillStyle = highlight ? 'rgba(255, 165, 0, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0, 140, 255, 0.9)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+    }
+
+    commitPenPath() {
+        if (this.penPath.length < 2) return;
+        if (!this.maskVisible) this.toggleMaskVisibility();
+
+        const pts = this.penPath;
+        const path = new Path2D();
+        path.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) {
+            path.bezierCurveTo(pts[i-1].cp1x, pts[i-1].cp1y, pts[i].cp2x, pts[i].cp2y, pts[i].x, pts[i].y);
+        }
+        // Close back to first anchor using last anchor's outgoing and first anchor's incoming handles
+        path.bezierCurveTo(pts[pts.length-1].cp1x, pts[pts.length-1].cp1y, pts[0].cp2x, pts[0].cp2y, pts[0].x, pts[0].y);
+        path.closePath();
+
+        this.ctx.globalCompositeOperation = 'source-over';
+        this.ctx.fillStyle = '#ffa500';
+        this.ctx.fill(path);
+
+        this.cancelPen();
+        this.updatePreviewMask();
+    }
+
+    // ── End Pen Tool ──────────────────────────────────────────────────────────
 
     updatePreviewMask() {
         const w = this.dom.maskCanvas.width;
@@ -531,8 +846,8 @@ export class ImageEditor {
                 dilation: this.dilation,
                 feather: this.feather
             };
-            const rpLabel = document.getElementById('restore-pixels-label');
-            const rpCheck = document.getElementById('restore-pixels-checkbox');
+            const rpLabel = document.querySelector(`.restore-pixels-label[data-target="${this.target}"]`);
+            const rpCheck = document.querySelector(`.restore-pixels-checkbox[data-target="${this.target}"]`);
             if (rpLabel) rpLabel.style.display = '';
             if (rpCheck) rpCheck.checked = true;
 
@@ -701,8 +1016,8 @@ export class ImageEditor {
                     dilation: this.dilation,
                     feather: this.feather
                 };
-                const rpLabel = document.getElementById('restore-pixels-label');
-                const rpCheck = document.getElementById('restore-pixels-checkbox');
+                const rpLabel = document.querySelector(`.restore-pixels-label[data-target="${this.target}"]`);
+                const rpCheck = document.querySelector(`.restore-pixels-checkbox[data-target="${this.target}"]`);
                 if (rpLabel) rpLabel.style.display = '';
                 if (rpCheck) rpCheck.checked = true;
 

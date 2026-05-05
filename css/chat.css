@@ -92,12 +92,6 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
     opacity: 0.8;
 }
 
-.desktop-ui .welcome-message h1 {
-    font-size: 2em;
-    margin-bottom: 1rem;
-    color: var(--text-color);
-}
-
 /* Video Status Styles */
 .video-status-container {
     display: flex;
@@ -144,6 +138,77 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
     width: 100%;
     max-width: 480px;
     margin: 0 auto;
+}
+
+/* Inputs inside the video params panel — match custom dropdown appearance */
+#video-params-panel .tool-section-body input[type="text"],
+#video-params-panel .tool-section-body input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+    height: 32px;
+    padding: 0 8px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-main);
+    font-size: 0.75rem;
+    -webkit-appearance: none;
+    appearance: none;
+}
+#video-params-panel .tool-section-body input[type="text"]:focus,
+#video-params-panel .tool-section-body input[type="number"]:focus {
+    border-color: var(--ansi-cyan);
+    outline: none;
+}
+/* Hide number spinners */
+#video-params-panel .tool-section-body input[type="number"]::-webkit-inner-spin-button,
+#video-params-panel .tool-section-body input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
+
+/* Video provider toggle (Venice / Together) */
+.video-provider-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.video-provider-btn {
+    flex: 1;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-darker);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.video-provider-btn:hover {
+    background: var(--bg-2);
+    color: var(--text-main);
+}
+
+.video-provider-btn.active {
+    background: var(--bg-2);
+    color: var(--text-main);
+    border-color: #3872aa;
+}
+
+/* Together in-progress spinner */
+@keyframes together-spin {
+    to { transform: rotate(360deg); }
+}
+
+.together-video-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255,255,255,0.1);
+    border-top-color: #3872aa;
+    border-radius: 50%;
+    animation: together-spin 0.9s linear infinite;
 }
 
 .desktop-ui .message-group {
@@ -1135,6 +1200,38 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
     90%, 100% { transform: perspective(140px) rotateY(180deg);  opacity: 0; }
 }
 
+/* ── Refused placeholder state ── */
+.placeholder-cell.refused {
+    background: #0d0d0d;
+    border-color: #2a2a2a;
+}
+
+.refused-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #3a3a3a;
+}
+
+/* ── In-place resolved cells inside spinner container ── */
+.image-gen-placeholder .grid-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.image-gen-placeholder .grid-cell img {
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+    display: block;
+}
+
+.image-gen-placeholder .grid-cell .assistant-actions {
+    justify-content: center;
+}
+
 /* ── Multi-result grid ── */
 .image-result-grid {
     display: grid;
@@ -1209,32 +1306,75 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
     background: linear-gradient(180deg, transparent, var(--ansi-cyan) 50%, transparent);
 }
 
-/* Activate when body carries the edit-mode flag */
-body.image-edit-mode .desktop-ui .input-wrapper {
+/* Activate when body carries the edit-mode or generating flag */
+body.image-edit-mode .desktop-ui .input-wrapper,
+body.image-generating .desktop-ui .input-wrapper {
     overflow: hidden;
 }
 
 body.image-edit-mode .desktop-ui .input-wrapper::before,
 body.image-edit-mode .desktop-ui .input-wrapper::after,
 body.image-edit-mode .desktop-ui .input-wrapper .input-chase-bottom,
-body.image-edit-mode .desktop-ui .input-wrapper .input-chase-left {
+body.image-edit-mode .desktop-ui .input-wrapper .input-chase-left,
+body.image-generating .desktop-ui .input-wrapper::before,
+body.image-generating .desktop-ui .input-wrapper::after,
+body.image-generating .desktop-ui .input-wrapper .input-chase-bottom,
+body.image-generating .desktop-ui .input-wrapper .input-chase-left {
     opacity: 1;
 }
 
-body.image-edit-mode .desktop-ui .input-wrapper::before {
+body.image-edit-mode .desktop-ui .input-wrapper::before,
+body.image-generating .desktop-ui .input-wrapper::before {
     animation: chaseTop 2s linear infinite;
 }
-body.image-edit-mode .desktop-ui .input-wrapper::after {
+body.image-edit-mode .desktop-ui .input-wrapper::after,
+body.image-generating .desktop-ui .input-wrapper::after {
     animation: chaseRight 2s linear infinite;
     animation-delay: 0.5s;
 }
-body.image-edit-mode .desktop-ui .input-wrapper .input-chase-bottom {
+body.image-edit-mode .desktop-ui .input-wrapper .input-chase-bottom,
+body.image-generating .desktop-ui .input-wrapper .input-chase-bottom {
     animation: chaseBottom 2s linear infinite;
     animation-delay: 1s;
 }
-body.image-edit-mode .desktop-ui .input-wrapper .input-chase-left {
+body.image-edit-mode .desktop-ui .input-wrapper .input-chase-left,
+body.image-generating .desktop-ui .input-wrapper .input-chase-left {
     animation: chaseLeft 2s linear infinite;
     animation-delay: 1.5s;
+}
+
+/* E2EE active: amber-gold chase on input, persistent border on verified messages */
+body.e2ee-active .desktop-ui .input-wrapper {
+    overflow: hidden;
+}
+body.e2ee-active .desktop-ui .input-wrapper::before,
+body.e2ee-active .desktop-ui .input-wrapper::after,
+body.e2ee-active .desktop-ui .input-wrapper .input-chase-bottom,
+body.e2ee-active .desktop-ui .input-wrapper .input-chase-left {
+    opacity: 1;
+}
+body.e2ee-active .desktop-ui .input-wrapper::before {
+    background: linear-gradient(90deg, transparent, #e09020 50%, transparent);
+    animation: chaseTop 2s linear infinite;
+}
+body.e2ee-active .desktop-ui .input-wrapper::after {
+    background: linear-gradient(180deg, transparent, #e09020 50%, transparent);
+    animation: chaseRight 2s linear infinite;
+    animation-delay: 0.5s;
+}
+body.e2ee-active .desktop-ui .input-wrapper .input-chase-bottom {
+    background: linear-gradient(90deg, transparent, #e09020 50%, transparent);
+    animation: chaseBottom 2s linear infinite;
+    animation-delay: 1s;
+}
+body.e2ee-active .desktop-ui .input-wrapper .input-chase-left {
+    background: linear-gradient(180deg, transparent, #e09020 50%, transparent);
+    animation: chaseLeft 2s linear infinite;
+    animation-delay: 1.5s;
+}
+
+.message-group.e2ee-verified .message {
+    border: 1px solid #e09020;
 }
 
 /* Edit button active (toggle on) state */

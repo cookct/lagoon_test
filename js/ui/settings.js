@@ -13,7 +13,9 @@ import { VENICE_VOICES, DEFAULT_VOICE, GOOGLE_VOICES, DEFAULT_GOOGLE_VOICE, DEFA
 import { VENICE_PRICING } from '../components/ChatManager.js';
 
 import { imageModeManager } from '../components/ImageModeManager.js';
+import { inferLogoKey } from '../core/InstalledModels.js';
 import { videoModeManager } from '../components/VideoModeManager.js';
+import { togetherVideoModeManager } from '../components/TogetherVideoModeManager.js';
 
 function formatPricing(m, provider) {
     let inputPrice = null;
@@ -47,6 +49,9 @@ function formatPricing(m, provider) {
 // Store all children (options and optgroups) once so we can restore them
 let _allModelChildren = null;
 
+// E2EE-capable models that don't follow the e2ee- naming convention
+const E2EE_EXTRA_MODELS = new Set(['venice-uncensored', 'venice-uncensored-role-play']);
+
 export function filterModelDropdownForE2EE(e2eeOn) {
     const sel = document.getElementById('model');
     if (!sel) return;
@@ -59,18 +64,20 @@ export function filterModelDropdownForE2EE(e2eeOn) {
     const currentVal = sel.value;
     sel.innerHTML = '';
 
+    const isE2EEModel = (val) => val.startsWith('e2ee-') || E2EE_EXTRA_MODELS.has(val);
+
     _allModelChildren.forEach(child => {
         if (child.tagName === 'OPTGROUP') {
             const group = child.cloneNode(false); // Clone without children
             const options = Array.from(child.children).filter(opt => {
-                return !e2eeOn || opt.value.startsWith('e2ee-');
+                return !e2eeOn || isE2EEModel(opt.value);
             });
             if (options.length > 0) {
                 options.forEach(opt => group.appendChild(opt.cloneNode(true)));
                 sel.appendChild(group);
             }
         } else if (child.tagName === 'OPTION') {
-            if (!e2eeOn || child.value.startsWith('e2ee-')) {
+            if (!e2eeOn || isE2EEModel(child.value)) {
                 sel.appendChild(child.cloneNode(true));
             }
         }
@@ -84,6 +91,7 @@ export function filterModelDropdownForE2EE(e2eeOn) {
         const firstOpt = sel.querySelector('option:not([disabled])');
         if (firstOpt) {
             sel.value = firstOpt.value;
+            localStorage.setItem('quickchat_model', sel.value);
             sel.dispatchEvent(new Event('change'));
         }
     }
@@ -511,7 +519,7 @@ export function showSystemPromptEditor() {
     overlay.appendChild(modal);
 
     // Close on overlay click
-    overlay.onclick = (e) => {
+    overlay.onmousedown = (e) => {
         if (e.target === overlay) overlay.remove();
     };
 
@@ -617,10 +625,12 @@ export async function showModelManager() {
                 }
 
                 await refreshInstalled();
-                const installedIds = new Set(installedModels.map(m => m.id));
+                // Check ID+provider combination to distinguish same model from different providers
+                const installedKeys = new Set(installedModels.map(m => `${m.id}::${m.provider}`));
 
 availableModels.forEach(m => {
-                    const isInstalled = installedIds.has(m.id);
+                    const key = `${m.id}::${provider}`;
+                    const isInstalled = installedKeys.has(key);
                     // Build pricing string
                     const formatPrice = (p) => (p === 0) ? 'Free' : (p != null ? `$${Number(p).toFixed(2)}` : null);
                     let priceHtml = '';
@@ -656,15 +666,48 @@ availableModels.forEach(m => {
                         const btn = e.target;
                         btn.disabled = true;
                         btn.textContent = 'Adding...';
-                        await fetch('/api/installed_models', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ id: m.id, name: m.name, provider: provider })
-                        });
-                        const { modelConfigManager } = await import('../core/ModelConfigManager.js');
-                        await modelConfigManager.refresh();
-                        window.syncInstalledModels?.();
-                        render();
+                        try {
+                            const res = await fetch('/api/installed_models', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: m.id, name: m.name, provider: provider, logo: inferLogoKey(m.id) })
+                            });
+                            const result = await res.json();
+                            if (!res.ok) {
+                                if (result.error === 'duplicate_id') {
+                                    const confirmed = await lagoonConfirm(`${result.message}\n\nRemove the existing ${result.existing_provider} version first?`);
+                                    if (confirmed) {
+                                        // Remove existing and re-add with new provider
+                                        await fetch(`/api/installed_models/${m.id}`, { method: 'DELETE' });
+                                        await fetch('/api/installed_models', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ id: m.id, name: m.name, provider: provider, logo: inferLogoKey(m.id) })
+                                        });
+                                        const { modelConfigManager } = await import('../core/ModelConfigManager.js');
+                                        await modelConfigManager.refresh();
+                                        window.syncInstalledModels?.();
+                                        render();
+                                    } else {
+                                        btn.disabled = false;
+                                        btn.textContent = '+ Add';
+                                    }
+                                } else {
+                                    alert(result.message || 'Failed to add model');
+                                    btn.disabled = false;
+                                    btn.textContent = '+ Add';
+                                }
+                                return;
+                            }
+                            const { modelConfigManager } = await import('../core/ModelConfigManager.js');
+                            await modelConfigManager.refresh();
+                            window.syncInstalledModels?.();
+                            render();
+                        } catch (err) {
+                            alert('Error: ' + err.message);
+                            btn.disabled = false;
+                            btn.textContent = '+ Add';
+                        }
                     };
                     contentContainer.appendChild(row);
                 });
@@ -769,7 +812,7 @@ export function showWritingToolsModal() {
     closeBtn.onclick = handleClose;
 
     // Close on overlay click
-    modal.onclick = (e) => {
+    modal.onmousedown = (e) => {
         if (e.target === modal) handleClose();
     };
 
@@ -894,7 +937,7 @@ export async function showMemorySettingsModal() {
     // Close
     const closeBtn = document.getElementById('close-memory-settings-btn');
     closeBtn.onclick = () => modal.classList.add('hidden');
-    modal.onclick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
+    modal.onmousedown = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
 
     modal.classList.remove('hidden');
 }
@@ -904,6 +947,8 @@ export function showSettingsMenu(button) {
     const menu = document.createElement('div');
     menu.classList.add('context-menu', 'settings-menu');
     const rect = button.getBoundingClientRect();
+
+    const e2eeEnabled = localStorage.getItem('quickchat_e2ee') === 'true';
 
     // Mode Toggle Section
     const modeSection = document.createElement('div');
@@ -1051,6 +1096,7 @@ export function showSettingsMenu(button) {
         localStorage.setItem('chat_font', fontSelect.value);
         uiManager.applyTypographySettings();
     };
+    fontSelect.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
     typoSection.appendChild(fontSelect);
 
     // Text Size slider
@@ -1349,19 +1395,21 @@ export function showSettingsMenu(button) {
 
     const webSearchEnabled = localStorage.getItem('quickchat_web_search') === 'true';
     const webSearchLabel = document.createElement('label');
-    webSearchLabel.style.cssText = 'position:relative;display:inline-block;width:32px;height:18px;flex-shrink:0;cursor:pointer;';
+    webSearchLabel.style.cssText = `position:relative;display:inline-block;width:32px;height:18px;flex-shrink:0;cursor:${e2eeEnabled ? 'not-allowed' : 'pointer'};opacity:${e2eeEnabled ? '0.5' : '1'};`;
     const webSearchInput = document.createElement('input');
     webSearchInput.type = 'checkbox';
-    webSearchInput.checked = webSearchEnabled;
+    webSearchInput.checked = webSearchEnabled && !e2eeEnabled;
+    webSearchInput.disabled = e2eeEnabled;
     webSearchInput.style.cssText = 'opacity:0;width:0;height:0;position:absolute;';
     const webSearchSlider = document.createElement('span');
-    webSearchSlider.style.cssText = `position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${webSearchEnabled ? 'var(--accent)' : '#444'};transition:.2s;border-radius:18px;`;
+    webSearchSlider.style.cssText = `position:absolute;cursor:${e2eeEnabled ? 'not-allowed' : 'pointer'};top:0;left:0;right:0;bottom:0;background:${webSearchInput.checked ? 'var(--accent)' : '#444'};transition:.2s;border-radius:18px;`;
     const webSearchKnob = document.createElement('span');
-    webSearchKnob.style.cssText = `position:absolute;height:14px;width:14px;left:${webSearchEnabled ? '16px' : '2px'};bottom:2px;background:white;transition:.2s;border-radius:50%;`;
+    webSearchKnob.style.cssText = `position:absolute;height:14px;width:14px;left:${webSearchInput.checked ? '16px' : '2px'};bottom:2px;background:white;transition:.2s;border-radius:50%;`;
     webSearchSlider.appendChild(webSearchKnob);
     webSearchLabel.appendChild(webSearchInput);
     webSearchLabel.appendChild(webSearchSlider);
     webSearchInput.onchange = (e) => {
+        if (e2eeEnabled) return;
         e.stopPropagation();
         const newValue = webSearchInput.checked;
         localStorage.setItem('quickchat_web_search', newValue ? 'true' : 'false');
@@ -1376,7 +1424,8 @@ export function showSettingsMenu(button) {
 
     const webSearchText = document.createElement('span');
     webSearchText.textContent = 'Web Search';
-    webSearchText.style.cssText = 'flex:1;color:var(--text);font-size:13px;';
+    webSearchText.style.cssText = `flex:1;color:var(--text);font-size:13px;opacity:${e2eeEnabled ? '0.5' : '1'};`;
+    if (e2eeEnabled) webSearchText.title = 'Web search is disabled in E2EE mode to prevent data leaks.';
     webSearchRow.appendChild(webSearchText);
 
     menu.appendChild(webSearchRow);
@@ -1388,19 +1437,21 @@ export function showSettingsMenu(button) {
 
     const webScrapeEnabled = localStorage.getItem('quickchat_web_scraping') !== 'false'; // Default true
     const webScrapeLabel = document.createElement('label');
-    webScrapeLabel.style.cssText = 'position:relative;display:inline-block;width:32px;height:18px;flex-shrink:0;cursor:pointer;';
+    webScrapeLabel.style.cssText = `position:relative;display:inline-block;width:32px;height:18px;flex-shrink:0;cursor:${e2eeEnabled ? 'not-allowed' : 'pointer'};opacity:${e2eeEnabled ? '0.5' : '1'};`;
     const webScrapeInput = document.createElement('input');
     webScrapeInput.type = 'checkbox';
-    webScrapeInput.checked = webScrapeEnabled;
+    webScrapeInput.checked = webScrapeEnabled && !e2eeEnabled;
+    webScrapeInput.disabled = e2eeEnabled;
     webScrapeInput.style.cssText = 'opacity:0;width:0;height:0;position:absolute;';
     const webScrapeSlider = document.createElement('span');
-    webScrapeSlider.style.cssText = `position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${webScrapeEnabled ? 'var(--accent)' : '#444'};transition:.2s;border-radius:18px;`;
+    webScrapeSlider.style.cssText = `position:absolute;cursor:${e2eeEnabled ? 'not-allowed' : 'pointer'};top:0;left:0;right:0;bottom:0;background:${webScrapeInput.checked ? 'var(--accent)' : '#444'};transition:.2s;border-radius:18px;`;
     const webScrapeKnob = document.createElement('span');
-    webScrapeKnob.style.cssText = `position:absolute;height:14px;width:14px;left:${webScrapeEnabled ? '16px' : '2px'};bottom:2px;background:white;transition:.2s;border-radius:50%;`;
+    webScrapeKnob.style.cssText = `position:absolute;height:14px;width:14px;left:${webScrapeInput.checked ? '16px' : '2px'};bottom:2px;background:white;transition:.2s;border-radius:50%;`;
     webScrapeSlider.appendChild(webScrapeKnob);
     webScrapeLabel.appendChild(webScrapeInput);
     webScrapeLabel.appendChild(webScrapeSlider);
     webScrapeInput.onchange = (e) => {
+        if (e2eeEnabled) return;
         e.stopPropagation();
         const newValue = webScrapeInput.checked;
         localStorage.setItem('quickchat_web_scraping', newValue ? 'true' : 'false');
@@ -1415,10 +1466,53 @@ export function showSettingsMenu(button) {
 
     const webScrapeText = document.createElement('span');
     webScrapeText.textContent = 'Web Scraping';
-    webScrapeText.style.cssText = 'flex:1;color:var(--text);font-size:13px;';
+    webScrapeText.style.cssText = `flex:1;color:var(--text);font-size:13px;opacity:${e2eeEnabled ? '0.5' : '1'};`;
+    if (e2eeEnabled) webScrapeText.title = 'Web scraping is disabled in E2EE mode to prevent data leaks.';
     webScrapeRow.appendChild(webScrapeText);
 
     menu.appendChild(webScrapeRow);
+
+    // X Search toggle row (Grok models only)
+    const currentModel = state.model || document.getElementById('model')?.value || '';
+    if (currentModel.toLowerCase().includes('grok')) {
+        const xSearchEnabled = localStorage.getItem('quickchat_x_search') === 'true';
+        const xSearchRow = document.createElement('div');
+        xSearchRow.style.cssText = 'display:flex;align-items:center;padding:6px 12px;gap:8px;';
+        xSearchRow.onclick = (e) => e.stopPropagation();
+
+        const xSearchToggleLabel = document.createElement('label');
+        xSearchToggleLabel.style.cssText = `position:relative;display:inline-block;width:32px;height:18px;flex-shrink:0;cursor:${e2eeEnabled ? 'not-allowed' : 'pointer'};opacity:${e2eeEnabled ? '0.5' : '1'};`;
+        const xSearchInput = document.createElement('input');
+        xSearchInput.type = 'checkbox';
+        xSearchInput.checked = xSearchEnabled && !e2eeEnabled;
+        xSearchInput.disabled = e2eeEnabled;
+        xSearchInput.style.cssText = 'opacity:0;width:0;height:0;position:absolute;';
+        const xSearchSlider = document.createElement('span');
+        xSearchSlider.style.cssText = `position:absolute;cursor:${e2eeEnabled ? 'not-allowed' : 'pointer'};top:0;left:0;right:0;bottom:0;background:${xSearchInput.checked ? 'var(--accent)' : '#444'};transition:.2s;border-radius:18px;`;
+        const xSearchKnob = document.createElement('span');
+        xSearchKnob.style.cssText = `position:absolute;height:14px;width:14px;left:${xSearchInput.checked ? '16px' : '2px'};bottom:2px;background:white;transition:.2s;border-radius:50%;`;
+        xSearchSlider.appendChild(xSearchKnob);
+        xSearchToggleLabel.appendChild(xSearchInput);
+        xSearchToggleLabel.appendChild(xSearchSlider);
+        xSearchInput.onchange = (e) => {
+            if (e2eeEnabled) return;
+            e.stopPropagation();
+            const newValue = xSearchInput.checked;
+            localStorage.setItem('quickchat_x_search', newValue ? 'true' : 'false');
+            xSearchSlider.style.background = newValue ? 'var(--accent)' : '#444';
+            xSearchKnob.style.left = newValue ? '16px' : '2px';
+            if (state.currentConfig) state.currentConfig.enable_x_search = newValue;
+        };
+        xSearchRow.appendChild(xSearchToggleLabel);
+
+        const xSearchText = document.createElement('span');
+        xSearchText.textContent = 'X Search';
+        xSearchText.style.cssText = `flex:1;color:var(--text);font-size:13px;opacity:${e2eeEnabled ? '0.5' : '1'};`;
+        if (e2eeEnabled) xSearchText.title = 'X Search is disabled in E2EE mode to prevent data leaks.';
+        xSearchRow.appendChild(xSearchText);
+
+        menu.appendChild(xSearchRow);
+    }
 
     // Strip Thinking (COT) toggle row
     const stripThinkingEnabled = localStorage.getItem('quickchat_strip_thinking') !== 'false'; // Default true
@@ -1459,8 +1553,45 @@ export function showSettingsMenu(button) {
 
     menu.appendChild(stripThinkingRow);
 
+    // Disable Thinking (COT) toggle row
+    const disableThinkingEnabled = localStorage.getItem('quickchat_disable_thinking') === 'true';
+    const disableThinkingRow = document.createElement('div');
+    disableThinkingRow.style.cssText = 'display:flex;align-items:center;padding:6px 12px;gap:8px;';
+    disableThinkingRow.onclick = (e) => e.stopPropagation();
+
+    const disableThinkingLabel = document.createElement('label');
+    disableThinkingLabel.style.cssText = 'position:relative;display:inline-block;width:32px;height:18px;flex-shrink:0;cursor:pointer;';
+    const disableThinkingInput = document.createElement('input');
+    disableThinkingInput.type = 'checkbox';
+    disableThinkingInput.checked = disableThinkingEnabled;
+    disableThinkingInput.style.cssText = 'opacity:0;width:0;height:0;position:absolute;';
+    const disableThinkingSlider = document.createElement('span');
+    disableThinkingSlider.style.cssText = `position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${disableThinkingEnabled ? 'var(--accent)' : '#444'};transition:.2s;border-radius:18px;`;
+    const disableThinkingKnob = document.createElement('span');
+    disableThinkingKnob.style.cssText = `position:absolute;height:14px;width:14px;left:${disableThinkingEnabled ? '16px' : '2px'};bottom:2px;background:white;transition:.2s;border-radius:50%;`;
+    disableThinkingSlider.appendChild(disableThinkingKnob);
+    disableThinkingLabel.appendChild(disableThinkingInput);
+    disableThinkingLabel.appendChild(disableThinkingSlider);
+    disableThinkingInput.onchange = (e) => {
+        e.stopPropagation();
+        const newValue = disableThinkingInput.checked;
+        localStorage.setItem('quickchat_disable_thinking', newValue ? 'true' : 'false');
+        disableThinkingSlider.style.background = newValue ? 'var(--accent)' : '#444';
+        disableThinkingKnob.style.left = newValue ? '16px' : '2px';
+        if (!state.currentParentConfig && state.currentConfig) {
+            state.currentConfig.disable_thinking = newValue;
+        }
+    };
+    disableThinkingRow.appendChild(disableThinkingLabel);
+
+    const disableThinkingText = document.createElement('span');
+    disableThinkingText.textContent = 'Disable Thinking (COT)';
+    disableThinkingText.style.cssText = 'flex:1;color:var(--text);font-size:13px;';
+    disableThinkingRow.appendChild(disableThinkingText);
+
+    menu.appendChild(disableThinkingRow);
+
     // E2EE toggle row
-    const e2eeEnabled = localStorage.getItem('quickchat_e2ee') === 'true';
     const e2eeRow = document.createElement('div');
     e2eeRow.style.cssText = 'display:flex;align-items:center;padding:6px 12px;gap:8px;';
     e2eeRow.onclick = (e) => e.stopPropagation();
@@ -1888,20 +2019,43 @@ export function toggleAppMode() {
         case 'image':
             showChatElements(false);
             document.body.classList.add('mode-image');
-            // Image mode uses shared right header
             if (rightHeader) rightHeader.style.display = '';
+            {
+                const eb = document.getElementById('export-btn');
+                if (eb) {
+                    eb.title = 'Export kept messages';
+                    const svg = eb.querySelector('svg');
+                    if (svg) svg.outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+                }
+            }
             break;
 
         case 'video':
             showChatElements(false);
             document.body.classList.add('mode-video');
-            // Video mode uses shared right header
             if (rightHeader) rightHeader.style.display = '';
+            {
+                const eb = document.getElementById('export-btn');
+                if (eb) {
+                    eb.title = 'WebM Tools';
+                    eb.disabled = false;
+                    const svg = eb.querySelector('svg');
+                    if (svg) svg.outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>';
+                }
+            }
             break;
 
         case 'chat':
         default:
             showChatElements(true);
+            {
+                const eb = document.getElementById('export-btn');
+                if (eb) {
+                    eb.title = 'Export kept messages';
+                    const svg = eb.querySelector('svg');
+                    if (svg) svg.outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+                }
+            }
             break;
     }
 
@@ -1911,15 +2065,18 @@ export function toggleAppMode() {
         if (modelSelect) {
             models.populateSelect(modelSelect);
             uiManager.updateCustomDropdown(modelSelect);
-            // Auto-select first model and sync state for video mode
+            
+            // Ensure the model button text reflects the current mode's model
+            import('../components/ChatManager.js').then(cm => {
+                if (cm.chatManager) cm.chatManager.updateModelButtonText();
+            });
+
             if (state.mode === 'video') {
-                if (modelSelect.value && !state.currentConfig.model) {
-                    state.currentConfig.model = modelSelect.value;
-                    import('../components/ChatManager.js').then(cm => {
-                        if (cm.chatManager) cm.chatManager.updateModelButtonText();
-                    });
+                if (state.videoProvider === 'together') {
+                    togetherVideoModeManager.refreshParameterPanel();
+                } else {
+                    videoModeManager.refreshParameterPanel();
                 }
-                videoModeManager.refreshParameterPanel();
             }
         }
     });

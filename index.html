@@ -59,6 +59,10 @@
                             <input type="checkbox" class="image-card-checkbox" data-target="ref-1">
                         </label>
                         <span class="tool-section-title">Reference 1</span>
+                        <label class="restore-pixels-toggle restore-pixels-label" data-target="ref-1" title="Apply saved pixel restoration to results" style="display:none">
+                            <input type="checkbox" class="restore-pixels-checkbox" data-target="ref-1">
+                            <span>Restore</span>
+                        </label>
                         <button type="button" class="image-card-clear-btn" data-target="ref-1" title="Clear image">&times;</button>
                     </div>
                     <div class="tool-section-body">
@@ -76,6 +80,10 @@
                             <input type="checkbox" class="image-card-checkbox" data-target="ref-2">
                         </label>
                         <span class="tool-section-title">Reference 2</span>
+                        <label class="restore-pixels-toggle restore-pixels-label" data-target="ref-2" title="Apply saved pixel restoration to results" style="display:none">
+                            <input type="checkbox" class="restore-pixels-checkbox" data-target="ref-2">
+                            <span>Restore</span>
+                        </label>
                         <button type="button" class="image-card-clear-btn" data-target="ref-2" title="Clear image">&times;</button>
                     </div>
                     <div class="tool-section-body">
@@ -95,8 +103,8 @@
                             <input type="checkbox" class="image-card-checkbox" data-target="target">
                         </label>
                         <span class="tool-section-title">Target</span>
-                        <label class="restore-pixels-toggle" id="restore-pixels-label" title="Apply saved pixel restoration to results" style="display:none">
-                            <input type="checkbox" id="restore-pixels-checkbox">
+                        <label class="restore-pixels-toggle restore-pixels-label" data-target="target" title="Apply saved pixel restoration to results" style="display:none">
+                            <input type="checkbox" class="restore-pixels-checkbox" data-target="target">
                             <span>Restore</span>
                         </label>
                         <button type="button" class="image-card-clear-btn" data-target="target" title="Clear image">&times;</button>
@@ -288,33 +296,62 @@
             <!-- Placeholder for Video Mode or other tools if needed -->
             <div id="placeholder-target" class="mode-video-only"></div>
 
+            <!-- Shared header for all modes -->
+            <div id="right-sidebar-header">
+                <div id="balance-display" class="balance-indicator" title="Account Balance (USD)">
+                    <span class="balance-label">$</span><span id="balance-usd">--</span>
+                </div>
+                <button type="button" id="view-context-btn" class="action-btn" title="View system context">Ctx</button>
+                <span id="img-price-display" class="action-btn mode-image-only" title="Estimated cost per generation" style="cursor:default;min-width:3.5em;text-align:center;"></span>
+                <select id="image-generate-model" class="header-model-select mode-image-only">
+                    <optgroup label="Generate">
+                        <option value="nano-banana-pro">Nano Banana Pro (Venice)</option>
+                        <option value="gemini-3-pro-image-preview">Nano Banana Pro (Google)</option>
+                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                        <option value="gemini-3.1-flash-image-preview">Nano Banana 2</option>
+                        <option value="gemini-2.5-flash-image">Nano Banana</option>
+                        <option value="glm-image">GLM-Image</option>
+                        <option value="grok-imagine-image">Grok Imagine</option>
+                        <option value="grok-imagine-image-pro">Grok Imagine Pro</option>
+                        <option value="wan-2-7-text-to-image">Wan 2.7</option>
+                        <option value="wan-2-7-pro-text-to-image">Wan 2.7 Pro</option>
+                    </optgroup>
+                    <optgroup label="Edit">
+                        <option value="nano-banana-pro-edit">Nano Banana Pro Edit (Venice)</option>
+                        <option value="gemini-3-pro-edit">Nano Banana Pro Edit (Google)</option>
+                        <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
+                        <option value="qwen-image-2-pro-edit">Qwen Image 2 Pro</option>
+                        <option value="grok-imagine-edit">Grok Imagine Edit</option>
+                        <option value="wan-2-7-pro-edit">Wan 2.7 Pro Edit</option>
+                        <option value="seedream-v5-lite-edit">Seedream V5 Lite Edit</option>
+                        <option value="seedream-v4-edit">Seedream V4 Edit</option>
+                        <option value="firered-image-edit">FireRed Image Edit</option>
+                    </optgroup>
+                    <optgroup label="Upscale">
+                        <option value="upscaler">Upscaler</option>
+                    </optgroup>
+                </select>
+                <select id="video-model-select" style="display:none">
+                    <option value="wan-2.6-image-to-video">Wan 2.6 I2V</option>
+                    <option value="wan-2.7-image-to-video">Wan 2.7 I2V</option>
+                    <option value="ovi-image-to-video">Ovi I2V</option>
+                    <option value="wan-2-7-reference-to-video">Wan 2.7 R2V</option>
+                    <option value="seedance-2-0-reference-to-video">Seedance 2.0 R2V</option>
+                </select>
+                <select id="together-video-model-select" style="display:none">
+                    <option value="wan2.7-i2v-together">Wan 2.7 I2V</option>
+                </select>
+                <div class="model-control-group mode-chat-video">
+                    <button type="button" id="change-model-btn" class="action-btn">Model</button>
+                    <label class="venice-toggle-wrapper" title="Toggle Venice System Prompt">
+                        <input type="checkbox" id="quick-venice-prompt-toggle" checked>
+                        <span class="venice-toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
             <div class="image-generate-panel mode-image-only" id="image-generate-panel">
-               <select id="image-generate-model" class="image-generate-select">
-
-                   <optgroup label="Generate">
-                       <option value="nano-banana-pro">Nano Banana Pro (Venice)</option>
-                       <option value="gemini-3-pro-image-preview">Nano Banana Pro (Google)</option>
-                       <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash</option>
-                       <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                       <option value="gemini-3.1-flash-image-preview">Nano Banana 2</option>
-                       <option value="gemini-2.5-flash-image">Nano Banana</option>
-                       <option value="glm-image">GLM-Image</option>
-                       <option value="grok-imagine-image-pro">Grok Imagine Pro</option>
-                       </optgroup>
-                       <optgroup label="Edit">
-                       <option value="nano-banana-pro-edit">Nano Banana Pro Edit (Venice)</option>
-                       <option value="gemini-3-pro-edit">Nano Banana Pro Edit (Google)</option>
-                       <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
-                       <option value="grok-imagine-edit">Grok Imagine Edit</option>
-                       <option value="seedream-v5-lite-edit">Seedream V5 Lite Edit</option>
-                       <option value="seedream-v4-edit">Seedream V4 Edit</option>
-                       <option value="firered-image-edit">FireRed Image Edit</option>
-                       </optgroup>
-                       <optgroup label="Upscale">
-                       <option value="upscaler">Upscaler</option>
-                       </optgroup>
-               </select>
-
                <!-- Gemini specific params -->
                <div id="gemini-params" class="upscaler-params hidden">
                    <div class="upscaler-param-row">
@@ -356,8 +393,21 @@
                            <option value="9:16">9:16</option>
                            <option value="2:3">2:3</option>
                            <option value="3:4">3:4</option>
+                           <option value="4:3">4:3</option>
                            <option value="4:5">4:5</option>
                        </select>
+                   </div>
+                   <div class="upscaler-param-row" id="venice-resolution-row" style="display:none;">
+                       <label class="upscaler-label">Res</label>
+                       <select id="venice-edit-resolution" class="upscaler-select">
+                           <option value="" selected>Auto</option>
+                           <option value="1k">1k</option>
+                           <option value="2k">2k</option>
+                       </select>
+                   </div>
+                   <div class="upscaler-param-row" id="venice-seed-row" style="display:none;">
+                       <label class="upscaler-label">Seed</label>
+                       <input type="number" id="venice-seed" class="upscaler-select" placeholder="Random" min="0" style="width:80px;">
                    </div>
                </div>
 
@@ -421,20 +471,6 @@
                </div>
             </div>
 
-            <div id="right-sidebar-header">
-                <div id="balance-display" class="balance-indicator" title="Account Balance (USD)">
-                    <span class="balance-label">$</span><span id="balance-usd">--</span>
-                </div>
-                <button type="button" id="view-context-btn" class="action-btn" title="View system context">Ctx</button>
-                <div class="model-control-group">
-                    <button type="button" id="change-model-btn" class="action-btn">Model</button>
-                    <label class="venice-toggle-wrapper" title="Toggle Venice System Prompt">
-                        <input type="checkbox" id="quick-venice-prompt-toggle" checked>
-                        <span class="venice-toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-
             <div class="sidebar-tabs right-tabs">
                 <button class="tab-btn hidden" data-tab="overseer">Overseer</button>
                 <button class="tab-btn active" data-tab="tools">Tools</button>
@@ -443,6 +479,10 @@
 
             <!-- Video Mode Parameters — direct child so rightContent hide doesn't affect it -->
             <div id="video-params-panel" class="mode-video-only" style="margin-top:10px;">
+                <div class="video-provider-toggle" id="video-provider-toggle">
+                    <button id="video-provider-venice" class="video-provider-btn active">Venice</button>
+                    <button id="video-provider-together" class="video-provider-btn">Together</button>
+                </div>
                 <div class="tool-section">
                     <div class="tool-section-header">
                         <span class="tool-section-title">Video Settings</span>
@@ -940,27 +980,33 @@
         <div class="modal-content dual-model-modal-content">
             <div class="modal-header">
                 <h2>Dual Character Conversation</h2>
-                <button type="button" class="close-btn">Close</button>
+                <button type="button" id="dual-modal-close-btn" class="close-btn">Close</button>
             </div>
             <div class="dual-model-grid">
                 <!-- Character A Column -->
                 <div class="model-config-col model-a-col">
                     <h3 class="model-col-title">Character A</h3>
-                    <div class="char-avatar-preview" id="char-a-avatar">
-                        <span class="char-avatar-placeholder">A</span>
+                    <div class="dual-participant-mode-toggle" id="dual-mode-toggle-a">
+                        <button type="button" class="dual-mode-btn active" data-mode="character">Character</button>
+                        <button type="button" class="dual-mode-btn" data-mode="quickchat">Quick Chat</button>
+                    </div>
+                    <div id="dual-char-a-fields">
+                        <div class="char-avatar-preview" id="char-a-avatar">
+                            <span class="char-avatar-placeholder">A</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="dual-char-a-select">Character</label>
+                            <select id="dual-char-a-select" class="character-select"></select>
+                        </div>
+                        <div class="char-info" id="char-a-info">
+                            <span class="char-model">Select a character</span>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="dual-char-a-select">Character</label>
-                        <select id="dual-char-a-select" class="character-select"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="dual-model-a-override">Model Override</label>
+                        <label for="dual-model-a-override" id="dual-model-a-override-label">Model Override</label>
                         <select id="dual-model-a-override" class="model-override-select">
                             <option value="">Use Character's Model</option>
                         </select>
-                    </div>
-                    <div class="char-info" id="char-a-info">
-                        <span class="char-model">Select a character</span>
                     </div>
                     <div class="form-group">
                         <label for="dual-model-a-prompt">System Prompt</label>
@@ -974,21 +1020,27 @@
                 <!-- Character B Column -->
                 <div class="model-config-col model-b-col">
                     <h3 class="model-col-title">Character B</h3>
-                    <div class="char-avatar-preview" id="char-b-avatar">
-                        <span class="char-avatar-placeholder">B</span>
+                    <div class="dual-participant-mode-toggle" id="dual-mode-toggle-b">
+                        <button type="button" class="dual-mode-btn active" data-mode="character">Character</button>
+                        <button type="button" class="dual-mode-btn" data-mode="quickchat">Quick Chat</button>
+                    </div>
+                    <div id="dual-char-b-fields">
+                        <div class="char-avatar-preview" id="char-b-avatar">
+                            <span class="char-avatar-placeholder">B</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="dual-char-b-select">Character</label>
+                            <select id="dual-char-b-select" class="character-select"></select>
+                        </div>
+                        <div class="char-info" id="char-b-info">
+                            <span class="char-model">Select a character</span>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="dual-char-b-select">Character</label>
-                        <select id="dual-char-b-select" class="character-select"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="dual-model-b-override">Model Override</label>
+                        <label for="dual-model-b-override" id="dual-model-b-override-label">Model Override</label>
                         <select id="dual-model-b-override" class="model-override-select">
                             <option value="">Use Character's Model</option>
                         </select>
-                    </div>
-                    <div class="char-info" id="char-b-info">
-                        <span class="char-model">Select a character</span>
                     </div>
                     <div class="form-group">
                         <label for="dual-model-b-prompt">System Prompt</label>
@@ -1014,6 +1066,7 @@
                 <textarea id="dual-initial-prompt" rows="2" placeholder="Enter a topic or question to start the conversation..."></textarea>
             </div>
             <div class="modal-actions">
+                <button type="button" id="dual-save-config-btn" class="secondary-btn">Save Config</button>
                 <button type="button" id="dual-start-btn" class="primary-btn">Start Conversation</button>
             </div>
         </div>
@@ -1117,10 +1170,13 @@
             </div>
             <div class="editor-tool-group">
                 <button type="button" id="editor-draw-btn" class="editor-btn active" title="Draw Mask (D)">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l5 5"/><path d="M9.5 9.5L11 11"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                 </button>
                 <button type="button" id="editor-erase-btn" class="editor-btn" title="Erase Mask (E)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16C2 15 2 13 3 12L13 2C14 1 16 1 17 2L21 6C22 7 22 9 21 10L11 20"/><path d="M17 2l4 4"/><path d="M11 20l4-4"/></svg>
+                </button>
+                <button type="button" id="editor-pen-btn" class="editor-btn" title="Pen Tool — click to place anchors, drag to curve, click first anchor to fill (P)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18C8 12 16 8 18 6"/><rect x="4" y="16" width="4" height="4" rx="0.5"/><rect x="16" y="4" width="4" height="4" rx="0.5"/><line x1="8" y1="17" x2="12" y2="13" stroke-width="1" stroke-dasharray="2 2"/><line x1="16" y1="6" x2="12" y2="10" stroke-width="1" stroke-dasharray="2 2"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>
                 </button>
             </div>
             <div class="editor-tool-group">
@@ -1160,6 +1216,7 @@
                     <img id="image-edit-base-img" src="" alt="Base">
                     <canvas id="image-edit-preview-canvas"></canvas>
                     <canvas id="image-edit-mask-canvas"></canvas>
+                    <canvas id="image-edit-pen-overlay"></canvas>
                 </div>
                 <div class="editor-loading-overlay">
                     <div class="spinner-morphing-core"></div>

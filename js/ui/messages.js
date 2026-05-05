@@ -2,7 +2,8 @@
  * Message Rendering and Display
  */
 
-import { state, dom, MODEL_LOGOS, DEFAULT_USER_AVATAR_IMAGE_PATH } from '../state.js';
+import { state, dom, MODEL_LOGOS, DEFAULT_AVATAR_SVG } from '../state.js';
+import { getInstalledModel, inferLogoKey } from '../core/InstalledModels.js';
 import { parseMarkdown } from '../utils.js';
 import { uiManager } from '../core/UIManager.js';
 
@@ -54,6 +55,7 @@ export function addMessageToUI(role, content, config, isStreaming = false, attac
     group.classList.add('message-group', role);
     if (msgIndex !== null) group.dataset.index = msgIndex;
     if (isKept) group.classList.add('kept');
+    if (msgData && msgData.e2ee) group.classList.add('e2ee-verified');
 
     // Dual model styling
     if (msgData && msgData.modelKey) {
@@ -74,28 +76,12 @@ export function addMessageToUI(role, content, config, isStreaming = false, attac
         } else {
             const modelInUse = (config && config.model) ? config.model : 'default';
             const charName = (config && config.character_name) || 'Assistant';
-            
-            let logoHtml = MODEL_LOGOS[modelInUse];
 
-            // Prefix walk: try progressively shorter dash-segments of the model ID
-            if (!logoHtml) {
-                const parts = modelInUse.split('-');
-                for (let i = parts.length - 1; i >= 1; i--) {
-                    const prefix = parts.slice(0, i).join('-');
-                    if (MODEL_LOGOS[prefix]) { logoHtml = MODEL_LOGOS[prefix]; break; }
-                }
-            }
+            const installedModel = getInstalledModel(modelInUse);
+            const logoKey = installedModel?.logo ?? inferLogoKey(modelInUse);
+            const logoHtml = logoKey ? MODEL_LOGOS[logoKey] : null;
 
-            // Fallback: org/model format (e.g. meta-llama/Llama-3)
-            if (!logoHtml && modelInUse.includes('/')) {
-                const org = modelInUse.split('/')[0].toLowerCase();
-                const match = Object.keys(MODEL_LOGOS).find(key =>
-                    org.includes(key) || key.includes(org)
-                );
-                logoHtml = match ? MODEL_LOGOS[match] : MODEL_LOGOS['together'];
-            }
-
-            avatarDiv.innerHTML = logoHtml || `<img src="${DEFAULT_USER_AVATAR_IMAGE_PATH}" alt="Avatar">`;
+            avatarDiv.innerHTML = logoHtml || DEFAULT_AVATAR_SVG;
         }
         group.appendChild(avatarDiv);
     }
@@ -274,7 +260,8 @@ export function renderMessages(onRegenerate, onDeleteMessage, onUpdateGauge, onE
                     onToggleKeep,
                     isKept,
                     isDualModeMessage,
-                    onFork
+                    onFork,
+                    null // overseerOptions
                 );
                 bubbleWrapper.appendChild(actions);
             }
@@ -337,6 +324,7 @@ export function createUserMessageActions(content, msgIndex, onDeleteMessage = nu
 export function createAssistantMessageActions(content, msgIndex, onRegenerate, onDeleteMessage, onEdit, onToggleKeep, isKept, isDualMode = false, onFork = null, overseerOptions = null) {
     const actions = document.createElement('div');
     actions.classList.add('message-actions', 'assistant-actions');
+    
     actions.innerHTML = `
         <button class="copy-btn" title="Copy">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -592,27 +580,11 @@ export function updateMessageAvatars(config) {
             } else {
                 // Use model logo or default
                 const modelInUse = config.model || 'default';
-                let logoHtml = MODEL_LOGOS[modelInUse];
-                
-                // Prefix walk: try progressively shorter dash-segments
-                if (!logoHtml) {
-                    const parts = modelInUse.split('-');
-                    for (let i = parts.length - 1; i >= 1; i--) {
-                        const prefix = parts.slice(0, i).join('-');
-                        if (MODEL_LOGOS[prefix]) { logoHtml = MODEL_LOGOS[prefix]; break; }
-                    }
-                }
-                
-                // Fallback: org/model format
-                if (!logoHtml && modelInUse.includes('/')) {
-                    const org = modelInUse.split('/')[0].toLowerCase();
-                    const match = Object.keys(MODEL_LOGOS).find(key =>
-                        org.includes(key) || key.includes(org)
-                    );
-                    logoHtml = match ? MODEL_LOGOS[match] : MODEL_LOGOS['together'];
-                }
-                
-                avatarDiv.innerHTML = logoHtml || `<img src="${DEFAULT_USER_AVATAR_IMAGE_PATH}" alt="Avatar">`;
+                const installedModel = getInstalledModel(modelInUse);
+                const logoKey = installedModel?.logo ?? null;
+                const logoHtml = logoKey ? MODEL_LOGOS[logoKey] : null;
+
+                avatarDiv.innerHTML = logoHtml || DEFAULT_AVATAR_SVG;
             }
         }
         

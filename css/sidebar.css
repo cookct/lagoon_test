@@ -170,8 +170,41 @@
     grid-column: span 2;
 }
 
-#right-sidebar-header #change-model-btn {
-    grid-column: span 1; /* In the grid, it takes 1 but group takes 2 */
+/* Image mode model select in header */
+#right-sidebar-header .header-model-select {
+    grid-column: span 2;
+    padding: 6px 8px;
+    font-size: 11px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+#right-sidebar-header .header-model-select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* Show model select only in image mode */
+/* Native select is hidden by UIManager, show the custom dropdown container */
+#right-sidebar-header .custom-dropdown-container.header-model-select.mode-image-only {
+    display: none;
+}
+body.mode-image #right-sidebar-header .custom-dropdown-container.header-model-select.mode-image-only {
+    display: block;
+}
+
+/* Show model button + toggle in chat/video modes (hide in image mode) */
+body.mode-image #right-sidebar-header .model-control-group.mode-chat-video {
+    display: none;
+}
+
+body.mode-image #view-context-btn {
+    display: none;
 }
 
 .sidebar-label {
@@ -644,6 +677,11 @@ body.mode-image .mode-image-only {
     display: flex !important;
 }
 
+/* Keep native selects hidden - UIManager creates custom dropdowns */
+body.mode-image select.mode-image-only {
+    display: none !important;
+}
+
 /* --- Video Mode --- */
 .mode-video-only {
     display: none !important;
@@ -656,6 +694,10 @@ body.mode-video .mode-video-only {
 /* Specific overrides for block elements like parameters panel */
 body.mode-video #video-params-panel.mode-video-only {
     display: block !important;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 12px;
 }
 
 body.mode-image #image-generate-panel.mode-image-only {
@@ -669,6 +711,11 @@ body.mode-image #image-generate-panel.mode-image-only {
     gap: 10px;
     overflow-y: auto;
     min-height: 0;
+    flex: 1;
+}
+
+.image-card-container > .image-card {
+    flex-shrink: 0;
 }
 
 .image-card .tool-section-header {
@@ -814,7 +861,79 @@ body.mode-image #image-generate-panel.mode-image-only {
 /* --- Image Generate Panel --- */
 .image-generate-panel {
     padding: 10px;
-    border-top: 1px solid var(--border);
+}
+
+/* --- Upscaler/Image Params --- */
+.upscaler-params {
+    /* Container for grouped params, no padding - rows handle spacing */
+}
+
+.upscaler-params.hidden {
+    display: none;
+}
+
+.upscaler-param-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.upscaler-param-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Last row in a container still needs margin for next element */
+.upscaler-params .upscaler-param-row:last-child {
+    margin-bottom: 8px;
+}
+
+.upscaler-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    width: 70px;
+    flex-shrink: 0;
+    text-align: right;
+    cursor: help;
+}
+
+.upscaler-select {
+    flex: 1;
+    background: var(--bg-darker);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+/* Custom dropdown container inside param rows */
+.upscaler-param-row .custom-dropdown-container.upscaler-select {
+    flex: 1 !important;
+    width: auto !important;
+}
+
+.upscaler-param-row .custom-dropdown-selected {
+    width: auto !important;
+}
+
+.upscaler-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.upscaler-slider {
+    flex: 1;
+    accent-color: var(--accent);
+}
+
+.upscaler-value {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    min-width: 30px;
+    text-align: right;
 }
 
 .image-generate-select {

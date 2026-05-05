@@ -47,7 +47,7 @@ export class Lightbox {
 
     bindEvents() {
         // Close on overlay click
-        this.dom.modal.addEventListener('click', (e) => {
+        this.dom.modal.addEventListener('mousedown', (e) => {
             if (e.target === this.dom.modal || e.target === this.dom.container) {
                 this.close();
             }
@@ -237,15 +237,18 @@ export class Lightbox {
             this.currentIndex = 0;
         }
         
-        // Reset transform for new image
-        this.scale = 1.0;
-        this.translateX = 0;
-        this.translateY = 0;
-        
+        // Preserve current zoom/pan so comparison flicking works
+        const savedScale = this.scale;
+        const savedX = this.translateX;
+        const savedY = this.translateY;
+
         // Load new image
         this.dom.image.src = this.collection[this.currentIndex];
         this.dom.image.onload = () => {
-            this.calculateFitToScreen();
+            this.calculateFitToScreen(); // recalculates minScale but also resets transform
+            this.scale = savedScale;
+            this.translateX = savedX;
+            this.translateY = savedY;
             this.updateTransform();
             this.updateNavigation();
         };

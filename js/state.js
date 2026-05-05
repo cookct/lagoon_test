@@ -106,7 +106,10 @@ export const MODEL_LOGOS = {
     'kling': '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="5,4 19,12 5,20" fill="currentColor"/></svg>',
     'hunyuan': '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>',
     'aion-labs': '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3 L21 20 H3 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="7" y1="15" x2="17" y2="15" stroke="currentColor" stroke-width="2"/></svg>',
-    'ollama': '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>'
+    'ollama': '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>',
+
+    // Qwen (Alibaba Cloud)
+    'qwen': '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M15.9488 9.71277L14.0994 6.47609L13.882 6.09378L14.8617 4.38116C14.895 4.32174 14.9129 4.25716 14.9129 4.19C14.9129 4.12284 14.895 4.05826 14.8617 3.99885L13.772 2.09507C13.7388 2.03566 13.6902 1.98916 13.6339 1.95558C13.5776 1.922 13.5137 1.90392 13.4446 1.90392H9.30584L8.32614 0.188711C8.25963 0.0698867 8.13429 -0.00244141 7.99872 -0.00244141H5.8219C5.7554 -0.00244141 5.68889 0.0156406 5.63261 0.0492215C5.57634 0.0828024 5.52774 0.129299 5.49448 0.188711L3.64253 3.42798L3.4251 3.8077H1.46571C1.3992 3.8077 1.33269 3.82578 1.27642 3.85936C1.22014 3.89294 1.17154 3.93944 1.13829 3.99885L0.0511591 5.90521C0.0179057 5.96462 0 6.0292 0 6.09636C0 6.16353 0.0179057 6.2281 0.0511591 6.28752L2.12054 9.9065L1.14085 11.6217C1.10759 11.6811 1.08969 11.7457 1.08969 11.8129C1.08969 11.88 1.10759 11.9446 1.14085 12.004L2.23054 13.9078C2.26379 13.9672 2.31239 14.0137 2.36867 14.0473C2.42494 14.0809 2.48889 14.0989 2.55795 14.0989H6.69416L7.67386 15.8142C7.74037 15.933 7.86571 16.0053 8.00128 16.0053H10.1781C10.2446 16.0053 10.3111 15.9872 10.3674 15.9536C10.4237 15.9201 10.4723 15.8736 10.5055 15.8142L12.5749 12.1952H14.5343C14.6008 12.1952 14.6673 12.1771 14.7236 12.1435C14.7799 12.1099 14.8285 12.0634 14.8617 12.004L15.9514 10.1002C15.9847 10.0408 16.0026 9.97625 16.0026 9.90909C16.0026 9.84192 15.9847 9.77735 15.9514 9.71793L15.9488 9.71277ZM5.8219 0.379864L6.91159 2.28623L5.8219 4.19H14.5343L13.4446 6.09378H5.16707L3.85995 3.8077L5.8219 0.379864ZM6.47418 13.7115H2.5554L3.64508 11.8051H5.8219L1.46571 4.19H3.64253L4.73221 6.09378L7.78129 11.428L6.47418 13.7141V13.7115ZM13.4446 9.90134L12.3575 7.99756L8.00128 15.6178L6.91159 13.7141L8.00128 11.8103L11.0504 6.47609H13.6646L15.624 9.90392H13.4446V9.90134Z" fill="currentColor"/></svg>'
 };
 
 
@@ -126,7 +129,8 @@ export const CONTEXT_WINDOWS = {
     'grok-4-20-multi-agent-beta': 131072
 };
 
-export const DEFAULT_USER_AVATAR_IMAGE_PATH = '/images/default-avatar-2.png';
+export const DEFAULT_AVATAR_SVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="11.5" fill="#2e2e2e" stroke="#3872aa" stroke-width="1"/><circle cx="12" cy="8" r="3.5" stroke="#3872aa" stroke-width="1.5"/><path d="M5 20c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="#3872aa" stroke-width="1.5"/></svg>`;
+export const DEFAULT_AVATAR_URI = `data:image/svg+xml,${encodeURIComponent(DEFAULT_AVATAR_SVG)}`;
 
 const DEFAULT_SYSTEM_PROMPT = "You are a helpful ai assistant";
 
@@ -145,7 +149,8 @@ export const defaultChatConfig = {
     uncensored_mode: false,
     avatar_url: null,
     strip_thinking: true,
-    strip_thinking_response: true
+    strip_thinking_response: true,
+    enable_e2ee: false
 };
 
 export function getDefaultChatConfig() {
@@ -156,14 +161,22 @@ export function getDefaultChatConfig() {
     const stripThinking = localStorage.getItem('quickchat_strip_thinking') !== 'false';
     const webSearch = localStorage.getItem('quickchat_web_search') === 'true';
     const webScraping = localStorage.getItem('quickchat_web_scraping') !== 'false';
+    const xSearch = localStorage.getItem('quickchat_x_search') === 'true';
+    const disableThinking = localStorage.getItem('quickchat_disable_thinking') === 'true';
+    const enableE2EE = localStorage.getItem('quickchat_e2ee') === 'true';
+    const model = localStorage.getItem('quickchat_model') || '';
 
     return {
         ...defaultChatConfig,
+        model: model,
         system_prompt: useDefaultPrompt ? promptToUse : '',
         uncensored_mode: uncensoredMode,
         strip_thinking: stripThinking,
+        disable_thinking: disableThinking,
         enable_web_search: webSearch,
-        enable_web_scraping: webScraping
+        enable_web_scraping: webScraping,
+        enable_x_search: xSearch,
+        enable_e2ee: enableE2EE
     };
 }
 

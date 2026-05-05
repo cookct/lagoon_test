@@ -111,6 +111,12 @@ export const modelConfigs =
       "category": "chat",
       "price_per_token": 0.0
     },
+    "e2ee-glm-5-1": {
+      "provider": "venice",
+      "display_name": "GLM 5.1 (E2EE)",
+      "category": "chat",
+      "price_per_token": 0.0
+    },
     "e2ee-qwen3-5-122b-a10b": {
       "provider": "venice",
       "display_name": "Qwen3.5 122B A10B (E2EE)",
@@ -215,7 +221,7 @@ export const modelConfigs =
       "display_name": "Wan 2.7 R2V",
       "category": "image-to-video",
       "supports_reference_images": true,
-      "supports_end_image": true,
+      "supports_end_image": false,
       "price_per_image": 0.95,
       "params": {
         "prompt": {
@@ -224,10 +230,6 @@ export const modelConfigs =
           "max_length": 2500
         },
         "image_url": {
-          "type": "image",
-          "required": true
-        },
-        "end_image_url": {
           "type": "image",
           "required": false
         },
@@ -284,6 +286,46 @@ export const modelConfigs =
         }
       },
       "ui_controls": ["aspect_ratio", "duration", "resolution", "audio"]
+    },
+    "wan2.7-i2v-together": {
+      "provider": "together",
+      "model_id": "Wan-AI/wan2.7-i2v",
+      "display_name": "Wan 2.7 I2V",
+      "category": "image-to-video",
+      "supports_end_image": true,
+      "params": {
+        "resolution": {
+          "type": "enum",
+          "options": ["720P", "1080P"],
+          "default": "720P"
+        },
+        "seconds": {
+          "type": "enum",
+          "options": ["5", "10", "15"],
+          "default": "5"
+        },
+        "steps": {
+          "type": "int",
+          "min": 10,
+          "max": 50,
+          "default": 20
+        },
+        "guidance_scale": {
+          "type": "float",
+          "min": 6.0,
+          "max": 10.0,
+          "default": 7.5
+        },
+        "seed": {
+          "type": "int",
+          "min": 0
+        },
+        "negative_prompt": {
+          "type": "string",
+          "default": ""
+        }
+      },
+      "ui_controls": ["resolution", "seconds", "seed", "negative_prompt"]
     },
     "qwen-image": {
       "provider": "venice",

@@ -2,7 +2,7 @@
  * Sidebar Rendering and Management
  */
 
-import { state, dom, defaultChatConfig, getDefaultChatConfig, DEFAULT_USER_AVATAR_IMAGE_PATH } from '../state.js';
+import { state, dom, defaultChatConfig, getDefaultChatConfig, DEFAULT_AVATAR_URI } from '../state.js';
 import { fetchConfigs, fetchChats, fetchConfig, deleteChatApi, deleteConfigApi, fetchChat, copyConfigApi } from '../api.js';
 import { lagoonConfirm, lagoonAlert, lagoonPrompt } from './dialog.js';
 import { cleanThinking } from '../utils.js';
@@ -75,7 +75,7 @@ async function renderSidebar(configs, chats) {
         } else {
             avatarImg.src = (configData && configData.avatar_url)
                 ? configData.avatar_url
-                : DEFAULT_USER_AVATAR_IMAGE_PATH;
+                : DEFAULT_AVATAR_URI;
         }
         avatarImg.classList.add('sidebar-avatar');
         summary.appendChild(avatarImg);
