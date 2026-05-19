@@ -329,7 +329,7 @@ def _call_venice(api_key, prompt, max_tokens=1000):
     """Make a blocking Venice API call for summarization. Returns text or None."""
     import httpx
     try:
-        with httpx.Client(timeout=180.0) as client:
+        with httpx.Client(timeout=300.0) as client:
             response = client.post(
                 f"{VENICE_API_BASE}/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -350,13 +350,19 @@ def _call_venice(api_key, prompt, max_tokens=1000):
         return None
 
 
-def _generate_summary(messages_to_summarize, api_key, chat_id, blocking=False, pending_review=False, msgs_to_keep=None, prior_summaries=None):
+def _generate_summary(messages_to_summarize, api_key, chat_id, blocking=False, pending_review=False, msgs_to_keep=None, prior_summaries=None, char_name=None):
     """Generate a detailed summary and append to stack."""
     conversation_text = _build_conversation_text(messages_to_summarize)
+
+    char_instruction = (
+        f"The assistant in this conversation is the character \"{char_name}\". "
+        f"Always refer to them as {char_name}, never as the model name or 'the assistant'.\n\n"
+    ) if char_name else ""
 
     if prior_summaries:
         prior_parts = "\n\n---\n\n".join(s['text'] for s in prior_summaries)
         prompt = (
+            f"{char_instruction}"
             "You are extending a permanent record of an ongoing roleplay/fiction session.\n\n"
             "The following has already been recorded. Do not repeat, rephrase, echo, or summarize "
             "anything in it. The reader already has this. Your job is only what comes AFTER.\n\n"
@@ -381,6 +387,7 @@ def _generate_summary(messages_to_summarize, api_key, chat_id, blocking=False, p
         )
     else:
         prompt = (
+            f"{char_instruction}"
             "You are creating a permanent record of a roleplay/fiction session. "
             "This record will be the ONLY reference to these events in all future sessions — "
             "treat it as the authoritative archive.\n\n"
@@ -427,7 +434,7 @@ def generate_detailed_summary(messages_to_summarize, api_key):
     return _call_venice(api_key, prompt, max_tokens=2000)
 
 
-def _generate_summary_background(messages_to_summarize, api_key, model_name, chat_id, msgs_to_keep=None):
+def _generate_summary_background(messages_to_summarize, api_key, model_name, chat_id, msgs_to_keep=None, char_name=None):
     if chat_id in _pending_summarizations:
         return
     _pending_summarizations.add(chat_id)
@@ -435,12 +442,12 @@ def _generate_summary_background(messages_to_summarize, api_key, model_name, cha
         prior = [s for s in load_summary_stack(chat_id) if not s.get('pending_review')]
         _generate_summary(messages_to_summarize, api_key, chat_id, blocking=False,
                           pending_review=True, msgs_to_keep=msgs_to_keep,
-                          prior_summaries=prior or None)
+                          prior_summaries=prior or None, char_name=char_name)
     finally:
         _pending_summarizations.discard(chat_id)
 
 
-def trigger_background_summarization(messages, model_name, api_key, chat_id, summarize_mode='auto'):
+def trigger_background_summarization(messages, model_name, api_key, chat_id, summarize_mode='auto', char_name=None):
     """
     Pre-warm the summary stack after streaming completes. Non-blocking.
     Marks the generated summary as pending_review=True so the user can approve
@@ -479,7 +486,7 @@ def trigger_background_summarization(messages, model_name, api_key, chat_id, sum
     thread = threading.Thread(
         target=_generate_summary_background,
         args=(messages_to_summarize, api_key, model_name, chat_id),
-        kwargs={'msgs_to_keep': msgs_to_keep},
+        kwargs={'msgs_to_keep': msgs_to_keep, 'char_name': char_name},
         daemon=True
     )
     thread.start()
@@ -488,7 +495,7 @@ def trigger_background_summarization(messages, model_name, api_key, chat_id, sum
 
 # ── Core context management ───────────────────────────────────────────────────
 
-def manage_context(messages, model_name, api_key, chat_id=None, max_bytes=None, summarize_mode='auto'):
+def manage_context(messages, model_name, api_key, chat_id=None, max_bytes=None, summarize_mode='auto', char_name=None):
     """
     Assemble the LLM payload and prune history if needed.
 
@@ -538,7 +545,7 @@ def manage_context(messages, model_name, api_key, chat_id=None, max_bytes=None, 
             to_summarize = conversation_msgs[:-msgs_to_keep]
             logger.info(f"[CONTEXT] Auto: summarizing {len(to_summarize)} messages synchronously (pending review)")
             _generate_summary(to_summarize, api_key, chat_id, blocking=True,
-                              pending_review=True, msgs_to_keep=msgs_to_keep)
+                              pending_review=True, msgs_to_keep=msgs_to_keep, char_name=char_name)
             summaries = load_summary_stack(chat_id)
             stack_msgs = build_summary_messages(summaries)
         elif summarize_mode == 'auto':

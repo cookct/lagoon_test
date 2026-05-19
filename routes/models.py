@@ -150,13 +150,15 @@ def get_venice_models():
             if input_price == 0 and output_price == 0:
                 continue
 
+            caps = spec.get('capabilities', {})
             models.append({
                 "id": m['id'],
                 "name": spec.get('name', m['id']),
                 "description": spec.get('description'),
                 "context_tokens": spec.get('availableContextTokens'),
                 "traits": spec.get('traits', []),
-                "capabilities": spec.get('capabilities', {}),
+                "capabilities": caps,
+                "supportsE2EE": caps.get('supportsE2EE') or m.get('supportsE2EE', False),
                 "pricing": spec.get('pricing', {}).get('input', {}).get('usd') is not None and {
                     "input": spec.get('pricing', {}).get('input', {}).get('usd'),
                     "output": spec.get('pricing', {}).get('output', {}).get('usd')

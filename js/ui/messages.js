@@ -51,6 +51,8 @@ export function addMessageToUI(role, content, config, isStreaming = false, attac
     // Hide context file messages from display (they're role:'user' for AI prioritization but shouldn't show)
     if (role === 'user' && content && content.startsWith('[ATTACHED FILE:')) return null;
 
+    document.getElementById('chat-avatar-splash')?.remove();
+
     const group = document.createElement('div');
     group.classList.add('message-group', role);
     if (msgIndex !== null) group.dataset.index = msgIndex;
@@ -277,6 +279,21 @@ export function renderMessages(onRegenerate, onDeleteMessage, onUpdateGauge, onE
         }
     });
     if (onUpdateGauge) onUpdateGauge();
+
+    // Empty-state avatar splash — show when no visible messages and character has an avatar
+    if (target.children.length === 0 && state.currentConfig && state.currentConfig.avatar_url) {
+        const splash = document.createElement('div');
+        splash.id = 'chat-avatar-splash';
+        splash.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px;pointer-events:none;';
+
+        const img = document.createElement('img');
+        img.src = state.currentConfig.avatar_url;
+        img.style.cssText = 'width:200px;height:200px;border-radius:50%;object-fit:cover;box-shadow:0 4px 24px rgba(0,0,0,0.4);';
+
+        splash.appendChild(img);
+
+        target.appendChild(splash);
+    }
 }
 
 export function createUserMessageActions(content, msgIndex, onDeleteMessage = null) {

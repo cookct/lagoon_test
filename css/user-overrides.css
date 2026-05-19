@@ -1,148 +1,145 @@
 /* Lagoon Design Mode — User Overrides
-   Managed by the Design Mode tool. Only this file is written by the backend.
-   Core CSS files (base.css, themes.css, variables.css) are read-only. */
-
+   Managed by the Design Mode tool. Do not edit manually. */
 
 /* ========================================
    LIGHTBOX STYLES
    ======================================== */
 
 .lightbox-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: zoom-out;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
 }
 
 .lightbox-overlay.hidden {
-    display: none !important;
-    pointer-events: none;
+  display: none !important;
+  pointer-events: none;
 }
 
 .lightbox-close-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 44px;
-    height: 44px;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10002;
-    transition: all 0.2s;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10002;
+  transition: all 0.2s;
 }
 
 .lightbox-close-btn:hover {
-    background: rgba(220, 38, 38, 0.8);
-    border-color: #ef4444;
-    transform: scale(1.1);
+  background: rgba(220, 38, 38, 0.8);
+  border-color: #ef4444;
+  transform: scale(1.1);
 }
 
 .lightbox-close-btn svg {
-    width: 24px;
-    height: 24px;
+  width: 24px;
+  height: 24px;
 }
 
 .lightbox-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    max-width: calc(100vw - 80px);
-    max-height: calc(100vh - 80px);
-    cursor: grab;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: calc(100vw - 80px);
+  max-height: calc(100vh - 80px);
+  cursor: grab;
 }
 
 .lightbox-container:active {
-    cursor: grabbing;
+  cursor: grabbing;
 }
 
 #lightbox-image {
-    display: block;
-    max-width: calc(100vw - 80px);
-    max-height: calc(100vh - 80px);
-    transform-origin: center center;
-    transition: transform 0.1s ease-out;
-    user-select: none;
-    -webkit-user-drag: none;
+  display: block;
+  max-width: calc(100vw - 80px);
+  max-height: calc(100vh - 80px);
+  transform-origin: center center;
+  transition: transform 0.1s ease-out;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .lightbox-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 48px;
-    height: 48px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
-    z-index: 10001;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  z-index: 10001;
 }
 
 .lightbox-nav:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-50%) scale(1.1);
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-50%) scale(1.1);
 }
 
 .lightbox-nav svg {
-    width: 24px;
-    height: 24px;
-    stroke: white;
+  width: 24px;
+  height: 24px;
+  stroke: white;
 }
 
 .lightbox-prev {
-    left: 20px;
+  left: 20px;
 }
 
 .lightbox-next {
-    right: 20px;
+  right: 20px;
 }
 
 .lightbox-counter {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 10001;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 10001;
 }
 
 /* Make image card previews clickable */
 .image-card-preview > img {
-    cursor: zoom-in;
-    transition: transform 0.2s;
+  cursor: zoom-in;
+  transition: transform 0.2s;
 }
 
 .image-card-preview > img:hover {
-    transform: scale(1.02);
+  transform: scale(1.02);
 }
 
 /* Make generated result images clickable */
 .image-result img {
-    cursor: zoom-in;
+  cursor: zoom-in;
 }
-
 
 /* ========================================
    IMAGE CARD FIXES
@@ -150,15 +147,14 @@
 
 /* Keep buttons usable even when checkbox is unchecked */
 .image-card:has(.image-card-checkbox:not(:checked)) .image-card-actions {
-    opacity: 1;
-    pointer-events: auto;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Keep preview clickable for lightbox when unchecked */
 .image-card:has(.image-card-checkbox:not(:checked)) .image-card-preview {
-    pointer-events: auto;
+  pointer-events: auto;
 }
-
 
 /* ========================================
    UPSCALER PARAMS
@@ -167,20 +163,36 @@
 /* Upscaler/image param styles moved to sidebar.css */
 
 .upscaler-input {
-    flex: 1;
-    background: var(--bg-darker);
-    border: 1px solid var(--border);
-    color: var(--text-main);
-    padding: 4px 6px;
-    border-radius: 4px;
-    font-size: 0.75rem;
+  flex: 1;
+  background: var(--bg-darker);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
 }
 
 .upscaler-input::placeholder {
-    color: var(--text-muted);
-    opacity: 0.6;
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 .upscaler-param-row.enhance-only.hidden {
-    display: none;
+  display: none;
+}
+
+.theme-hacker #messages-container > .message-group.assistant > .message-content > .bubble-wrapper > .message.assistant {
+  border-color: #4fc1ff;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.theme-hacker #messages-container > .message-group.user > .message-content > .bubble-wrapper > .message.user {
+  border-style: solid;
+  border-width: 1px;
+  border-color: #4fc1ff;
+}
+
+.theme-hacker .bubble-wrapper > .message.assistant {
+  border-color: #3872aa;
 }

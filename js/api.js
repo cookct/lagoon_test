@@ -134,7 +134,7 @@ export async function retrieveTogetherVideoApi(jobId) {
     return response.json();
 }
 
-export async function saveChatApi(chatId, messages, config, parentConfig, displayName, keptMessages = null) {
+export async function saveChatApi(chatId, messages, config, parentConfig, displayName, keptMessages = null, options = {}) {
     // Use provided keptMessages or import from state (with  to match other imports)
     let kept = keptMessages;
     if (kept === null) {
@@ -142,17 +142,20 @@ export async function saveChatApi(chatId, messages, config, parentConfig, displa
         kept = stateModule.state.keptMessages;
     }
 
+    const body = {
+        chat_id: chatId,
+        messages,
+        config,
+        parent_config: parentConfig,
+        display_name: displayName,
+        kept_messages: Array.isArray(kept) ? kept : Array.from(kept || [])
+    };
+    if (options.ragInvalidate) body.rag_invalidate = true;
+
     const response = await fetch('/api/save_chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: chatId,
-            messages,
-            config,
-            parent_config: parentConfig,
-            display_name: displayName,
-            kept_messages: Array.isArray(kept) ? kept : Array.from(kept || [])
-        })
+        body: JSON.stringify(body)
     });
     if (!response.ok) {
         const errorData = await response.json();

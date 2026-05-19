@@ -13,9 +13,9 @@ import datetime
 import copy
 from flask import Blueprint, request, jsonify, Response
 
-from config import CHATS_DIR, VENICE_API_BASE, DEFAULT_MODEL, CONTEXT_WINDOWS, DEFAULT_CONTEXT_WINDOW, RECENT_MESSAGES_TO_KEEP, CREATIVE_FICTION_SYSTEM_PROMPT
+from config import CHATS_DIR, CONFIG_DIR, VENICE_API_BASE, DEFAULT_MODEL, CONTEXT_WINDOWS, DEFAULT_CONTEXT_WINDOW, RECENT_MESSAGES_TO_KEEP, CREATIVE_FICTION_SYSTEM_PROMPT
 from services.storage import get_api_key, get_together_api_key, get_zai_api_key, get_chat_display_name
-from services.installed_models import load as load_installed_models
+from services.installed_models import load as load_installed_models, update_model_field
 from services.context import (
     manage_context, trigger_background_summarization, load_cached_summary, count_message_tokens,
     load_summary_stack, append_to_summary_stack, delete_summary_entry,
@@ -23,7 +23,7 @@ from services.context import (
     _generate_summary, strip_cot_from_messages
 )
 from services.anchors import scan_and_inject as lore_scan, mark_aware as lore_mark_aware, strip_lore_updates, get_matched_entries as lore_get_matched
-from services.rag import retrieve as rag_retrieve, trigger_background_chunking
+from services.rag import retrieve as rag_retrieve, trigger_background_chunking, invalidate_rag_store
 
 logger = logging.getLogger(__name__)
 chat_bp = Blueprint('chat', __name__)
@@ -148,7 +148,20 @@ def stream_chat():
     char_name = parent_config.replace('.json', '') if parent_config else None
     logger.debug(f"[Anchors] parent_config={parent_config!r}")
     if parent_config:
-        lore_msgs = lore_scan(messages, char_name, char_name)
+        # Load shared_lore + lore_labels from live character config file
+        # so stale frontend snapshots can't suppress injection on old chats
+        live_char_cfg = {}
+        try:
+            cfg_filename = parent_config if parent_config.endswith('.json') else parent_config + '.json'
+            with open(os.path.join(CONFIG_DIR, cfg_filename)) as _f:
+                live_char_cfg = json.load(_f)
+        except Exception:
+            pass
+        extra_lore = live_char_cfg.get('shared_lore') or config.get('shared_lore') or []
+        if isinstance(extra_lore, str):
+            extra_lore = [extra_lore] if extra_lore else []
+        lore_labels = live_char_cfg.get('lore_labels', config.get('lore_labels', True))
+        lore_msgs = lore_scan(messages, char_name, char_name, lore_labels=lore_labels, extra_lore_names=extra_lore)
         if lore_msgs:
             # Inject after RAG (after last system message), before conversation
             last_sys_idx = -1
@@ -157,6 +170,15 @@ def stream_chat():
                     last_sys_idx = i
             for j, lm in enumerate(lore_msgs):
                 messages.insert(last_sys_idx + 1 + j, lm)
+    elif config.get('uncensored_mode') and not parent_config:
+        # Quick-chat fiction mode: scan __quickchat__ anchors and inject after character card
+        lore_msgs = lore_scan(messages, '__quickchat__', lore_labels=False)
+        logger.info(f"[Anchors/Fiction] uncensored_mode={config.get('uncensored_mode')!r} parent_config={parent_config!r} → {len(lore_msgs)} lore entries matched")
+        if lore_msgs:
+            last_sys_idx = max((i for i, m in enumerate(messages) if m.get('role') == 'system'), default=-1)
+            insert_at = last_sys_idx + 1
+            for j, lm in enumerate(lore_msgs):
+                messages.insert(insert_at + j, {"role": "system", "content": lm['content']})
 
     # ── Author's Note: dual-injection (top of prompt + depth-positioned) ──
     author_note = config.get('author_note', '').strip()
@@ -193,7 +215,8 @@ def stream_chat():
     is_together = provider == 'together'
     is_zai = provider == 'zai'
     is_venice = not is_ollama and not is_custom and not is_together and not is_zai
-    is_e2ee = is_venice and model_name.startswith('e2ee-') and config.get('enable_e2ee', False)
+    _installed_model = next((m for m in load_installed_models().get('models', []) if m['id'] == model_name), {})
+    is_e2ee = is_venice and model_name.startswith('e2ee-') and config.get('enable_e2ee', False) and _installed_model.get('tee', True)
     target_api_base = VENICE_API_BASE
     target_api_key = api_key
 
@@ -222,8 +245,9 @@ def stream_chat():
     # Context management - may block for synchronous summarization if over 75% threshold
     pre_tokens = count_message_tokens(messages)
     
-    messages, was_summarized, needs_review = manage_context(messages, model_name, api_key, chat_id=chat_id, summarize_mode=summarize_mode)
+    messages, was_summarized, needs_review = manage_context(messages, model_name, api_key, chat_id=chat_id, summarize_mode=summarize_mode, char_name=char_name)
     post_tokens = count_message_tokens(messages)
+
 
     # Build payload
     payload = {
@@ -235,6 +259,11 @@ def stream_chat():
         "stream": True
     }
 
+    if is_zai:
+        payload["temperature"] = min(payload["temperature"], 1.0)
+        if config.get('disable_thinking', False):
+            payload["thinking"] = {"type": "disabled"}
+
     if is_venice:
         # Build venice_parameters
         venice_params = {
@@ -244,16 +273,12 @@ def stream_chat():
             "disable_thinking": config.get('disable_thinking', False),
             "include_venice_system_prompt": config.get('include_venice_system_prompt', False),
             "include_search_results_in_stream": False,
-            "return_search_results_as_documents": True,
+            "return_search_results_as_documents": True if config.get('enable_web_search', False) else False,
             "enable_web_citations": True if config.get('enable_web_search', False) else False,
             "strip_thinking_response": config.get('strip_thinking', False)
         }
         payload["venice_parameters"] = venice_params
 
-    if is_zai:
-        # z.ai thinking parameter - disabled when strip_thinking is true
-        strip_thinking = config.get('strip_thinking', False)
-        payload["thinking"] = {"type": "disabled" if strip_thinking else "enabled"}
 
     # Log full request payload (mask sensitive content)
     log_payload = {
@@ -265,7 +290,7 @@ def stream_chat():
         "message_count": len(payload.get("messages", [])),
         "first_msg_preview": str(payload.get("messages", [{}])[0].get("content", ""))[:100] + "..." if payload.get("messages") else None,
     }
-    if "venice_parameters" in payload:
+    if "venice_parameters" in payload and not is_e2ee:
         log_payload["venice_parameters"] = payload["venice_parameters"]
     if "thinking" in payload:
         log_payload["thinking"] = payload["thinking"]
@@ -315,7 +340,10 @@ def stream_chat():
                     from services.e2ee import generate_session_keypair, fetch_attestation, encrypt_messages, is_hex_encrypted, decrypt_chunk
                     e2ee_session_priv, e2ee_session_pub_hex = generate_session_keypair()
                     model_pub_key = fetch_attestation(model_name, target_api_key, target_api_base)
-                    
+                    if _installed_model.get('tee') is not True:
+                        update_model_field(model_name, 'tee', True)
+                        logger.info(f"[E2EE] Auto-stamped tee=True for {model_name}")
+
                     pre_enc = payload['messages']
                     
                     # TEE Consolidation: Combine all system messages into a SINGLE message.
@@ -367,6 +395,9 @@ def stream_chat():
                     yield f"data: {json.dumps({'event': 'e2ee_active', 'model': model_name})}\n\n"
                 except Exception as e:
                     logger.error(f"[E2EE] Setup failed: {e}")
+                    if 'signing key' in str(e).lower():
+                        update_model_field(model_name, 'tee', False)
+                        logger.info(f"[E2EE] Auto-stamped tee=False for {model_name} (no signing key)")
                     yield f"data: {json.dumps({'event': 'e2ee_failed', 'error': str(e)})}\n\n"
                     return
 
@@ -636,7 +667,7 @@ def stream_chat():
                 updated_msgs = messages
                 if full_response:
                     updated_msgs = messages + [{"role": "assistant", "content": full_response}]
-                trigger_background_summarization(updated_msgs, model_name, api_key, new_chat_id)
+                trigger_background_summarization(updated_msgs, model_name, api_key, new_chat_id, char_name=char_name)
                 if parent_config:
                     trigger_background_chunking(new_chat_id, updated_msgs)
             except Exception as e:
@@ -654,6 +685,7 @@ def save_chat():
     parent_config = data.get('parent_config')
     display_name = data.get('display_name')
     kept_messages = data.get('kept_messages', [])
+    rag_invalidate = data.get('rag_invalidate', False)
 
     if not chat_id:
         return jsonify({"error": "chat_id is required to save."}), 400
@@ -677,6 +709,10 @@ def save_chat():
         filepath = os.path.join(CHATS_DIR, chat_id)
         with open(filepath, 'w') as f:
             json.dump(chat_data_to_save, f, indent=4)
+
+        if rag_invalidate:
+            invalidate_rag_store(chat_id)
+            trigger_background_chunking(chat_id, messages)
 
         return jsonify({"success": True, "message": "Chat saved.", "display_name": display_name})
 
@@ -1133,11 +1169,30 @@ def preview_prompt():
         char_name = parent_config.replace('.json', '') if parent_config else None
         if parent_config:
             lore_matched = lore_get_matched(messages, char_name)
-            lore_msgs = lore_scan(messages, char_name, char_name)
+            live_char_cfg2 = {}
+            try:
+                cfg_fn2 = parent_config if parent_config.endswith('.json') else parent_config + '.json'
+                with open(os.path.join(CONFIG_DIR, cfg_fn2)) as _f2:
+                    live_char_cfg2 = json.load(_f2)
+            except Exception:
+                pass
+            extra_lore = live_char_cfg2.get('shared_lore') or config.get('shared_lore') or []
+            if isinstance(extra_lore, str):
+                extra_lore = [extra_lore] if extra_lore else []
+            lore_labels2 = live_char_cfg2.get('lore_labels', config.get('lore_labels', True))
+            lore_msgs = lore_scan(messages, char_name, char_name, lore_labels=lore_labels2, extra_lore_names=extra_lore)
             if lore_msgs:
                 last_sys_idx = max((i for i, m in enumerate(messages) if m.get('role') == 'system'), default=-1)
                 for j, lm in enumerate(lore_msgs):
                     messages.insert(last_sys_idx + 1 + j, lm)
+        elif config.get('uncensored_mode') and not parent_config:
+            lore_msgs = lore_scan(messages, '__quickchat__', lore_labels=False)
+            logger.info(f"[Anchors/Fiction/Preview] → {len(lore_msgs)} lore entries matched")
+            if lore_msgs:
+                last_sys_idx = max((i for i, m in enumerate(messages) if m.get('role') == 'system'), default=-1)
+                insert_at = last_sys_idx + 1
+                for j, lm in enumerate(lore_msgs):
+                    messages.insert(insert_at + j, {"role": "system", "content": lm['content']})
 
         # 5. Author's note at depth
         author_note_index = -1
@@ -1257,6 +1312,11 @@ def edit_image_route():
 
     payload["safe_mode"] = False
 
+    # Venice defaults to WEBP; force PNG so the frontend's data:image/png;base64, prefix is correct.
+    # Only applies to /image/generate — edit endpoints return binary and are handled separately.
+    if model_endpoint == "/image/generate":
+        payload["format"] = "png"
+
     aspect_ratio = data.get('aspect_ratio')
     if aspect_ratio:
         payload["aspect_ratio"] = aspect_ratio
@@ -1271,6 +1331,14 @@ def edit_image_route():
     elif model_config and 'seed' in model_config.get('ui_controls', []):
         import random
         payload["seed"] = random.randint(0, 2147483647)
+
+    adherence = data.get('adherence')
+    if adherence is not None:
+        payload["cfg_scale"] = float(adherence)
+
+    lora_strength = data.get('lora_strength')
+    if lora_strength is not None:
+        payload["lora_strength"] = float(lora_strength)
 
     # Route images to the correct field per endpoint:
     #   /image/edit       → singular "image" (first only)
@@ -1311,6 +1379,11 @@ def edit_image_route():
         # Check if the response is JSON or Binary
         content_type = resp.headers.get('Content-Type', '')
         balance_usd = resp.headers.get('x-venice-balance-usd')
+
+        if resp.headers.get('x-venice-is-content-violation') == 'true':
+            logger.warning(f"[edit_image] Content violation on {model_id} (blurred={resp.headers.get('x-venice-is-blurred')}). Enable adult content on the Venice API key.")
+            return jsonify({"error": "Content policy violation — enable adult content on your Venice API key to generate this image."}), 403
+
         if 'application/json' in content_type:
             try:
                 data = resp.json()
@@ -1340,7 +1413,7 @@ def edit_image_route():
             return jsonify({"error": f"Unexpected Content-Type: {content_type}", "raw": resp.text[:200]}), 500
 
     except Exception as e:
-        logger.error(f"[edit_image] Multi-edit Error: {e}")
+        logger.error(f"[edit_image] Request Error: {e}")
         # Try to return the actual error message from Venice if available
         error_msg = str(e)
         if 'resp' in locals() and resp.text:

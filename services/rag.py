@@ -117,6 +117,17 @@ def _chunk_to_text(chunk_msgs: list) -> str:
     return "\n".join(parts)
 
 
+def invalidate_rag_store(chat_id: str):
+    """Delete the RAG store for a chat so it gets rebuilt from current messages."""
+    path = _rag_path(chat_id)
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+            logger.info(f"[RAG] Invalidated store for {chat_id}")
+    except Exception as e:
+        logger.error(f"[RAG] Failed to invalidate store {path}: {e}")
+
+
 def chunk_and_embed(chat_id: str, messages: list):
     """
     Chunk conversation, embed new chunks (those not already in the store), and save.

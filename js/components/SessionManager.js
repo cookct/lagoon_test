@@ -14,7 +14,8 @@ import { cleanThinking, stripMarkdown } from '../utils.js';
 export class SessionManager {
     constructor() {
         this.dom = {};
-        this.selectedFile = null;  // Store selected file directly
+        this.selectedFile = null;
+        this.selectedCharFile = null;
     }
 
     init() {
@@ -36,7 +37,17 @@ export class SessionManager {
             cancelImportBtn: document.getElementById('cancel-import-btn'),
             doImportBtn: document.getElementById('do-import-btn'),
             exportBtn: document.getElementById('export-btn'),
-            exportCount: document.getElementById('export-count')
+            exportCount: document.getElementById('export-count'),
+            // Character tab
+            tabBtns: document.querySelectorAll('.import-tab-btn'),
+            tabChat: document.getElementById('import-tab-chat'),
+            tabCharacter: document.getElementById('import-tab-character'),
+            exportCharSelect: document.getElementById('export-character-select'),
+            doExportCharBtn: document.getElementById('do-export-char-btn'),
+            importCharDropZone: document.getElementById('import-char-drop-zone'),
+            importCharFileInput: document.getElementById('import-char-file-input'),
+            importCharFileName: document.getElementById('import-char-file-name'),
+            doImportCharBtn: document.getElementById('do-import-char-btn'),
         };
     }
 
@@ -46,9 +57,11 @@ export class SessionManager {
         // Import
         this.dom.importChatBtn?.addEventListener('click', async () => {
             this.dom.importModal.classList.remove('hidden');
+            this.switchTab('chat');
             this.dom.importName.value = '';
             this.dom.importFileInput.value = '';
-            this.selectedFile = null;  // Reset stored file
+            this.selectedFile = null;
+            this.selectedCharFile = null;
             this.dom.importFileName.textContent = 'Click or drag file here';
             this.dom.importDropZone?.classList.remove('has-file');
             await this.populateCharacterDropdown();
@@ -94,11 +107,114 @@ export class SessionManager {
             }
             this.showExportMenu(e.currentTarget);
         });
+
+        // Modal tabs
+        this.dom.tabBtns?.forEach(btn => {
+            btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
+        });
+
+        // Character export
+        this.dom.doExportCharBtn?.addEventListener('click', () => this.handleExportCharacter());
+
+        // Character import drop zone
+        this.dom.importCharDropZone?.addEventListener('click', () => this.dom.importCharFileInput.click());
+        this.dom.importCharFileInput?.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                this.selectedCharFile = e.target.files[0];
+                this.dom.importCharFileName.textContent = e.target.files[0].name;
+                this.dom.importCharDropZone.classList.add('has-file');
+            }
+        });
+        this.dom.importCharDropZone?.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            this.dom.importCharDropZone.classList.add('drag-over');
+        });
+        this.dom.importCharDropZone?.addEventListener('dragleave', () => {
+            this.dom.importCharDropZone.classList.remove('drag-over');
+        });
+        this.dom.importCharDropZone?.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.dom.importCharDropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) {
+                this.selectedCharFile = e.dataTransfer.files[0];
+                this.dom.importCharFileName.textContent = e.dataTransfer.files[0].name;
+                this.dom.importCharDropZone.classList.add('has-file');
+            }
+        });
+        this.dom.doImportCharBtn?.addEventListener('click', () => this.handleImportCharacter());
+    }
+
+    switchTab(tab) {
+        this.dom.tabBtns?.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        this.dom.tabChat.classList.toggle('hidden', tab !== 'chat');
+        this.dom.tabCharacter.classList.toggle('hidden', tab !== 'character');
+        if (tab === 'character') this.populateExportCharacterDropdown();
     }
 
     async handleQuickChat() {
         const { chatManager } = await import('./ChatManager.js');
         chatManager.startNewChatSession(getDefaultChatConfig(), null);
+    }
+
+    async populateExportCharacterDropdown() {
+        const select = this.dom.exportCharSelect;
+        if (!select) return;
+        select.innerHTML = '<option value="">-- Select Character --</option>';
+        try {
+            const { fetchConfigs, fetchConfig } = await import('../api.js');
+            const files = await fetchConfigs();
+            for (const filename of (files || [])) {
+                try {
+                    const cfg = await fetchConfig(filename);
+                    const opt = document.createElement('option');
+                    opt.value = filename;
+                    opt.textContent = cfg.character_name || filename.replace('.json', '');
+                    select.appendChild(opt);
+                } catch {}
+            }
+        } catch (e) {
+            console.error('[SessionManager] Failed to populate export dropdown:', e);
+        }
+    }
+
+    async handleExportCharacter() {
+        const configName = this.dom.exportCharSelect?.value;
+        if (!configName) {
+            await lagoonAlert('Please select a character to export.');
+            return;
+        }
+        const a = document.createElement('a');
+        a.href = `/api/export_character/${encodeURIComponent(configName)}`;
+        a.download = '';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    async handleImportCharacter() {
+        if (!this.selectedCharFile) {
+            await lagoonAlert('Please select a .lagoon-char.zip file.');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('file', this.selectedCharFile);
+        try {
+            const res = await fetch('/api/import_character', { method: 'POST', body: formData });
+            const result = await res.json();
+            if (result.success) {
+                this.dom.importModal.classList.add('hidden');
+                const detail = result.has_lore ? ' (with lore)' : '';
+                await lagoonAlert(`"${result.character_name}" imported successfully${detail}.`);
+                this.selectedCharFile = null;
+                if (this.dom.importCharFileName) this.dom.importCharFileName.textContent = 'Drag & drop a .lagoon-char.zip here';
+                this.dom.importCharDropZone?.classList.remove('has-file');
+                await refreshSidebar();
+            } else {
+                await lagoonAlert(`Import failed: ${result.error}`);
+            }
+        } catch (e) {
+            await lagoonAlert(`Import failed: ${e.message}`);
+        }
     }
 
     async populateCharacterDropdown() {

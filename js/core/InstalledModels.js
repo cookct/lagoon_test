@@ -115,6 +115,8 @@ export function populateSelect(selectEl, { includeBlank = false, blankLabel = ''
         groupModels.forEach(m => {
             const opt = new Option(m.name, m.id);
             opt.dataset.provider = provider;
+            if (m.tee !== undefined) opt.dataset.tee = m.tee ? 'true' : 'false';
+            if (m.tee_only) opt.dataset.teeOnly = 'true';
             group.appendChild(opt);
         });
         selectEl.appendChild(group);

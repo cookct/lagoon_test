@@ -117,7 +117,8 @@
     flex-shrink: 0;
 }
 
-#sidebar-header button {
+#sidebar-header button,
+#sidebar-header a {
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 6px 8px;
@@ -130,11 +131,13 @@
     color: var(--text-main);
     width: 100%;
     white-space: nowrap;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }
 
-#import-chat-btn {
-    grid-column: span 2;
-}
 
 #right-sidebar-header {
     padding: 12px;

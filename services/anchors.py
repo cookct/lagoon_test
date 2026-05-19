@@ -62,7 +62,7 @@ def add_entry(config_name: str, keywords: list, content: str, priority: int = 0,
         "id": str(uuid.uuid4()),
         "enabled": True,
         "character_aware": character_aware,
-        "keywords": [k.strip().lower() for k in keywords if k.strip()],
+        "keywords": [k.strip() for k in keywords if k.strip()],
         "content": content.strip(),
         "priority": priority
     }
@@ -77,7 +77,7 @@ def update_entry(config_name: str, entry_id: str, updates: dict) -> bool:
     for entry in entries:
         if entry.get("id") == entry_id:
             if "keywords" in updates:
-                updates["keywords"] = [k.strip().lower() for k in updates["keywords"] if k.strip()]
+                updates["keywords"] = [k.strip() for k in updates["keywords"] if k.strip()]
             entry.update(updates)
             save_anchors(config_name, entries)
             return True
@@ -127,11 +127,14 @@ def strip_lore_updates(text: str) -> tuple[str, list[str], list[str]]:
     return cleaned, ids, bad
 
 
-def scan_and_inject(messages: list, config_name: str, char_name: str = "the character") -> list:
+def scan_and_inject(messages: list, config_name: str, char_name: str = "the character", lore_labels: bool = True, extra_lore_names: list = None) -> list:
     """
     Scan recent messages for anchors keyword matches and return
     matching system messages to inject, sorted by priority (highest first),
     within token budget.
+
+    extra_lore_names: optional list of additional config names whose lore
+    entries are merged in (deduped by entry id).
 
     Returns list of {"role": "system", "content": ...} dicts.
     """
@@ -140,6 +143,19 @@ def scan_and_inject(messages: list, config_name: str, char_name: str = "the char
         return []
 
     entries = load_anchors(config_name)
+
+    if extra_lore_names:
+        seen_ids = {e.get('id') for e in entries if e.get('id')}
+        for extra in extra_lore_names:
+            if not extra or extra == config_name:
+                continue
+            for entry in load_anchors(extra):
+                eid = entry.get('id')
+                if eid and eid in seen_ids:
+                    continue
+                entries.append(entry)
+                if eid:
+                    seen_ids.add(eid)
     logger.debug(f"[Anchors] Scanning for {config_name!r} — {len(entries)} entries loaded")
     if not entries:
         return []
@@ -191,13 +207,13 @@ def scan_and_inject(messages: list, config_name: str, char_name: str = "the char
             break
 
         if entry.get("character_aware", True):
-            # Standard injection — character knows this
-            msg_content = f"[Lore]\n{content}"
+            msg_content = f"[Lore]\n{content}" if lore_labels else content
         else:
             # Awareness injection — character doesn't know this yet
             entry_id = entry.get("id", "")
+            aware_prefix = f"[Lore | {char_name} NOT YET AWARE — id:{entry_id}]" if lore_labels else f"[{char_name} NOT YET AWARE — id:{entry_id}]"
             msg_content = (
-                f"[Lore | {char_name} NOT YET AWARE — id:{entry_id}]\n"
+                f"{aware_prefix}\n"
                 f"{content}\n"
                 f"INSTRUCTION: {char_name} does not know this yet. "
                 f"The moment this fact is revealed in the conversation — whether stated, implied, or discovered — "

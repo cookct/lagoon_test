@@ -6,7 +6,7 @@ import os
 import json
 from flask import Blueprint, request, jsonify
 
-from config import CHATS_DIR
+from config import CHATS_DIR, CONFIG_DIR
 
 chats_bp = Blueprint('chats', __name__)
 
@@ -73,24 +73,34 @@ def reparent_chats():
     new_parent = data.get('new_parent', '').strip()
     if not old_parent or not new_parent:
         return jsonify({"error": "old_parent and new_parent required"}), 400
-    if not os.path.exists(CHATS_DIR):
-        return jsonify({"updated": 0})
     updated = 0
-    for filename in os.listdir(CHATS_DIR):
-        if not filename.endswith('.json'):
-            continue
-        filepath = os.path.join(CHATS_DIR, filename)
+    if os.path.exists(CHATS_DIR):
+        for filename in os.listdir(CHATS_DIR):
+            if not filename.endswith('.json'):
+                continue
+            filepath = os.path.join(CHATS_DIR, filename)
+            try:
+                with open(filepath, 'r') as f:
+                    chat_data = json.load(f)
+                if chat_data.get('parent_config') == old_parent:
+                    chat_data['parent_config'] = new_parent
+                    with open(filepath, 'w') as f:
+                        json.dump(chat_data, f)
+                    updated += 1
+            except Exception:
+                continue
+    lore_dir = os.path.join(CONFIG_DIR, '.lore')
+    old_lore = os.path.join(lore_dir, f"{old_parent.replace('.json', '')}.lore.json")
+    new_lore = os.path.join(lore_dir, f"{new_parent.replace('.json', '')}.lore.json")
+    lore_renamed = False
+    if os.path.exists(old_lore):
         try:
-            with open(filepath, 'r') as f:
-                chat_data = json.load(f)
-            if chat_data.get('parent_config') == old_parent:
-                chat_data['parent_config'] = new_parent
-                with open(filepath, 'w') as f:
-                    json.dump(chat_data, f)
-                updated += 1
+            os.rename(old_lore, new_lore)
+            lore_renamed = True
         except Exception:
-            continue
-    return jsonify({"updated": updated})
+            pass
+
+    return jsonify({"updated": updated, "lore_renamed": lore_renamed})
 
 
 @chats_bp.route('/api/chat/<chat_id>', methods=['DELETE'])

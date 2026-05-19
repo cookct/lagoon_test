@@ -110,7 +110,7 @@ def upload_avatar():
             top = (height - min_dim) // 2
             img = img.crop((left, top, left + min_dim, top + min_dim))
 
-            img = img.resize((128, 128), Image.LANCZOS)
+            img = img.resize((256, 256), Image.LANCZOS)
             img = img.filter(ImageFilter.UnsharpMask(radius=0.5, percent=80, threshold=2))
             enhancer = ImageEnhance.Contrast(img)
             img = enhancer.enhance(1.05)

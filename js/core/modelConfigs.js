@@ -547,7 +547,7 @@ export const modelConfigs =
       "display_name": "Seedream V5 Lite",
       "category": "generate",
       "edit_variant": "seedream-v5-lite-edit",
-      "price_per_image": 0.01,
+      "price_per_image": 0.05,
       "params": {
         "prompt": {
           "type": "string",
@@ -625,7 +625,7 @@ export const modelConfigs =
       "display_name": "Seedream V4",
       "category": "generate",
       "edit_variant": "seedream-v4-edit",
-      "price_per_image": 0.01,
+      "price_per_image": 0.05,
       "params": {
         "prompt": {
           "type": "string",

@@ -115,6 +115,106 @@
     justify-content: flex-end;
 }
 
+/* ── Shared Lore Checkbox List (config modal) ───────────────────────────── */
+
+.shared-lore-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    max-height: 120px;
+    overflow-y: auto;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--border, #333);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 3px;
+}
+
+.shared-lore-list:empty::after {
+    content: 'No lore files';
+    font-size: 0.72rem;
+    color: var(--text-muted, #666);
+    padding: 5px 6px;
+    display: block;
+}
+
+.shared-lore-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: var(--text-secondary, #aaa);
+    transition: background 0.1s, color 0.1s;
+    user-select: none;
+    min-width: 0;
+}
+
+.shared-lore-item:hover {
+    background: var(--bg-hover, #2a2a3e);
+    color: var(--text, #fff);
+}
+
+.shared-lore-item.selected {
+    background: rgba(124, 158, 248, 0.14);
+    color: var(--accent, #7c9ef8);
+}
+
+.shared-lore-item input[type=checkbox] {
+    accent-color: var(--accent, #7c9ef8);
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.shared-lore-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Anchors Tab Bar ─────────────────────────────────────────────────────── */
+
+.anchors-tab-bar {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border, #333);
+    padding-bottom: 0;
+    flex-wrap: wrap;
+}
+
+.anchors-tab-bar.hidden {
+    display: none;
+}
+
+.anchors-tab {
+    background: none;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+    color: var(--text-dim, #888);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 5px 12px;
+    transition: background 0.12s, color 0.12s;
+    position: relative;
+    bottom: -1px;
+}
+
+.anchors-tab:hover {
+    background: var(--bg-hover, #2a2a3e);
+    color: var(--text, #fff);
+}
+
+.anchors-tab.active {
+    background: var(--bg-secondary, #1e1e2e);
+    border-color: var(--border, #333);
+    color: var(--accent, #7c9ef8);
+    font-weight: 500;
+}
+
 /* ── Author's Note in Config Modal ──────────────────────────────────────── */
 
 .input-small-num {
@@ -309,6 +409,18 @@
     color: var(--ansi-red, #f38ba8);
     border-color: #f38ba855;
     background: #f38ba811;
+}
+
+/* ── Share Lore Modal ────────────────────────────────────────────────────────── */
+
+.share-lore-modal-content {
+    width: 380px;
+    max-width: 95vw;
+}
+
+.share-lore-scroll {
+    max-height: 260px;
+    min-height: 60px;
 }
 
 /* ── E2EE Badge ─────────────────────────────────────────────────────────────── */

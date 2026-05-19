@@ -54,3 +54,14 @@ def remove_model(model_id):
         save(data)
         return True
     return False
+
+
+def update_model_field(model_id, field, value):
+    """Set a single field on an installed model. Returns True if found and updated."""
+    data = load()
+    for m in data['models']:
+        if m['id'] == model_id:
+            m[field] = value
+            save(data)
+            return True
+    return False

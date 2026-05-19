@@ -101,9 +101,8 @@ export class ImageEditor {
         // Edit buttons on cards
         document.addEventListener('click', (e) => {
             const editBtn = e.target.closest('.edit-btn');
-            if (editBtn) {
-                const target = editBtn.dataset.target;
-                this.open(target);
+            if (editBtn && editBtn.dataset.target) {
+                this.open(editBtn.dataset.target);
             }
         });
 

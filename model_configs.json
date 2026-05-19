@@ -257,6 +257,30 @@
             "price_per_image": 0.09,
             "ui_controls": ["aspect_ratio", "seed"]
         },
+        "lustify-v8": {
+            "provider": "venice",
+            "endpoint": "/image/generate",
+            "display_name": "Lustify V8",
+            "category": "generate",
+            "price_per_image": 0.01,
+            "ui_controls": ["aspect_ratio", "adherence"]
+        },
+        "z-image-turbo": {
+            "provider": "venice",
+            "endpoint": "/image/generate",
+            "display_name": "Z Image Turbo",
+            "category": "generate",
+            "price_per_image": 0.01,
+            "ui_controls": ["aspect_ratio"]
+        },
+        "wai-Illustrious": {
+            "provider": "venice",
+            "endpoint": "/image/generate",
+            "display_name": "WAI Illustrious",
+            "category": "generate",
+            "price_per_image": 0.01,
+            "ui_controls": ["aspect_ratio", "adherence", "lora_strength"]
+        },
         "e2ee-gemma-3-27b-p": {
             "provider": "venice",
             "display_name": "Gemma 3 27B (E2EE)",

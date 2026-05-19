@@ -337,7 +337,8 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
 .desktop-ui .message.user {
     background-color: rgba(14, 99, 156, 0.25);
     color: var(--text-main);
-    border-radius: 4px;
+    border-radius: 18px;
+    border-bottom-right-radius: 4px;
     max-width: 100%;
     word-wrap: break-word;
 }
@@ -618,7 +619,8 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
 .desktop-ui .think-container {
     background-color: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
     margin: 10px 0;
     overflow: hidden;
 }
@@ -644,6 +646,10 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
     font-size: 0.9em;
     color: var(--text-dim);
     border-top: 1px solid var(--border);
+}
+
+.message-group.e2ee-verified .think-content {
+    border-top-color: #e09020;
 }
 
 .desktop-ui .think-content p:last-child {
@@ -899,7 +905,7 @@ body:not(.image-mode) .desktop-ui .scroll-nav-btn {
     height: 44px;
     min-height: 44px;
     max-height: 30vh;
-    overflow-y: hidden;
+    overflow-y: auto;
     box-sizing: border-box;
     outline: none;
     transition: border-color 0.2s;
@@ -1373,8 +1379,13 @@ body.e2ee-active .desktop-ui .input-wrapper .input-chase-left {
     animation-delay: 1.5s;
 }
 
-.message-group.e2ee-verified .message {
+.message-group.e2ee-verified .message,
+.message-group:has(+ .message-group.e2ee-verified) .message {
     border: 1px solid #e09020;
+}
+
+.message-group.e2ee-verified .think-container {
+    border-color: #e09020;
 }
 
 /* Edit button active (toggle on) state */

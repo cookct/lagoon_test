@@ -980,7 +980,7 @@ export class DualModelManager {
         this.saveChat();
     }
 
-    async saveChat() {
+    async saveChat(options = {}) {
         if (!state.currentChatId) return;
 
         const displayName = `${state.dualModelConfig.modelA.name} vs ${state.dualModelConfig.modelB.name}`;
@@ -995,7 +995,9 @@ export class DualModelManager {
                     dual_config: state.dualModelConfig
                 },
                 'dual-model', // parent_config tag for sidebar grouping
-                displayName
+                displayName,
+                null,
+                options
             );
             // Intentionally not refreshing sidebar here to avoid heavy API spam on every turn
         } catch (error) {
@@ -1136,7 +1138,7 @@ export class DualModelManager {
         state.dualModelPaused = true;
         this.updateControlBar();
         this.renderDualMessages(state.messages);
-        await this.saveChat();
+        await this.saveChat({ ragInvalidate: true });
     }
 
     renderDualMessages(messages) {

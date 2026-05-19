@@ -212,9 +212,9 @@
             <div id="sidebar-header">
                 <button id="quick-chat-btn">New Chat</button>
                 <button id="create-char-btn" class="secondary-btn">Create Character</button>
-                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                <div style="display: flex; gap: 5px; grid-column: span 2;">
                     <button id="import-chat-btn" class="secondary-btn" style="flex: 1;">Import</button>
-                    <a href="/logout" class="secondary-btn" style="flex: 1; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; background: #2a2f37; border: 1px solid #3a3f47; color: #8e9297;">Logout</a>
+                    <a href="/logout" style="flex: 1;">Logout</a>
                 </div>
             </div>
             <div class="sidebar-tabs">
@@ -316,6 +316,10 @@
                         <option value="grok-imagine-image-pro">Grok Imagine Pro</option>
                         <option value="wan-2-7-text-to-image">Wan 2.7</option>
                         <option value="wan-2-7-pro-text-to-image">Wan 2.7 Pro</option>
+                        <option value="lustify-v8">Lustify V8</option>
+                        <option value="z-image-turbo">Z Image Turbo</option>
+                        <option value="wai-Illustrious">WAI Illustrious</option>
+                        <option value="seedream-v4">Seedream V4</option>
                     </optgroup>
                     <optgroup label="Edit">
                         <option value="nano-banana-pro-edit">Nano Banana Pro Edit (Venice)</option>
@@ -408,6 +412,21 @@
                    <div class="upscaler-param-row" id="venice-seed-row" style="display:none;">
                        <label class="upscaler-label">Seed</label>
                        <input type="number" id="venice-seed" class="upscaler-select" placeholder="Random" min="0" style="width:80px;">
+                   </div>
+                   <div class="upscaler-param-row" id="lustify-adherence-row" style="display:none;">
+                       <label class="upscaler-label" title="Prompt adherence strength (1.5–10)">Adh</label>
+                       <input type="range" id="lustify-adherence" min="1.5" max="10" step="0.5" value="3.5" style="flex:1;">
+                       <span id="lustify-adherence-value" style="min-width:2.5em;text-align:right;">3.5</span>
+                   </div>
+                   <div class="upscaler-param-row" id="wai-adherence-row" style="display:none;">
+                       <label class="upscaler-label" title="Prompt adherence strength (0–10)">Adh</label>
+                       <input type="range" id="wai-adherence" min="0" max="10" step="0.5" value="5" style="flex:1;">
+                       <span id="wai-adherence-value" style="min-width:2.5em;text-align:right;">5</span>
+                   </div>
+                   <div class="upscaler-param-row" id="wai-lora-strength-row" style="display:none;">
+                       <label class="upscaler-label" title="LoRA strength (0–100)">LoRA</label>
+                       <input type="range" id="wai-lora-strength" min="0" max="100" step="1" value="50" style="flex:1;">
+                       <span id="wai-lora-strength-value" style="min-width:2.5em;text-align:right;">50</span>
                    </div>
                </div>
 
@@ -707,6 +726,8 @@
                             <label><input type="checkbox" id="include_venice_system_prompt" checked> venice.ai Prompt</label>
                             <label><input type="checkbox" id="uncensored_mode"> Uncensored</label>
                             <label><input type="checkbox" id="strip_thinking"> Strip Thinking</label>
+                            <label><input type="checkbox" id="disable_thinking"> Disable Thinking</label>
+                            <label><input type="checkbox" id="lore_labels" checked> Lore Labels</label>
                             <label><input type="checkbox" id="style_overseer"> Style Overseer</label>
                             <label><input type="checkbox" id="desktop_auto_read"> Auto Read</label>
                         </div>
@@ -749,33 +770,70 @@
         </div>
     </div>
 
-    <!-- Import Chat Modal -->
-<!-- Import Chat Modal -->
+    <!-- Import / Export Modal -->
     <div id="import-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Import Chat</h2>
+                <h2>Import &amp; Export</h2>
                 <button type="button" id="cancel-import-btn" class="close-btn">Close</button>
             </div>
-            <div class="field-group">
-                <label for="import-name">Chat Name</label>
-                <input type="text" id="import-name" placeholder="Imported Chat">
+            <div class="import-modal-tabs">
+                <button class="import-tab-btn active" data-tab="chat">Chat</button>
+                <button class="import-tab-btn" data-tab="character">Character</button>
             </div>
-            <div class="field-group">
-                <label for="import-character">Associate with Character (optional)</label>
-                <select id="import-character">
-                    <option value="">-- No Character --</option>
-                </select>
-            </div>
-            <div class="file-drop-zone" id="import-drop-zone">
-                <input type="file" id="import-file-input" accept=".json,.txt" style="display: none;">
-                <div class="drop-zone-content">
-                    <p id="import-file-name">Drag & drop a chat export file here</p>
-                    <p style="font-size: 0.8em; margin-top: 0.5rem;">or click to select</p>
+
+            <!-- Chat Tab -->
+            <div id="import-tab-chat" class="import-tab-panel">
+                <div class="field-group">
+                    <label for="import-name">Chat Name</label>
+                    <input type="text" id="import-name" placeholder="Imported Chat">
+                </div>
+                <div class="field-group">
+                    <label for="import-character">Associate with Character (optional)</label>
+                    <select id="import-character">
+                        <option value="">-- No Character --</option>
+                    </select>
+                </div>
+                <div class="file-drop-zone" id="import-drop-zone">
+                    <input type="file" id="import-file-input" accept=".json,.txt" style="display: none;">
+                    <div class="drop-zone-content">
+                        <p id="import-file-name">Drag &amp; drop a chat export file here</p>
+                        <p style="font-size: 0.8em; margin-top: 0.5rem;">or click to select</p>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="do-import-btn" class="primary-btn">Import</button>
                 </div>
             </div>
-            <div class="modal-actions">
-                <button type="button" id="do-import-btn" class="primary-btn">Import</button>
+
+            <!-- Character Tab -->
+            <div id="import-tab-character" class="import-tab-panel hidden">
+                <div class="char-io-section">
+                    <p class="char-io-label">Export</p>
+                    <div class="field-group">
+                        <label for="export-character-select">Character</label>
+                        <select id="export-character-select">
+                            <option value="">-- Select Character --</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" id="do-export-char-btn" class="primary-btn">Download ZIP</button>
+                    </div>
+                </div>
+                <div class="char-io-divider"></div>
+                <div class="char-io-section">
+                    <p class="char-io-label">Import</p>
+                    <div class="file-drop-zone" id="import-char-drop-zone">
+                        <input type="file" id="import-char-file-input" accept=".zip" style="display: none;">
+                        <div class="drop-zone-content">
+                            <p id="import-char-file-name">Drag &amp; drop a .lagoon-char.zip here</p>
+                            <p style="font-size: 0.8em; margin-top: 0.5rem;">or click to select</p>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" id="do-import-char-btn" class="primary-btn">Import Character</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -820,9 +878,13 @@
         <div class="modal-content anchors-modal-content">
             <div class="modal-header">
                 <h2>Anchors — <span id="anchors-char-name"></span></h2>
-                <button type="button" id="close-anchors-btn" class="close-btn">Close</button>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button type="button" id="share-lore-btn" class="btn-small">Share Lore</button>
+                    <button type="button" id="close-anchors-btn" class="close-btn">Close</button>
+                </div>
             </div>
             <p class="modal-subtitle">Keyword-triggered lore injected near the bottom of context when matched in recent messages.</p>
+            <div id="anchors-tab-bar" class="anchors-tab-bar hidden"></div>
             <div class="anchors-scroll-body">
                 <div id="anchors-entries" class="anchors-entries-list"></div>
                 <!-- Inline entry editor (shown when adding/editing) -->
@@ -855,6 +917,22 @@
             </div><!-- end anchors-scroll-body -->
             <div class="modal-actions">
                 <button type="button" id="add-lore-entry-btn" class="action-btn">+ Add Entry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Lore Modal -->
+    <div id="share-lore-modal" class="modal-overlay hidden">
+        <div class="modal-content share-lore-modal-content">
+            <div class="modal-header">
+                <h2>Share Lore — <span id="share-lore-char-name"></span></h2>
+                <button type="button" id="close-share-lore-btn" class="close-btn">Close</button>
+            </div>
+            <p class="modal-subtitle">Select lore files whose anchors will also fire in this character's context.</p>
+            <div id="share-lore-list" class="shared-lore-list share-lore-scroll"></div>
+            <div class="modal-actions">
+                <button type="button" id="save-share-lore-btn" class="primary-btn">Save</button>
+                <button type="button" id="cancel-share-lore-btn" class="btn-cancel">Cancel</button>
             </div>
         </div>
     </div>

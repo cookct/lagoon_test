@@ -24,7 +24,12 @@ const IMAGE_PRICES = {
     'qwen-image-2-pro-edit': 0.10,
     'seedream-v5-lite-edit': 0.05,
     'seedream-v4-edit': 0.05,
+    'seedream-v4': 0.05,
+    'seedream-v4': 0.05,
     'firered-image-edit': 0.04,
+    'lustify-v8': 0.01,
+    'z-image-turbo': 0.01,
+    'wai-Illustrious': 0.01,
 };
 const UPSCALER_PRICES = { 2: 0.02, 4: 0.08 };
 
@@ -43,6 +48,8 @@ export class ImageModeManager {
         this.cacheDom();
         this.cacheUpscalerDom();
         this.cacheGlmDom();
+        this.cacheLustifyDom();
+        this.cacheWaiDom();
         this.bindEvents();
         this.bindClearEvents();
         this.bindGenerateEvents();
@@ -79,6 +86,15 @@ export class ImageModeManager {
         this.dom.glmParams = document.getElementById('glm-image-params');
         this.dom.glmSize = document.getElementById('glm-image-size');
         this.dom.glmQuality = document.getElementById('glm-image-quality');
+    }
+
+    cacheLustifyDom() {
+        this.dom.lustifyAdherence = document.getElementById('lustify-adherence');
+    }
+
+    cacheWaiDom() {
+        this.dom.waiAdherence = document.getElementById('wai-adherence');
+        this.dom.waiLoraStrength = document.getElementById('wai-lora-strength');
     }
 
     bindEvents() {
@@ -245,6 +261,27 @@ export class ImageModeManager {
             });
         }
 
+        const adherenceSlider = document.getElementById('lustify-adherence');
+        if (adherenceSlider) {
+            adherenceSlider.addEventListener('input', (e) => {
+                document.getElementById('lustify-adherence-value').textContent = e.target.value;
+            });
+        }
+
+        const waiAdherenceSlider = document.getElementById('wai-adherence');
+        if (waiAdherenceSlider) {
+            waiAdherenceSlider.addEventListener('input', (e) => {
+                document.getElementById('wai-adherence-value').textContent = e.target.value;
+            });
+        }
+
+        const waiLoraSlider = document.getElementById('wai-lora-strength');
+        if (waiLoraSlider) {
+            waiLoraSlider.addEventListener('input', (e) => {
+                document.getElementById('wai-lora-strength-value').textContent = e.target.value;
+            });
+        }
+
         // Initial state
         this.toggleUpscalerParams();
         this.updatePriceDisplay();
@@ -289,9 +326,10 @@ export class ImageModeManager {
             geminiParams.classList.toggle('hidden', !showGemini);
         }
 
-        const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'seedream-v5-lite-edit', 'nano-banana-pro-edit', 'grok-imagine-image', 'grok-imagine-image-pro', 'wan-2-7-text-to-image', 'wan-2-7-pro-text-to-image'];
+        const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'seedream-v5-lite-edit', 'nano-banana-pro-edit', 'grok-imagine-image', 'grok-imagine-image-pro', 'wan-2-7-text-to-image', 'wan-2-7-pro-text-to-image', 'lustify-v8', 'z-image-turbo', 'wai-Illustrious', 'seedream-v4'];
         const veniceSeedModels = ['wan-2-7-text-to-image', 'wan-2-7-pro-text-to-image'];
         const veniceResolutionModels = ['grok-imagine-edit'];
+        const veniceAdherenceModels = ['lustify-v8'];
         const veniceEditParams = document.getElementById('venice-edit-params');
         if (veniceEditParams) {
             veniceEditParams.style.display = veniceAspectModels.includes(selectedModel) ? 'block' : 'none';
@@ -303,6 +341,20 @@ export class ImageModeManager {
         const resolutionRow = document.getElementById('venice-resolution-row');
         if (resolutionRow) {
             resolutionRow.style.display = veniceResolutionModels.includes(selectedModel) ? 'flex' : 'none';
+        }
+        const adherenceRow = document.getElementById('lustify-adherence-row');
+        if (adherenceRow) {
+            adherenceRow.style.display = veniceAdherenceModels.includes(selectedModel) ? 'flex' : 'none';
+        }
+
+        const waiModels = ['wai-Illustrious'];
+        const waiAdherenceRow = document.getElementById('wai-adherence-row');
+        if (waiAdherenceRow) {
+            waiAdherenceRow.style.display = waiModels.includes(selectedModel) ? 'flex' : 'none';
+        }
+        const waiLoraRow = document.getElementById('wai-lora-strength-row');
+        if (waiLoraRow) {
+            waiLoraRow.style.display = waiModels.includes(selectedModel) ? 'flex' : 'none';
         }
 
         // Hide message input for upscaler (no prompt needed)
@@ -541,9 +593,10 @@ export class ImageModeManager {
             ? { model: modelId, prompt, images }
             : { modelId, prompt, images, multi_ref: refCount >= 1, single_edit: this.editModeActive };
 
-        const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'seedream-v5-lite-edit', 'nano-banana-pro-edit', 'grok-imagine-image', 'grok-imagine-image-pro', 'wan-2-7-text-to-image', 'wan-2-7-pro-text-to-image'];
+        const veniceAspectModels = ['grok-imagine-edit', 'seedream-v4-edit', 'seedream-v5-lite-edit', 'nano-banana-pro-edit', 'grok-imagine-image', 'grok-imagine-image-pro', 'wan-2-7-text-to-image', 'wan-2-7-pro-text-to-image', 'lustify-v8', 'z-image-turbo', 'wai-Illustrious', 'seedream-v4'];
         const veniceSeedModels = ['wan-2-7-text-to-image', 'wan-2-7-pro-text-to-image'];
         const veniceResolutionModels = ['grok-imagine-edit'];
+        const veniceAdherenceModels = ['lustify-v8'];
         if (veniceAspectModels.includes(modelId)) {
             const ratio = document.getElementById('venice-edit-aspect-ratio')?.value;
             if (ratio && ratio !== 'auto') body.aspect_ratio = ratio;
@@ -555,6 +608,18 @@ export class ImageModeManager {
         if (veniceResolutionModels.includes(modelId)) {
             const res = document.getElementById('venice-edit-resolution')?.value;
             if (res) body.resolution = res;
+        }
+        if (veniceAdherenceModels.includes(modelId)) {
+            const adherenceVal = this.dom.lustifyAdherence?.value;
+            if (adherenceVal !== null && adherenceVal !== undefined) body.adherence = parseFloat(adherenceVal);
+        }
+
+        const waiModels = ['wai-Illustrious'];
+        if (waiModels.includes(modelId)) {
+            const adherenceVal = this.dom.waiAdherence?.value;
+            if (adherenceVal !== null && adherenceVal !== undefined) body.adherence = parseFloat(adherenceVal);
+            const loraVal = this.dom.waiLoraStrength?.value;
+            if (loraVal !== null && loraVal !== undefined) body.lora_strength = parseFloat(loraVal);
         }
 
         if (isGemini && (!editModels.includes(modelId) || modelId === 'gemini-3-pro-edit')) {

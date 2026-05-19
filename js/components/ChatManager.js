@@ -150,8 +150,13 @@ export class ChatManager {
         // Auto-resize input
         this.dom.messageInput.addEventListener('input', () => {
             this.dom.messageInput.style.height = '44px';
+            this.dom.messageInput.style.overflowY = 'hidden';
             if (this.dom.messageInput.scrollHeight > 44) {
                 this.dom.messageInput.style.height = this.dom.messageInput.scrollHeight + 'px';
+            }
+            // Enable scrollbar only when content exceeds max-height
+            if (this.dom.messageInput.scrollHeight > this.dom.messageInput.clientHeight) {
+                this.dom.messageInput.style.overflowY = 'auto';
             }
             toggleSendButtonState();
         });
@@ -374,7 +379,8 @@ export class ChatManager {
                         'system_prompt', 'system_context', 'character_card',
                         'author_note', 'author_note_depth',
                         'uncensored_mode', 'strip_thinking', 'style_overseer',
-                        'fiction_prompt_text', 'include_venice_system_prompt'
+                        'fiction_prompt_text', 'include_venice_system_prompt',
+                        'shared_lore', 'lore_labels'
                     ];
                     for (const field of liveFields) {
                         if (liveConfig[field] !== undefined) {
@@ -435,7 +441,9 @@ export class ChatManager {
             'author_note', 'author_note_depth',
             'uncensored_mode', 'strip_thinking', 'style_overseer',
             'fiction_prompt_text', 'include_venice_system_prompt',
-            'character_name', 'avatar', 'model'
+            'character_name', 'avatar', 'model',
+            'enable_web_search', 'temperature', 'top_p', 'repetition_penalty',
+            'max_tokens', 'disable_thinking', 'lore_labels', 'shared_lore'
         ];
         for (const field of liveFields) {
             if (newConfig[field] !== undefined) {
@@ -595,6 +603,7 @@ export class ChatManager {
         this.setStreamingState(true); 
         
         const promptOverride = (textToSend && textToSend !== userMessage) ? textToSend : null;
+        this._refreshPromptMonitor();
         await this.generateResponse(null, promptOverride, imageData);
     }
 
@@ -772,11 +781,6 @@ export class ChatManager {
                             document.body.classList.add('e2ee-active');
                             assistantMessage.e2ee = true;
                             assistantMessageGroup.classList.add('e2ee-verified');
-                            const badge = document.createElement('span');
-                            badge.className = 'e2ee-badge';
-                            badge.title = 'End-to-end encrypted via Venice TEE';
-                            badge.textContent = '\uD83D\uDD12';
-                            assistantMessageDiv.prepend(badge);
                         } else if (eventData.event === 'e2ee_failed') {
                             this._showToast('\u26A0\uFE0F E2EE failed \u2014 message not encrypted', 'error');
                             return;
@@ -1042,18 +1046,20 @@ export class ChatManager {
         this.updateModelButtonText();
     }
 
-    async saveChat() {
+    async saveChat(options = {}) {
         if (!state.currentChatId) return;
         const activeChatItem = document.querySelector(`.list-item[data-chat-id="${state.currentChatId}"] .chat-name`);
         const displayName = activeChatItem ? activeChatItem.textContent : null;
 
         try {
             const result = await saveChatApi(
-                state.currentChatId, 
-                state.messages, 
-                state.currentConfig, 
-                state.currentParentConfig, 
-                displayName
+                state.currentChatId,
+                state.messages,
+                state.currentConfig,
+                state.currentParentConfig,
+                displayName,
+                null,
+                options
             );
             if (activeChatItem && result.display_name && activeChatItem.textContent !== result.display_name) {
                 activeChatItem.textContent = result.display_name;
@@ -1094,7 +1100,9 @@ export class ChatManager {
         let totalTokens = 0;
 
         state.messages.forEach(msg => {
-            totalTokens += estimateTokens(msg.content);
+            // Strip <think> blocks — they're removed server-side before API calls
+            const content = (msg.content || '').replace(/<think>[\s\S]*?<\/think>/g, '');
+            totalTokens += estimateTokens(content);
         });
 
         if (state.currentConfig.system_prompt) totalTokens += estimateTokens(state.currentConfig.system_prompt);
@@ -1177,7 +1185,7 @@ export class ChatManager {
         }
 
         this.renderMessages();
-        await this.saveChat();
+        await this.saveChat({ ragInvalidate: true });
         this.updateContextGauge();
         setTimeout(() => autoScroll(), 50);
     }
@@ -1410,7 +1418,6 @@ export class ChatManager {
     async _refreshPromptMonitor() {
         const { previewPrompt } = await import('../api.js');
         const { state } = await import('../state.js');
-        if (!state.currentChatId) return;
         try {
             const result = await previewPrompt(
                 state.currentChatId,

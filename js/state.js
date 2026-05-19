@@ -98,6 +98,9 @@ export const MODEL_LOGOS = {
     'glm': '<svg viewBox="0 0 29.74 29.74" xmlns="http://www.w3.org/2000/svg"><path d="m15.47 7.1-1.3 1.85c-.2.29-.54.47-.9.47h-7.1V7.09c-.01.01 9.3.01 9.3.01zM24.3 7.1 13.14 22.91H5.7L16.86 7.1zM14.53 22.91l1.31-1.86c-.2-.29-.54-.47-.9-.47h7.09v2.33h-9.3z" fill="currentColor"/></svg>',
 
     // Venice AI (Handled via prefix venice)
+
+    // NVIDIA
+    'nvidia': '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.948 8.798v-1.43a6.7 6.7 0 01.424-.018c3.922-.124 6.417 3.396 6.417 3.396s-2.728 3.789-5.648 3.789a4.2 4.2 0 01-1.193-.178v-4.338c1.57.19 1.886.886 2.834 2.469l2.1-1.772s-1.536-2.017-4.127-2.017a5.5 5.5 0 00-.807.059zm0-4.762v2.14l.424-.036c5.163-.324 8.396 4.27 8.396 4.27s-3.655 4.49-7.46 4.49a5.3 5.3 0 01-1.36-.178v1.338a6 6 0 00.996.082c3.543 0 6.104-1.824 8.577-3.982.411.332 2.096.907 2.443 1.19-2.357 1.99-7.848 3.594-10.964 3.594a8.3 8.3 0 01-1.052-.06v1.86H22.5V4.036zm0 10.065v1.13c-3.665-.416-4.678-3.6-4.678-3.6s1.758-2.478 4.678-2.872v1.236l-.036-.006c-1.536-.186-2.738 1.26-2.738 1.26s.68 2.452 2.774 2.852zM3.57 11.465s2.164-3.22 6.49-3.558v-1.17C5.24 7.168 1.5 11.166 1.5 11.166s2.136 6.24 8.56 6.808v-1.248c-4.632-.554-6.49-5.261-6.49-5.261z" fill="#76B900"/></svg>',
     'venice': '<svg viewBox="0 0 326 366" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M163 0L326 94v178l-163 94L0 272V94L163 0z" fill="currentColor"/></svg>',
 
     // Fallbacks for other providers
@@ -171,6 +174,7 @@ export function getDefaultChatConfig() {
         model: model,
         system_prompt: useDefaultPrompt ? promptToUse : '',
         uncensored_mode: uncensoredMode,
+        fiction_prompt_text: localStorage.getItem('quickchat_fiction_prompt') || '',
         strip_thinking: stripThinking,
         disable_thinking: disableThinking,
         enable_web_search: webSearch,

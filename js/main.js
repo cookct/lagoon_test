@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     settingsPersistence.init();
     dualModelManager.init();
     const anchorsManager = new AnchorsManager();
+    window.anchorsManager = anchorsManager;
     initWritingToolsPanel(anchorsManager);
 
     initOverseerRules();
@@ -238,9 +239,11 @@ function initWritingToolsPanel(anchorsManager) {
         applyBtn?.click();
     });
 
-    anchorsBtn?.addEventListener('click', () => {
+    anchorsBtn?.addEventListener('click', async () => {
         if (state.currentParentConfig) {
-            anchorsManager.open(state.currentParentConfig);
+            const { fetchConfig } = await import('./api.js');
+            const liveConfig = await fetchConfig(state.currentParentConfig);
+            anchorsManager.open(state.currentParentConfig, liveConfig?.shared_lore || state.currentConfig?.shared_lore);
         }
     });
 }

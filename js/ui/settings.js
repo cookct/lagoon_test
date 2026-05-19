@@ -49,8 +49,7 @@ function formatPricing(m, provider) {
 // Store all children (options and optgroups) once so we can restore them
 let _allModelChildren = null;
 
-// E2EE-capable models that don't follow the e2ee- naming convention
-const E2EE_EXTRA_MODELS = new Set(['venice-uncensored', 'venice-uncensored-role-play']);
+export function resetModelDropdownSnapshot() { _allModelChildren = null; }
 
 export function filterModelDropdownForE2EE(e2eeOn) {
     const sel = document.getElementById('model');
@@ -64,20 +63,23 @@ export function filterModelDropdownForE2EE(e2eeOn) {
     const currentVal = sel.value;
     sel.innerHTML = '';
 
-    const isE2EEModel = (val) => val.startsWith('e2ee-') || E2EE_EXTRA_MODELS.has(val);
+    const isE2EEModel = (val, opt) => {
+        if (opt?.dataset.tee !== undefined) return opt.dataset.tee === 'true';
+        return val.startsWith('e2ee-');
+    };
 
     _allModelChildren.forEach(child => {
         if (child.tagName === 'OPTGROUP') {
             const group = child.cloneNode(false); // Clone without children
             const options = Array.from(child.children).filter(opt => {
-                return !e2eeOn || isE2EEModel(opt.value);
+                return e2eeOn === isE2EEModel(opt.value, opt);
             });
             if (options.length > 0) {
                 options.forEach(opt => group.appendChild(opt.cloneNode(true)));
                 sel.appendChild(group);
             }
         } else if (child.tagName === 'OPTION') {
-            if (!e2eeOn || isE2EEModel(child.value)) {
+            if (e2eeOn === isE2EEModel(child.value, child)) {
                 sel.appendChild(child.cloneNode(true));
             }
         }
@@ -467,8 +469,26 @@ export function showSystemPromptEditor() {
     fictionResetBtn.textContent = 'Reset to Default';
     fictionResetBtn.style.cssText = 'margin-top:4px;padding:4px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);cursor:pointer;font-size:12px;';
     fictionResetBtn.onclick = () => { fictionTextarea.value = ''; };
+
+    const anchorsBtn = document.createElement('button');
+    anchorsBtn.textContent = 'Anchors';
+    anchorsBtn.style.cssText = 'margin-top:4px;margin-left:6px;padding:4px 10px;border:1px solid var(--accent);border-radius:4px;background:var(--bg);color:var(--accent);cursor:pointer;font-size:12px;';
+    anchorsBtn.onclick = async () => {
+        overlay.remove();
+        if (window.anchorsManager) {
+            await window.anchorsManager.open('__quickchat__');
+            const nameEl = document.getElementById('anchors-char-name');
+            if (nameEl) nameEl.textContent = 'Quick Chat (Fiction Mode)';
+        }
+    };
+
+    const fictionBtnRow = document.createElement('div');
+    fictionBtnRow.style.cssText = 'display:flex;align-items:center;';
+    fictionBtnRow.appendChild(fictionResetBtn);
+    fictionBtnRow.appendChild(anchorsBtn);
+
     fictionEditor.appendChild(fictionTextarea);
-    fictionEditor.appendChild(fictionResetBtn);
+    fictionEditor.appendChild(fictionBtnRow);
     modal.appendChild(fictionEditor);
 
     uncensoredCheckbox.addEventListener('change', () => {
@@ -489,12 +509,13 @@ export function showSystemPromptEditor() {
     saveBtn.textContent = 'Save';
     saveBtn.style.cssText = 'padding:8px 16px;border:none;border-radius:4px;background:var(--accent);color:white;cursor:pointer;';
     saveBtn.onclick = () => {
+        const useDefaultPrompt = localStorage.getItem('use_default_prompt') !== 'false';
         setDefaultSystemPrompt(textarea.value);
         localStorage.setItem('quickchat_uncensored', uncensoredCheckbox.checked ? 'true' : 'false');
         localStorage.setItem('quickchat_fiction_prompt', fictionTextarea.value);
         // Also update current chat if it's a quick chat (no parent config)
         if (!state.currentParentConfig) {
-            state.currentConfig.system_prompt = textarea.value;
+            state.currentConfig.system_prompt = useDefaultPrompt ? textarea.value : '';
             state.currentConfig.uncensored_mode = uncensoredCheckbox.checked;
             state.currentConfig.fiction_prompt_text = fictionTextarea.value;
 
@@ -504,10 +525,19 @@ export function showSystemPromptEditor() {
                 !m.content.includes('CONTEXT FILE') &&
                 !m.content.includes('USER-DEFINED INSTRUCTIONS')
             );
-            if (systemMsgIndex > -1) {
-                state.messages[systemMsgIndex].content = textarea.value;
-            } else if (textarea.value.trim()) {
-                state.messages.unshift({ role: 'system', content: textarea.value });
+
+            if (!useDefaultPrompt) {
+                // If disabled, remove it if it exists
+                if (systemMsgIndex > -1) {
+                    state.messages.splice(systemMsgIndex, 1);
+                }
+            } else {
+                // If enabled, update or add it
+                if (systemMsgIndex > -1) {
+                    state.messages[systemMsgIndex].content = textarea.value;
+                } else if (textarea.value.trim()) {
+                    state.messages.unshift({ role: 'system', content: textarea.value });
+                }
             }
         }
 
@@ -667,10 +697,11 @@ availableModels.forEach(m => {
                         btn.disabled = true;
                         btn.textContent = 'Adding...';
                         try {
+                            const tee = m.supportsE2EE === true;
                             const res = await fetch('/api/installed_models', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ id: m.id, name: m.name, provider: provider, logo: inferLogoKey(m.id) })
+                                body: JSON.stringify({ id: m.id, name: m.name, provider: provider, logo: inferLogoKey(m.id), tee })
                             });
                             const result = await res.json();
                             if (!res.ok) {
@@ -682,7 +713,7 @@ availableModels.forEach(m => {
                                         await fetch('/api/installed_models', {
                                             method: 'POST',
                                             headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ id: m.id, name: m.name, provider: provider, logo: inferLogoKey(m.id) })
+                                            body: JSON.stringify({ id: m.id, name: m.name, provider: provider, logo: inferLogoKey(m.id), tee })
                                         });
                                         const { modelConfigManager } = await import('../core/ModelConfigManager.js');
                                         await modelConfigManager.refresh();
@@ -1364,6 +1395,33 @@ export function showSettingsMenu(button) {
         localStorage.setItem('use_default_prompt', newValue ? 'true' : 'false');
         toggleSlider.style.background = newValue ? 'var(--accent)' : '#444';
         toggleKnob.style.left = newValue ? '16px' : '2px';
+
+        // Also update current chat if it's a quick chat (no parent config)
+        if (!state.currentParentConfig) {
+            const promptValue = getDefaultSystemPrompt();
+            state.currentConfig.system_prompt = newValue ? promptValue : '';
+
+            // Update the system message in state.messages
+            const systemMsgIndex = state.messages.findIndex(m =>
+                m.role === 'system' &&
+                !m.content.includes('CONTEXT FILE') &&
+                !m.content.includes('USER-DEFINED INSTRUCTIONS')
+            );
+
+            if (!newValue) {
+                // If disabled, remove it
+                if (systemMsgIndex > -1) {
+                    state.messages.splice(systemMsgIndex, 1);
+                }
+            } else {
+                // If enabled, update or add it
+                if (systemMsgIndex > -1) {
+                    state.messages[systemMsgIndex].content = promptValue;
+                } else if (promptValue.trim()) {
+                    state.messages.unshift({ role: 'system', content: promptValue });
+                }
+            }
+        }
     };
     promptRow.appendChild(toggleLabel);
 
@@ -2064,6 +2122,7 @@ export function toggleAppMode() {
         const modelSelect = document.getElementById('model');
         if (modelSelect) {
             models.populateSelect(modelSelect);
+            filterModelDropdownForE2EE(localStorage.getItem('quickchat_e2ee') === 'true');
             uiManager.updateCustomDropdown(modelSelect);
             
             // Ensure the model button text reflects the current mode's model

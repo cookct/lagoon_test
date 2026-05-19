@@ -1,0 +1,13 @@
+{
+  "summarize_threshold": 0.75,
+  "recent_messages_to_keep": 6,
+  "summary_model": "gemma-4-uncensored",
+  "summary_max_tokens": 10000,
+  "rag_enabled": true,
+  "rag_top_k": 3,
+  "rag_min_similarity": 0.35,
+  "rag_token_budget": 800,
+  "rag_chunk_size": 4,
+  "lore_scan_depth": 4,
+  "lore_token_budget": 4000
+}

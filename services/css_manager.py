@@ -17,7 +17,7 @@ CSS_PATH     = PROJECT_ROOT / 'css' / 'user-overrides.css'
 BACKUP_DIR   = PROJECT_ROOT / 'backups' / 'css'
 
 ALLOWED_PROPERTIES = {
-    'color', 'background', 'background-color', 'background-image', 'border-color', 'border-width',
+    'color', 'background', 'background-color', 'background-image', 'border-color', 'border-width', 'border-style',
     'border-radius', 'border-top-left-radius', 'border-top-right-radius',
     'border-bottom-left-radius', 'border-bottom-right-radius',
     'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',

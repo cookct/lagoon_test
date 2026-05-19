@@ -15,6 +15,7 @@ export class ConfigManager {
     constructor() {
         this.dom = {};
         this._editingConfigFilename = null; // tracks which config is open in the editor (NOT the active chat's parent)
+        this._editingSharedLore = [];
         this.refreshDom();
     }
 
@@ -65,7 +66,9 @@ export class ConfigManager {
             includeVeniceSystemPrompt: document.getElementById('include_venice_system_prompt'),
             uncensoredMode: document.getElementById('uncensored_mode'),
             stripThinking: document.getElementById('strip_thinking'),
-            styleOverseer: document.getElementById('style_overseer')
+            disableThinking: document.getElementById('disable_thinking'),
+            styleOverseer: document.getElementById('style_overseer'),
+            loreLabels: document.getElementById('lore_labels')
         };
     }
 
@@ -174,6 +177,7 @@ export class ConfigManager {
 
     handleCreateCharacter() {
         this._editingConfigFilename = null;
+        this._editingSharedLore = [];
         this.dom.configForm.reset();
         this.dom.configName.value = '';
         this.dom.avatarPreview.src = DEFAULT_AVATAR_URI;
@@ -232,7 +236,10 @@ export class ConfigManager {
             include_venice_system_prompt: this.dom.includeVeniceSystemPrompt.checked,
             uncensored_mode: this.dom.uncensoredMode.checked,
             strip_thinking: this.dom.stripThinking.checked,
+            disable_thinking: this.dom.disableThinking?.checked || false,
+            lore_labels: this.dom.loreLabels?.checked ?? true,
             style_overseer: this.dom.styleOverseer?.checked || false,
+            shared_lore: this._editingSharedLore,
             avatar_url: this.dom.avatarPreview.src.startsWith('data:') ? this.dom.avatarPreview.src : null
         };
     }
@@ -318,6 +325,8 @@ export class ConfigManager {
         if (!configData) return;
 
         this._editingConfigFilename = configFilename; // track editor state only — do NOT touch state.currentParentConfig
+        this._editingSharedLore = Array.isArray(configData.shared_lore) ? configData.shared_lore
+            : (configData.shared_lore ? [configData.shared_lore] : []);
         this.dom.configName.value = configFilename.replace('.json', '');
         this.dom.model.value = configData.model || 'zai-org-glm-4.7';
         this.dom.model.dispatchEvent(new Event('change'));
@@ -351,6 +360,8 @@ export class ConfigManager {
         this.dom.includeVeniceSystemPrompt.checked = configData.include_venice_system_prompt ?? true;
         this.dom.uncensoredMode.checked = configData.uncensored_mode || false;
         this.dom.stripThinking.checked = configData.strip_thinking || false;
+        if (this.dom.disableThinking) this.dom.disableThinking.checked = configData.disable_thinking || false;
+        if (this.dom.loreLabels) this.dom.loreLabels.checked = configData.lore_labels ?? true;
         if (this.dom.styleOverseer) this.dom.styleOverseer.checked = configData.style_overseer || false;
         this.dom.avatarPreview.src = configData.avatar_url || DEFAULT_AVATAR_URI;
         state.selectedAvatarFile = null;
@@ -358,6 +369,7 @@ export class ConfigManager {
         this.dom.tempValue.textContent = parseFloat(this.dom.temperature.value).toFixed(2);
         this.dom.topPValue.textContent = parseFloat(this.dom.topP.value).toFixed(2);
         this.dom.repPenValue.textContent = parseFloat(this.dom.repetitionPenalty.value).toFixed(2);
+
         this.dom.configModal.classList.remove('hidden');
     }
 

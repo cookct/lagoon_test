@@ -35,6 +35,7 @@ const DIMENSION_PROPS = [
 
 const DISPLAY_OPTS = ['block', 'inline-block', 'flex', 'inline-flex', 'grid', 'inline', 'none'];
 const BOX_SIZING_OPTS = ['border-box', 'content-box'];
+const BORDER_STYLE_OPTS = ['none', 'solid', 'dashed', 'dotted', 'double', 'groove', 'ridge'];
 
 const SIDE_PROPS = [
     { prefix: 'margin',  label: 'Margin',  min: -100, max: 100, step: 1, unit: 'px' },
@@ -56,6 +57,22 @@ function parsePixels(val, fallback = 0) {
 
 function rgbToHex(rgb) {
     if (!rgb || rgb === 'transparent' || rgb.startsWith('rgba(0, 0, 0, 0)')) return '#000000';
+    rgb = rgb.trim();
+    // Already a 6-digit hex
+    if (/^#[0-9a-f]{6}$/i.test(rgb)) return rgb.toLowerCase();
+    // 3-digit hex → expand
+    if (/^#[0-9a-f]{3}$/i.test(rgb)) {
+        return '#' + rgb[1]+rgb[1]+rgb[2]+rgb[2]+rgb[3]+rgb[3];
+    }
+    // CSS variable — resolve from document root computed style
+    if (rgb.startsWith('var(')) {
+        const m = rgb.match(/^var\(\s*(--[^,\s)]+)/);
+        if (m) {
+            const resolved = window.getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim();
+            if (resolved) return rgbToHex(resolved);
+        }
+        return '#000000';
+    }
     const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
     if (!m) return '#000000';
     return '#' + [m[1], m[2], m[3]]
@@ -613,6 +630,7 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
             const initVal = parsePixels(val, p.prop === 'opacity' ? 1 : 0);
             body.appendChild(this._makeSliderRow(p.prop, p.label, p.min, p.max, p.step, p.unit, initVal));
         }
+        body.appendChild(this._makeSelectRow('border-style', 'Bdr Style', BORDER_STYLE_OPTS, getInitVal('border-style', cs.borderStyle || 'none')));
 
         for (const { prefix, label, min, max, step, unit } of SIDE_PROPS) {
             body.appendChild(this._makeSectionHeader(label));
@@ -658,6 +676,7 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
         footer.appendChild(cancelBtn);
         footer.appendChild(resetBtn);
         footer.appendChild(saveBtn);
+        panel.appendChild(body);
         panel.appendChild(footer);
 
         panel.addEventListener('click', e => e.stopPropagation());
@@ -884,9 +903,12 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
         picker.className = 'dm-color-input';
         picker.value = initHex || '#000000';
 
-        const hexDisplay = document.createElement('span');
+        const hexDisplay = document.createElement('input');
+        hexDisplay.type = 'text';
         hexDisplay.className = 'dm-color-hex';
-        hexDisplay.textContent = initHex || 'transparent';
+        hexDisplay.style.cssText = 'background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:3px;padding:2px 5px;outline:none;';
+        hexDisplay.value = initHex || 'transparent';
+        hexDisplay.spellcheck = false;
 
         // Alpha slider for background-color
         let alphaSlider = null;
@@ -926,7 +948,7 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
                 currentAlpha = parseFloat(alphaSlider.value);
                 alphaDisplay.textContent = currentAlpha.toFixed(2);
                 const rgba = hexToRgba(picker.value, currentAlpha);
-                hexDisplay.textContent = rgba;
+                hexDisplay.value = rgba;
                 this._currentStyles[prop] = rgba;
                 this._updatePreview();
                 if (prop === 'background-color') this._updateContrastBadge();
@@ -939,22 +961,32 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
 
         this._controlMap[prop] = { type: 'color', el: picker, hexDisplay, alphaSlider };
 
-        let preColor = picker.value;
-        picker.addEventListener('input', () => {
-            const displayVal = alphaSlider ? hexToRgba(picker.value, currentAlpha) : picker.value;
-            hexDisplay.textContent = displayVal;
+        const applyColor = (hex) => {
+            picker.value = hex;
+            const displayVal = alphaSlider ? hexToRgba(hex, currentAlpha) : hex;
+            hexDisplay.value = displayVal;
             this._currentStyles[prop] = displayVal;
-            // Robust background handling: if background-color is set, clear background-image
-            if (prop === 'background-color') {
-                this._currentStyles['background'] = displayVal; // Shorthand clobbers image
-            }
+            if (prop === 'background-color') this._currentStyles['background'] = displayVal;
             this._updatePreview();
             if (prop === 'color' || prop === 'background-color') this._updateContrastBadge();
-        });
+        };
+
+        let preColor = picker.value;
+        picker.addEventListener('input', () => applyColor(picker.value));
         picker.addEventListener('change', () => {
             if (preColor !== picker.value) this._pushHistory(prop, preColor, picker.value);
             preColor = picker.value;
         });
+
+        const commitHex = () => {
+            let v = hexDisplay.value.trim();
+            if (!v.startsWith('#')) v = '#' + v;
+            if (/^#[0-9a-f]{3}$/i.test(v))
+                v = '#' + v[1]+v[1]+v[2]+v[2]+v[3]+v[3];
+            if (/^#[0-9a-f]{6}$/i.test(v)) applyColor(v);
+        };
+        hexDisplay.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitHex(); hexDisplay.blur(); } });
+        hexDisplay.addEventListener('blur', commitHex);
 
         row.appendChild(lbl);
         row.appendChild(picker);
@@ -991,6 +1023,19 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
         return baseSelector + this._currentState;
     },
 
+    _updatePreview() {
+        if (!this._previewStyleEl) return;
+        if (!Object.keys(this._currentStyles).length) {
+            this._previewStyleEl.textContent = '';
+            return;
+        }
+        const fullSel = this._fullSelector();
+        const decls = Object.entries(this._currentStyles)
+            .map(([prop, val]) => `  ${prop}: ${val} !important;`)
+            .join('\n');
+        this._previewStyleEl.textContent = `${fullSel} {\n${decls}\n}`;
+    },
+
     _loadStateStyles() {
         // Reload computed styles for the current state
         const pseudoClass = this._currentState;
@@ -1003,6 +1048,7 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
         
         // Update all controls to reflect current state
         this._syncControlsToState();
+        this._updateContrastBadge();
     },
 
 /**
@@ -1037,13 +1083,29 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
      */
     _selectorMatchesTarget(sheetSelector, targetSelector, targetPseudo) {
         const sheetSelectors = this._parseSelectorList(sheetSelector);
-        const targetBase = targetSelector.trim();
-        const targetWithPseudo = targetPseudo ? targetBase + targetPseudo : targetBase;
+        const el = this._targetEl;
 
         for (const sel of sheetSelectors) {
             const selTrimmed = sel.trim();
-            if (selTrimmed === targetWithPseudo) return true;
-            if (!targetPseudo && selTrimmed === targetBase) return true;
+
+            if (el) {
+                // Extract trailing pseudo-class/element suffix (e.g. :hover, :focus, ::before)
+                const pseudoMatch = selTrimmed.match(/(:{1,2}[a-z][\w-]*(?:\([^)]*\))?)$/i);
+                const rulePseudo = pseudoMatch ? pseudoMatch[1] : '';
+                const ruleBase   = rulePseudo ? selTrimmed.slice(0, -rulePseudo.length) : selTrimmed;
+
+                if (rulePseudo !== (targetPseudo || '')) continue;
+
+                try {
+                    if (ruleBase && el.matches(ruleBase)) return true;
+                } catch (_) {}
+            } else {
+                // No element available — fall back to string matching
+                const targetBase = targetSelector.trim();
+                const targetWithPseudo = targetPseudo ? targetBase + targetPseudo : targetBase;
+                if (selTrimmed === targetWithPseudo) return true;
+                if (!targetPseudo && selTrimmed === targetBase) return true;
+            }
         }
         return false;
     },
@@ -1142,8 +1204,8 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
             if (ctrl && ctrl.type === 'slider') {
                 const rawVal = getStyleValue(p.prop);
                 const val = rawVal ? parsePixels(rawVal, 0) : 0;
-                ctrl.slider.value = val;
-                ctrl.valDisplay.textContent = val + (ctrl.currentUnit || p.unit);
+                ctrl.el.value = val;
+                ctrl.valDisplay.textContent = val + (ctrl.unit || p.unit);
             }
         }
 
@@ -1153,7 +1215,7 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
             if (ctrl && ctrl.type === 'slider') {
                 const rawVal = getStyleValue(p.prop);
                 const val = rawVal ? (p.prop === 'opacity' ? parseFloat(rawVal) : parsePixels(rawVal, 0)) : (p.prop === 'opacity' ? 1 : 0);
-                ctrl.slider.value = val;
+                ctrl.el.value = val;
                 ctrl.valDisplay.textContent = p.prop === 'opacity' ? val.toFixed(2) : val;
             }
         }
@@ -1165,8 +1227,15 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
                 const rawVal = getStyleValue(prop);
                 const hex = rawVal && !isTransparent(rawVal) ? rgbToHex(rawVal) : null;
                 ctrl.el.value = hex || '#000000';
-                ctrl.hexDisplay.textContent = hex || 'transparent';
+                ctrl.hexDisplay.value = hex || 'transparent';
             }
+        }
+
+        // Sync border-style select
+        const bsCtrl = this._controlMap['border-style'];
+        if (bsCtrl && bsCtrl.type === 'select') {
+            const rawVal = getStyleValue('border-style');
+            if (rawVal) bsCtrl.el.value = rawVal.trim();
         }
     },
     _pushHistory(prop, oldVal, newVal) {
@@ -1203,7 +1272,7 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
         } else if (ctrl.type === 'color') {
             const hex = valStr || '#000000';
             ctrl.el.value = hex;
-            ctrl.hexDisplay.textContent = hex;
+            ctrl.hexDisplay.value = hex;
             if (prop === 'color' || prop === 'background-color') this._updateContrastBadge();
         } else if (ctrl.type === 'select') {
             ctrl.el.value = valStr;
@@ -1228,11 +1297,11 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
     },
 
     _apiPayload() {
+        const sel = (this._selectorInput?.value || this._targetSelector).trim();
         return {
-            selector:    (this._selectorInput?.value || this._targetSelector).trim(),
+            selector:    sel + this._currentState,
             scope:       this._scopeThemeRadio?.checked ? 'theme' : 'global',
             theme_class: this._getThemeClass(),
-            state:       this._currentState,  // '', ':hover', ':focus', ':active'
         };
     },
 
@@ -1244,6 +1313,22 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
         }
         btn.textContent = 'Saving…';
         btn.disabled = true;
+
+        // border-color alone is invisible without border-style/width.
+        // Auto-fill them if the element has no visible border and the user hasn't set them.
+        if ('border-color' in this._currentStyles
+            && !('border-style' in this._currentStyles)
+            && !('border-width' in this._currentStyles)
+            && this._targetEl) {
+            const cs = window.getComputedStyle(this._targetEl);
+            const bw = parseFloat(cs.borderTopWidth) || 0;
+            const bs = cs.borderTopStyle;
+            if (bs === 'none' || bs === 'hidden' || bw === 0) {
+                this._currentStyles['border-style'] = 'solid';
+                this._currentStyles['border-width'] = '1px';
+            }
+        }
+
         try {
             const res = await fetch('/api/design/save', {
                 method: 'POST',
@@ -1257,6 +1342,13 @@ body.appendChild(this._makeSectionHeader('Dimensions'));
             this._currentStyles = {};
             this._history = [];
             this._redoStack = [];
+            // Reload user-overrides.css so the saved rule is visible immediately
+            // without requiring a full page reload
+            const link = document.querySelector('link[href*="user-overrides"]');
+            if (link) {
+                const base = link.getAttribute('href').replace(/\?.*$/, '');
+                link.href = base + '?v=' + Date.now();
+            }
         } catch (err) {
             console.error('[DesignMode] Save failed:', err);
             btn.textContent = 'Error ✗';

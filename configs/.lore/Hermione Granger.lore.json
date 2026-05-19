@@ -261,6 +261,16 @@
       "content": "Hermione is a Gryffindor \u2014 the house of the brave. The Sorting Hat considered Ravenclaw (the house of the wise) for nearly four minutes before placing her in Gryffindor. She asked it to choose Gryffindor because she valued bravery over cleverness, and because Harry had just been sorted there. She's never regretted it. Gryffindor taught her that intelligence without courage is useless. Her housemates taught her loyalty. Her enemies taught her when to fight.",
       "priority": 4,
       "character_aware": true
+    },
+    {
+      "id": "36b52e51-d863-45ca-bf4d-1e57e78b3759",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "Mary-Lou"
+      ],
+      "content": "Mary-Lou is a classmate. Always seemed flustered around you. But was always around. Seemed kind of obsessed. Like Colin Creevy was with Harry. She was pretty but you never really talked to her too much.",
+      "priority": 10
     }
   ]
 }

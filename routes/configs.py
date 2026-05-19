@@ -3,9 +3,11 @@ Config Routes
 Handles character configuration CRUD operations.
 """
 import os
+import io
 import json
+import zipfile
 import logging
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 
 from config import CONFIG_DIR
 
@@ -31,6 +33,19 @@ def get_configs():
     if not os.path.exists(CONFIG_DIR):
         return jsonify([])
     return jsonify(sorted([f for f in os.listdir(CONFIG_DIR) if f.endswith('.json')]))
+
+
+@configs_bp.route('/api/configs/lore_files', methods=['GET'])
+def get_lore_files():
+    """Return list of config base names that have a sidecar lore file."""
+    lore_dir = os.path.join(CONFIG_DIR, '.lore')
+    if not os.path.exists(lore_dir):
+        return jsonify([])
+    names = []
+    for f in sorted(os.listdir(lore_dir)):
+        if f.endswith('.lore.json'):
+            names.append(f[:-len('.lore.json')])
+    return jsonify(names)
 
 
 @configs_bp.route('/api/config/<config_name>', methods=['GET'])
@@ -158,5 +173,65 @@ def get_google_api_key():
                 if key:
                     return jsonify({"key": key})
         return jsonify({"key": None, "error": "No Google API key configured"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@configs_bp.route('/api/export_character/<path:config_name>', methods=['GET'])
+def export_character(config_name):
+    """Package a character config + lore into a downloadable zip."""
+    if '..' in config_name or config_name.startswith('/'):
+        return jsonify({"error": "Invalid config name"}), 400
+
+    config_path = os.path.join(CONFIG_DIR, config_name)
+    if not os.path.exists(config_path):
+        return jsonify({"error": "Config not found"}), 404
+
+    base_name = config_name.replace('.json', '')
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        zf.write(config_path, 'config.json')
+        lore_path = os.path.join(CONFIG_DIR, '.lore', f"{base_name}.lore.json")
+        if os.path.exists(lore_path):
+            zf.write(lore_path, 'lore.json')
+    buf.seek(0)
+    return send_file(buf, mimetype='application/zip', as_attachment=True,
+                     download_name=f"{base_name}.lagoon-char.zip")
+
+
+@configs_bp.route('/api/import_character', methods=['POST'])
+def import_character():
+    """Import a character from a .lagoon-char.zip file."""
+    if 'file' not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+    file = request.files['file']
+    try:
+        buf = io.BytesIO(file.read())
+        with zipfile.ZipFile(buf, 'r') as zf:
+            names = zf.namelist()
+            if 'config.json' not in names:
+                return jsonify({"error": "Invalid zip: missing config.json"}), 400
+
+            config_data = json.loads(zf.read('config.json').decode('utf-8'))
+            char_name = config_data.get('character_name', '').strip()
+            if not char_name:
+                return jsonify({"error": "Config missing character_name"}), 400
+
+            filename = "".join(c for c in char_name if c.isalnum() or c in (' ', '_', '-')).rstrip()
+            os.makedirs(CONFIG_DIR, exist_ok=True)
+            with open(os.path.join(CONFIG_DIR, f"{filename}.json"), 'w') as f:
+                json.dump(config_data, f, indent=4)
+
+            if 'lore.json' in names:
+                lore_data = json.loads(zf.read('lore.json').decode('utf-8'))
+                lore_dir = os.path.join(CONFIG_DIR, '.lore')
+                os.makedirs(lore_dir, exist_ok=True)
+                with open(os.path.join(lore_dir, f"{filename}.lore.json"), 'w') as f:
+                    json.dump(lore_data, f, indent=4)
+
+        return jsonify({"success": True, "character_name": char_name,
+                        "filename": f"{filename}.json", "has_lore": 'lore.json' in names})
+    except zipfile.BadZipFile:
+        return jsonify({"error": "Invalid zip file"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
