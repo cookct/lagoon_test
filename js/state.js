@@ -143,6 +143,7 @@ export const defaultChatConfig = {
     system_prompt: DEFAULT_SYSTEM_PROMPT,
     character_card: '',
     system_context: '',
+    context_mode: 'always',  // 'always' = inject full text every turn, 'rag' = retrieve relevant chunks
     temperature: 0.7,
     top_p: 1.0,
     max_tokens: 4096,

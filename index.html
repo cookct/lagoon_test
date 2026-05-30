@@ -686,6 +686,10 @@
                                 <label for="system_prompt">System Prompt</label>
                                 <div class="row-actions" style="display:flex; gap: 5px; align-items:center;">
                                     <button type="button" id="system-context-btn" class="btn-link">+ Context File</button>
+                                    <select id="context_mode" title="How context is injected each turn" style="font-size:0.75rem; padding:2px 4px; border-radius:4px; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border-color);">
+                                        <option value="always">Always Include</option>
+                                        <option value="rag">Retrieve Relevant</option>
+                                    </select>
                                     <button type="button" class="btn-icon expand-textarea-btn" data-target="system_prompt" title="Expand">
                                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                                     </button>
@@ -699,7 +703,7 @@
                                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                                 </button>
                             </div>
-                            <textarea id="system_context" rows="2" placeholder="Context from uploaded file..." readonly class="hidden"></textarea>
+                            <textarea id="system_context" rows="2" placeholder="Context from uploaded file..." class="hidden"></textarea>
                         </div>
                     </div>
 

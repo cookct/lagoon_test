@@ -14,6 +14,7 @@ from config import CONFIG_DIR
 logger = logging.getLogger(__name__)
 from services import memory_settings
 from services.storage import get_api_key, get_google_api_key, get_together_api_key, get_zai_api_key
+from services.context_rag import embed_context_file, delete_context_store
 
 configs_bp = Blueprint('configs', __name__)
 
@@ -175,6 +176,61 @@ def get_google_api_key():
         return jsonify({"key": None, "error": "No Google API key configured"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@configs_bp.route('/api/embed_context', methods=['POST'])
+def embed_context():
+    """Embed a context file for a character config using RAG chunking.
+    
+    Expects JSON: { config_name: str, content: str, source_file: str }
+    Returns: { success: bool, chunks: int }
+    """
+    data = request.json or {}
+    config_name = data.get('config_name', '').strip()
+    content = data.get('content', '').strip()
+    source_file = data.get('source_file', '')
+
+    if not config_name or not content:
+        return jsonify({"error": "config_name and content are required"}), 400
+
+    # Validate config exists
+    cfg_path = os.path.join(CONFIG_DIR, config_name)
+    if not os.path.exists(cfg_path):
+        return jsonify({"error": f"Config {config_name} not found"}), 404
+
+    try:
+        success = embed_context_file(config_name, content, source_file)
+        if success:
+            # Load just the metadata back to report chunk count
+            from services.context_rag import _load_ctx_store
+            store = _load_ctx_store(config_name)
+            return jsonify({"success": True, "chunks": store.get("chunk_count", 0)})
+        else:
+            return jsonify({"error": "Failed to embed context — sentence-transformers may not be available"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@configs_bp.route('/api/context_status/<path:config_name>', methods=['GET'])
+def context_status(config_name):
+    """Check if a character has an embedded context file and how many chunks."""
+    if '..' in config_name or config_name.startswith('/'):
+        return jsonify({"error": "Invalid config name"}), 400
+    from services.context_rag import _load_ctx_store
+    store = _load_ctx_store(config_name)
+    return jsonify({
+        "source_file": store.get("source_file", ""),
+        "chunk_count": store.get("chunk_count", 0)
+    })
+
+
+@configs_bp.route('/api/embed_context/<path:config_name>', methods=['DELETE'])
+def delete_embedded_context(config_name):
+    """Delete the embedded context store for a character."""
+    if '..' in config_name or config_name.startswith('/'):
+        return jsonify({"error": "Invalid config name"}), 400
+    delete_context_store(config_name)
+    return jsonify({"success": True})
 
 
 @configs_bp.route('/api/export_character/<path:config_name>', methods=['GET'])

@@ -336,7 +336,10 @@ export class ChatManager {
             state.messages.push({ role: "system", content: state.currentConfig.system_prompt });
         }
         if (state.currentConfig.system_context) {
-            state.messages.push({ role: "system", content: state.currentConfig.system_context });
+            // Only inject full context in 'always' mode; 'rag' mode is handled server-side
+            if (state.currentConfig.context_mode !== 'rag') {
+                state.messages.push({ role: "system", content: state.currentConfig.system_context });
+            }
         }
         if (state.currentConfig.character_card) {
             state.messages.push({ role: "system", content: `USER-DEFINED INSTRUCTIONS:\n${state.currentConfig.character_card}` });
@@ -377,6 +380,7 @@ export class ChatManager {
                     // Character-definition fields (should reflect latest edits to the character)
                     const liveFields = [
                         'system_prompt', 'system_context', 'character_card',
+                        'context_mode',
                         'author_note', 'author_note_depth',
                         'uncensored_mode', 'strip_thinking', 'style_overseer',
                         'fiction_prompt_text', 'include_venice_system_prompt',

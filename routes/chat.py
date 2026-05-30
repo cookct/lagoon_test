@@ -24,6 +24,7 @@ from services.context import (
 )
 from services.anchors import scan_and_inject as lore_scan, mark_aware as lore_mark_aware, strip_lore_updates, get_matched_entries as lore_get_matched
 from services.rag import retrieve as rag_retrieve, trigger_background_chunking, invalidate_rag_store
+from services.context_rag import retrieve as ctx_rag_retrieve
 
 logger = logging.getLogger(__name__)
 chat_bp = Blueprint('chat', __name__)
@@ -143,6 +144,19 @@ def stream_chat():
                     last_sys_idx = i
             for j, rm in enumerate(rag_msgs):
                 messages.insert(last_sys_idx + 1 + j, rm)
+
+    # ── Context RAG: retrieve relevant chunks from character's context file ──
+    context_mode = config.get('context_mode', 'always')
+    if parent_config and context_mode == 'rag' and last_user_msg:
+        ctx_msgs = ctx_rag_retrieve(parent_config, last_user_msg)
+        if ctx_msgs:
+            last_sys_idx = -1
+            for i, m in enumerate(messages):
+                if m.get('role') == 'system':
+                    last_sys_idx = i
+            for j, cm in enumerate(ctx_msgs):
+                messages.insert(last_sys_idx + 1 + j, cm)
+            logger.info(f"[ContextRAG] Injected {len(ctx_msgs)} context chunks for {parent_config}")
 
     # ── Anchors: keyword-triggered lore injection ────────────────────────────
     char_name = parent_config.replace('.json', '') if parent_config else None

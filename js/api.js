@@ -184,6 +184,20 @@ export async function parseFileApi(file) {
     return response.json();
 }
 
+export async function embedContextApi(configName, content, sourceFile = '') {
+    const response = await fetch('/api/embed_context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config_name: configName, content, source_file: sourceFile })
+    });
+    return response.json();
+}
+
+export async function contextEmbedStatusApi(configName) {
+    const response = await fetch(`/api/context_status/${encodeURIComponent(configName)}`);
+    return response.ok ? response.json() : { source_file: '', chunk_count: 0 };
+}
+
 export async function importChatApi(text, displayName, config = {}) {
     const response = await fetch('/api/import_chat', {
         method: 'POST',

@@ -49,6 +49,7 @@ export class ConfigManager {
             systemContextBtn: document.getElementById('system-context-btn'),
             systemContextInput: document.getElementById('system-context-input'),
             systemContextTextarea: document.getElementById('system_context'),
+            contextMode: document.getElementById('context_mode'),
             contextFileBtn: document.getElementById('context-file-btn'),
             contextFileInput: document.getElementById('context-file-input'),
             fileCancelBtn: document.getElementById('file-cancel-btn'),
@@ -87,6 +88,9 @@ export class ConfigManager {
         // System Context (Character Config)
         this.dom.systemContextBtn?.addEventListener('click', () => this.dom.systemContextInput.click());
         this.dom.systemContextInput?.addEventListener('change', () => this.handleSystemContextFileSelect());
+
+        // Context mode toggle — re-embed when switching to RAG
+        this.dom.contextMode?.addEventListener('change', () => this._handleContextModeChange());
 
         // Sliders
         this.dom.temperature?.addEventListener('input', () => this.dom.tempValue.textContent = parseFloat(this.dom.temperature.value).toFixed(2));
@@ -193,6 +197,7 @@ export class ConfigManager {
             if (contextBtn) contextBtn.classList.add('hidden');
         }
         if (state.currentConfig) state.currentConfig.system_context = '';
+        if (this.dom.contextMode) this.dom.contextMode.value = 'always';
 
         // Load persisted settings from localStorage
         const savedSettings = JSON.parse(localStorage.getItem('lagoon_desktop_settings') || '{}');
@@ -226,6 +231,7 @@ export class ConfigManager {
             intro_statement: this.dom.introStatement.value,
             character_card: this.dom.characterCard.value,
             system_context: this.dom.systemContextTextarea ? this.dom.systemContextTextarea.value : '',
+            context_mode: this.dom.contextMode ? this.dom.contextMode.value : 'always',
             temperature: parseFloat(this.dom.temperature.value),
             top_p: parseFloat(this.dom.topP.value),
             repetition_penalty: parseFloat(this.dom.repetitionPenalty.value),
@@ -258,6 +264,17 @@ export class ConfigManager {
         
         try {
             await saveConfigApi(filename, configData);
+
+            // If context mode is RAG, embed the context file server-side
+            if (configData.context_mode === 'rag' && configData.system_context) {
+                try {
+                    const { embedContextApi } = await import('../api.js');
+                    const newFilename = `${filename}.json`;
+                    await embedContextApi(newFilename, configData.system_context, 'context');
+                } catch (err) {
+                    console.warn('[ConfigManager] Context embedding after save failed:', err);
+                }
+            }
 
             // Handle Renaming: If we have an existing config open in the editor and the name changed, delete the old one
             const newFilename = `${filename}.json`;
@@ -349,6 +366,11 @@ export class ConfigManager {
                 if (contextLabel) contextLabel.classList.add('hidden');
                 if (contextBtn) contextBtn.classList.add('hidden');
             }
+        }
+
+        // Context mode dropdown
+        if (this.dom.contextMode) {
+            this.dom.contextMode.value = configData.context_mode || 'always';
         }
 
         this.dom.temperature.value = configData.temperature || 0.7;
@@ -458,10 +480,56 @@ ${rawText}`;
                 state.currentConfig.system_context = content;
             }
             this.dom.systemContextInput.value = '';
-            await lagoonAlert(`Loaded system context: ${file.name}`);
+
+            // If context mode is RAG, embed the file server-side immediately
+            const mode = this.dom.contextMode ? this.dom.contextMode.value : 'always';
+            if (mode === 'rag' && this._editingConfigFilename) {
+                try {
+                    const { embedContextApi } = await import('../api.js');
+                    const result = await embedContextApi(this._editingConfigFilename, content, file.name);
+                    if (result.success) {
+                        await lagoonAlert(`Loaded & embedded context: ${file.name} (${result.chunks} chunks)`);
+                    } else {
+                        await lagoonAlert(`Loaded context: ${file.name}\n(RAG embedding failed — will use full injection as fallback)`);
+                    }
+                } catch (err) {
+                    console.warn('[ConfigManager] Context embedding failed:', err);
+                    await lagoonAlert(`Loaded context: ${file.name}\n(RAG embedding unavailable — will use full injection as fallback)`);
+                }
+            } else {
+                await lagoonAlert(`Loaded system context: ${file.name}`);
+            }
 
         } catch (error) {
             await lagoonAlert(`Error reading file: ${error.message}`);
+        }
+    }
+
+    async _handleContextModeChange() {
+        const mode = this.dom.contextMode ? this.dom.contextMode.value : 'always';
+        if (mode !== 'rag') return;
+
+        // If we have context text but no config filename yet, just note it
+        const contextText = this.dom.systemContextTextarea ? this.dom.systemContextTextarea.value.trim() : '';
+        if (!contextText) return;
+
+        const configName = this._editingConfigFilename;
+        if (!configName) {
+            // Will embed after save when we have a filename
+            return;
+        }
+
+        try {
+            const { embedContextApi } = await import('../api.js');
+            const result = await embedContextApi(configName, contextText, 'context');
+            if (result.success) {
+                await lagoonAlert(`Context embedded: ${result.chunks} chunks ready for RAG retrieval`);
+            } else {
+                await lagoonAlert('RAG embedding failed — context will fall back to full injection');
+            }
+        } catch (err) {
+            console.warn('[ConfigManager] Context embedding failed:', err);
+            await lagoonAlert('RAG embedding unavailable — context will fall back to full injection');
         }
     }
 }

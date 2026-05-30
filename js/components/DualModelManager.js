@@ -279,7 +279,8 @@ export class DualModelManager {
             const parts = [];
             if (char.system_prompt) parts.push(char.system_prompt);
             if (char.character_card) parts.push(`[CHARACTER CARD]\n${char.character_card}`);
-            if (char.system_context) parts.push(`[CONTEXT]\n${char.system_context}`);
+            // In RAG mode, context is handled server-side — don't inject full text
+            if (char.system_context && char.context_mode !== 'rag') parts.push(`[CONTEXT]\n${char.system_context}`);
             promptEl.value = parts.filter(p => p).join('\n\n');
         }
 

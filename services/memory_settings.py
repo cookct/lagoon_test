@@ -26,6 +26,13 @@ DEFAULTS = {
     # Lore / Anchors
     'lore_scan_depth': 15,              # Recent messages scanned for keyword matches
     'lore_token_budget': 4000,          # Max tokens injected from lore
+    # Context file RAG
+    'ctx_rag_enabled': True,            # Enable RAG retrieval for context files
+    'ctx_rag_top_k': 5,                 # Max chunks retrieved per query from context file
+    'ctx_rag_min_similarity': 0.25,     # Minimum cosine similarity for context chunks
+    'ctx_rag_token_budget': 1500,       # Max tokens injected from context RAG
+    'ctx_rag_chunk_size': 400,          # Approx tokens per chunk when splitting context files
+    'ctx_rag_chunk_overlap': 50,        # Overlap tokens between consecutive chunks
 }
 
 _cache = None

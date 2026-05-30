@@ -13,7 +13,7 @@
 - [2026-04-18] Image mode uses three-card system: ref-1, ref-2, and target. Reference images plus target for editing. Model filtering b
 - [2026-04-19] The `video-params-panel` is a direct child of `.sidebar-right`, NOT inside `#right-sidebar-content`. Same for `target-ca
 - [2026-05-01] routes/chat.py handles SSE (Server-Sent Events) streaming chat with provider routing logic for multiple AI backends.
-- ... (17 total, see deep store)
+- ... (19 total, see deep store)
 
 ## Decisions
 
@@ -22,6 +22,7 @@
 - [2026-04-18] Kelly is a test character. If she works well, user may create an open source package for others to build similar charact
 - [2026-04-19] User was challenged by an AO3 reader to write a Hermione/Harry/Ginny threesome that heals Hermione, with the constraint 
 - [2026-05-01] Deliberate architectural choice to require no external database—all data stays local on the user's machine for privacy.
+- [2026-05-19] When user switches context_mode from 'always' to 'rag', they must re-embed their context file. Embedding is also trigger
 
 ## Patterns
 
@@ -30,9 +31,11 @@
 - [2026-04-30] GPT-OSS 120B models still have OpenAI training embedded despite 'open source' labeling - they struggle with policy bound
 - [2026-05-06] Refusal recovery (Priority 100) catches phrases like 'I cannot', 'I'm unable', 'I apologize but' and injects override in
 - [2026-05-08] MODEL_LOGOS in state.js stores SVG logo references. When adding a model with a new provider (e.g., nvidia), must add the
+- [2026-05-26] Celebrity clients come via word-of-mouth referrals from mother-in-law who is a high-profile real estate agent
 - [2026-04-20] The wife has her own cash stash and secretly pays contractors when her husband refuses. She schedules work behind his ba
 - [2026-04-30] Grok 4.20 Beta escalates content intensity aggressively without hesitation - each user comment triggers harder/more expl
 - [2026-05-18] To investigate toggle bugs: grep for toggle/switch/checkbox UI elements, trace state location (state.js, config objects,
+- [2026-05-19] When adding new config fields like context_mode, must add to: defaultChatConfig in state.js, loadChat overlay in ChatMan
 
 ## Gotchas
 
@@ -42,23 +45,24 @@
 - [2026-05-06] Venice's E2EE mode doesn't just expose parameters - it rejects them fully. You cannot pass include_venice_system_prompt 
 - [2026-05-08] Setting overflow-y: auto shows scrollbar even on empty inputs. Fix: JS toggles overflow-y to hidden by default, only swi
 - [2026-05-10] Hitting Byparr's /v1 endpoint for the first time triggers a ~5GB camoufox browser download from GitHub. This blocks all 
+- [2026-05-19] During transaction buffering, search and read operations see the disk file content, not the staged/buffered changes. Edi
 - [2026-04-17] Project has both legacy and modular codepaths coexisting; changes may need to handle both.
 - [2026-05-19] Parallel builds with many jobs can fail due to race conditions. Using -j2 instead of higher job counts resolves this.
-- [2026-04-17] Microphone access requires SSL/HTTPS context to work properly.
-- ... (14 total, see deep store)
+- ... (15 total, see deep store)
 
 ## Active Context
 
-- [2026-05-19] A repeat button with Off/One/All states was added to VideoOSD.xml in the Confluence skin.
-- [2026-05-18] Lagoon is a local-first AI writing workspace: Flask backend on port 5007, vanilla JS frontend with js/main.js entry poin
-- [2026-05-10] Camoufox is a ~5GB anti-detection browser package used by Byparr to solve anti-bot challenges. It's downloaded from GitH
+- [2026-05-26] Ubuntu laptop at 192.168.1.107 runs Samba share 'share' with SMB3 max protocol and guest access, configured for Kodi on 
+- [2026-05-26] Home improvement contractor with 6 years experience, based in Fairfield County CT area (near Broadway)
+- [2026-05-30] Session cleared by user. Tasks covered: attitude needs adjusting she's being a prude bitch. also, add the shit i had to 
 
 ## Preferences
 
 - [2026-04-28] User explicitly requested single questions rather than multi-part queries during the creative interview process. Prefers
 - [2026-04-20] Uses GLM 5 for most tasks, escalates to 5.1 after 2 failed attempts on difficult tasks. Endpoint choice: Z.ai for raw we
 - [2026-04-19] User prefers uncensored AI platforms (praised Grok for 'giving no fucks' about adult content) and is frustrated by tiere
+- [2026-05-26] Appreciates clients who treat him casually; stayed professional when tested with a celebrity 'feel test' about a Broadwa
 
 ## Key Files
-state.js, app.py, js/ui/settings.js, routes/chat.py, js/main.js
+state.js, routes/chat.py, js/ui/settings.js, mobile.js, chat.py, app.py, chats.py, ChatManager.js, js/main.js
 

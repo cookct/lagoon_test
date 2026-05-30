@@ -195,6 +195,7 @@ class MobileChatApp {
           if (liveConfig) {
             const liveFields = [
               'system_prompt', 'system_context', 'character_card',
+              'context_mode',
               'author_note', 'author_note_depth',
               'uncensored_mode', 'strip_thinking', 'style_overseer',
               'fiction_prompt_text', 'include_venice_system_prompt'
