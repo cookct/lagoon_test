@@ -234,7 +234,7 @@ export function renderCitations(results) {
     return container;
 }
 
-export function renderMessages(onRegenerate, onDeleteMessage, onUpdateGauge, onEdit, onToggleKeep, onFork = null) {
+export function renderMessages(onRegenerate, onDeleteMessage, onUpdateGauge, onEdit, onToggleKeep, onFork = null, onCorrect = null) {
     const target = dom.messagesContainer || dom.chatMessages;
     if (!target) return;
     target.innerHTML = '';
@@ -263,7 +263,8 @@ export function renderMessages(onRegenerate, onDeleteMessage, onUpdateGauge, onE
                     isKept,
                     isDualModeMessage,
                     onFork,
-                    null // overseerOptions
+                    null, // overseerOptions
+                    onCorrect
                 );
                 bubbleWrapper.appendChild(actions);
             }
@@ -338,7 +339,7 @@ export function createUserMessageActions(content, msgIndex, onDeleteMessage = nu
     return actions;
 }
 
-export function createAssistantMessageActions(content, msgIndex, onRegenerate, onDeleteMessage, onEdit, onToggleKeep, isKept, isDualMode = false, onFork = null, overseerOptions = null) {
+export function createAssistantMessageActions(content, msgIndex, onRegenerate, onDeleteMessage, onEdit, onToggleKeep, isKept, isDualMode = false, onFork = null, overseerOptions = null, onCorrect = null) {
     const actions = document.createElement('div');
     actions.classList.add('message-actions', 'assistant-actions');
     
@@ -352,6 +353,9 @@ export function createAssistantMessageActions(content, msgIndex, onRegenerate, o
         </button>` : ''}
         <button class="fork-btn" title="Fork from here">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>
+        </button>
+        <button class="correct-btn" title="Correct & Regenerate">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/><path d="M15 5l3 3"/></svg>
         </button>
         ${isDualMode ? `
         <button class="nudge-btn" title="Nudge & Regenerate">
@@ -456,6 +460,54 @@ export function createAssistantMessageActions(content, msgIndex, onRegenerate, o
 
     actions.querySelector('.fork-btn')?.addEventListener('click', () => {
         if (onFork) onFork(msgIndex);
+    });
+
+    actions.querySelector('.correct-btn')?.addEventListener('click', () => {
+        const modal = document.getElementById('correct-modal');
+        const input = document.getElementById('correct-input');
+        const confirmBtn = document.getElementById('correct-confirm-btn');
+        const cancelBtn = document.getElementById('correct-cancel-btn');
+        const closeBtn = document.getElementById('correct-close-btn');
+
+        if (!modal || !input || !confirmBtn) return;
+
+        input.value = '';
+        modal.classList.remove('hidden');
+        input.focus();
+
+        const cleanup = () => {
+            modal.classList.add('hidden');
+            confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+            cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+            closeBtn.replaceWith(closeBtn.cloneNode(true));
+        };
+
+        const handleConfirm = () => {
+            const correctionText = input.value.trim();
+            cleanup();
+            if (onCorrect && correctionText) {
+                onCorrect(msgIndex, correctionText);
+            }
+        };
+
+        const newConfirmBtn = document.getElementById('correct-confirm-btn');
+        const newCancelBtn = document.getElementById('correct-cancel-btn');
+        const newCloseBtn = document.getElementById('correct-close-btn');
+
+        newConfirmBtn.addEventListener('click', handleConfirm);
+        newCancelBtn.addEventListener('click', cleanup);
+        newCloseBtn.addEventListener('click', cleanup);
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleConfirm();
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                cleanup();
+            }
+        });
     });
 
     actions.querySelector('.regen-btn')?.addEventListener('click', () => {

@@ -23,6 +23,7 @@
 - [2026-04-19] User was challenged by an AO3 reader to write a Hermione/Harry/Ginny threesome that heals Hermione, with the constraint 
 - [2026-05-01] Deliberate architectural choice to require no external database—all data stays local on the user's machine for privacy.
 - [2026-05-19] When user switches context_mode from 'always' to 'rag', they must re-embed their context file. Embedding is also trigger
+- [2026-05-31] The correct approach for message correction: keep the bad message object in its original position, reset its content to 
 
 ## Patterns
 
@@ -46,15 +47,14 @@
 - [2026-05-08] Setting overflow-y: auto shows scrollbar even on empty inputs. Fix: JS toggles overflow-y to hidden by default, only swi
 - [2026-05-10] Hitting Byparr's /v1 endpoint for the first time triggers a ~5GB camoufox browser download from GitHub. This blocks all 
 - [2026-05-19] During transaction buffering, search and read operations see the disk file content, not the staged/buffered changes. Edi
-- [2026-04-17] Project has both legacy and modular codepaths coexisting; changes may need to handle both.
-- [2026-05-19] Parallel builds with many jobs can fail due to race conditions. Using -j2 instead of higher job counts resolves this.
-- ... (15 total, see deep store)
+- [2026-05-31] Using array indices (msgIndex) to reference messages is fundamentally broken—indices become stale the moment any message
+- ... (18 total, see deep store)
 
 ## Active Context
 
+- [2026-05-31] User lost another hour of work on turn 30 after the assistant confirmed the fix would work. The correction/regeneration 
 - [2026-05-26] Ubuntu laptop at 192.168.1.107 runs Samba share 'share' with SMB3 max protocol and guest access, configured for Kodi on 
 - [2026-05-26] Home improvement contractor with 6 years experience, based in Fairfield County CT area (near Broadway)
-- [2026-05-30] Session cleared by user. Tasks covered: attitude needs adjusting she's being a prude bitch. also, add the shit i had to 
 
 ## Preferences
 
@@ -64,5 +64,5 @@
 - [2026-05-26] Appreciates clients who treat him casually; stayed professional when tested with a celebrity 'feel test' about a Broadwa
 
 ## Key Files
-state.js, routes/chat.py, js/ui/settings.js, mobile.js, chat.py, app.py, chats.py, ChatManager.js, js/main.js
+js/main.js, app.py, chat.py, mobile.js, state.js, js/ui/settings.js, routes/chat.py, ChatManager.js, chats.py
 

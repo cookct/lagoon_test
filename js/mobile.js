@@ -398,9 +398,18 @@ class MobileChatApp {
       // Add user message to state
       if (!state.messages) state.messages = [];
       
-      // Inject system prompt if this is a new conversation
-      if (state.messages.length === 0 && state.currentConfig.system_prompt) {
-        state.messages.push({ role: 'system', content: state.currentConfig.system_prompt });
+      // Build a single system message from all config fields if this is a new conversation
+      if (state.messages.length === 0) {
+        const systemParts = [];
+        if (state.currentConfig.system_prompt) {
+          systemParts.push(state.currentConfig.system_prompt);
+        }
+        if (state.currentConfig.character_card) {
+          systemParts.push(`USER-DEFINED INSTRUCTIONS:\n${state.currentConfig.character_card}`);
+        }
+        if (systemParts.length > 0) {
+          state.messages.push({ role: 'system', content: systemParts.join('\n\n') });
+        }
       }
       
       state.messages.push({ role: 'user', content: text });

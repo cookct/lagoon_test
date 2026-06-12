@@ -4074,6 +4074,24 @@ body.theme-dark {
     border-color: var(--accent);
 }
 
+#correct-modal .modal-content {
+    max-width: 500px;
+}
+#correct-input {
+    width: 100%;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    border-radius: 4px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+}
+#correct-input:focus {
+    border-color: var(--accent);
+}
+
 /* Expand Textarea Button in Config Modal */
 .label-row {
     display: flex;

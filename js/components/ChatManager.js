@@ -332,17 +332,22 @@ export class ChatManager {
             window.updateOverseerTab();
         }
 
+        // Build a single system message from all config fields
+        const systemParts = [];
         if (state.currentConfig.system_prompt) {
-            state.messages.push({ role: "system", content: state.currentConfig.system_prompt });
+            systemParts.push(state.currentConfig.system_prompt);
         }
         if (state.currentConfig.system_context) {
             // Only inject full context in 'always' mode; 'rag' mode is handled server-side
             if (state.currentConfig.context_mode !== 'rag') {
-                state.messages.push({ role: "system", content: state.currentConfig.system_context });
+                systemParts.push(state.currentConfig.system_context);
             }
         }
         if (state.currentConfig.character_card) {
-            state.messages.push({ role: "system", content: `USER-DEFINED INSTRUCTIONS:\n${state.currentConfig.character_card}` });
+            systemParts.push(`USER-DEFINED INSTRUCTIONS:\n${state.currentConfig.character_card}`);
+        }
+        if (systemParts.length > 0) {
+            state.messages.push({ role: "system", content: systemParts.join('\n\n') });
         }
         if (state.currentConfig.intro_statement) {
             state.messages.push({ role: "assistant", content: state.currentConfig.intro_statement });
@@ -463,7 +468,8 @@ export class ChatManager {
             () => this.updateContextGauge(),
             (idx) => this.editAssistantMessage(idx),
             toggleKeepMessage,
-            (idx) => this.forkFromMessage(idx)
+            (idx) => this.forkFromMessage(idx),
+            (idx, text) => this.correctAndRegenerate(idx, text)
         );
     }
 
@@ -899,7 +905,8 @@ export class ChatManager {
                             localStorage.setItem('overseer_auto_accept', this._overseerAutoAccept);
                             return this._overseerAutoAccept;
                         }
-                    } : null
+                    } : null,
+                    (idx, text) => this.correctAndRegenerate(idx, text)
                 );
                 bubbleWrapper.appendChild(actions);
             }
@@ -1156,6 +1163,7 @@ export class ChatManager {
         this.renderMessages();
         await this.saveChat();
         this.updateContextGauge();
+        toggleSendButtonState();
         setTimeout(() => autoScroll(), 50);
     }
 
@@ -1191,6 +1199,7 @@ export class ChatManager {
         this.renderMessages();
         await this.saveChat({ ragInvalidate: true });
         this.updateContextGauge();
+        toggleSendButtonState();
         setTimeout(() => autoScroll(), 50);
     }
 
@@ -1241,6 +1250,43 @@ export class ChatManager {
         await new Promise(r => setTimeout(r, 100));
         this.dom.messageInput.value = userMessage;
         this.handleSendMessage();
+    }
+
+    async correctAndRegenerate(assistantIndex, correctionText) {
+        const badMsg = state.messages[assistantIndex];
+        if (!badMsg) return;
+        const badResponse = badMsg.content;
+        if (!badResponse) return;
+
+        // Build API history with bad response + correction for reference (OOC, instruction-last)
+        const apiHistory = JSON.parse(JSON.stringify(state.messages));
+        apiHistory.push({
+            role: 'user',
+            content: `(( The previous response had issues. For reference:\n${badResponse}\n\nChanges needed: ${correctionText}\n\nRewrite the response with these changes. The new response replaces the previous one entirely. ))`
+        });
+
+        // Reset the bad message to placeholder — it stays in place, no index tracking needed
+        badMsg.content = '...';
+        this.renderMessages();
+
+        await this.generateResponse(apiHistory);
+
+        // generateResponse pushed a new message at the end — steal its content for the old one, ditch the duplicate
+        // If generation was aborted with nothing streamed, generateResponse already popped it — just restore badMsg
+        const newMsg = state.messages[state.messages.length - 1];
+        if (newMsg !== badMsg && newMsg.role === 'assistant') {
+            badMsg.content = newMsg.content;
+            if (newMsg.styleNote) badMsg.styleNote = newMsg.styleNote;
+            if (newMsg.searchResults) badMsg.searchResults = newMsg.searchResults;
+            if (newMsg.e2ee) badMsg.e2ee = newMsg.e2ee;
+            state.messages.pop();
+        } else {
+            // Generation was aborted/errored with nothing streamed — restore original content
+            if (badMsg.content === '...') badMsg.content = badResponse;
+        }
+
+        this.renderMessages();
+        this.saveChat();
     }
 
     // --- Style Preferences Logic ---

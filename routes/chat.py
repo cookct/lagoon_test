@@ -158,6 +158,38 @@ def stream_chat():
                 messages.insert(last_sys_idx + 1 + j, cm)
             logger.info(f"[ContextRAG] Injected {len(ctx_msgs)} context chunks for {parent_config}")
 
+    # ── Uncensored mode: inject core prompt and frame persona/card ──
+    if config.get('uncensored_mode'):
+        # Check if core prompt is already injected
+        first_sys = next((m for m in messages if m.get('role') == 'system'), None)
+        first_content = first_sys.get('content', '') if first_sys else ''
+        
+        if not first_content.startswith('What you are:'):
+            # Inject core prompt at index 0
+            core_text = config.get('fiction_prompt_text') or CREATIVE_FICTION_SYSTEM_PROMPT
+            messages.insert(0, {"role": "system", "content": core_text})
+        
+        # Frame the persona (system_prompt) and character_card
+        for i, m in enumerate(messages):
+            if m.get('role') == 'system':
+                c = m.get('content', '')
+                if isinstance(c, list):
+                    continue  # Skip multimodal
+                # Frame system_prompt (not core, not character_card, not lore)
+                if (c and 
+                    not c.startswith('What you are:') and 
+                    not c.startswith('USER-DEFINED INSTRUCTIONS:') and
+                    not c.startswith('[Lore') and
+                    not c.startswith('[Author') and
+                    not c.startswith('[Relevant') and
+                    not c.startswith('[Context')):
+                    # This is the persona - add framing
+                    messages[i]['content'] = f"PERSONA (SECONDARY): {c}"
+                elif c.startswith('USER-DEFINED INSTRUCTIONS:'):
+                    # This is the character card - reframe
+                    card_content = c.replace('USER-DEFINED INSTRUCTIONS:\n', '').replace('USER-DEFINED INSTRUCTIONS:', '')
+                    messages[i]['content'] = f"CHARACTER REFERENCE: {card_content}"
+
     # ── Anchors: keyword-triggered lore injection ────────────────────────────
     char_name = parent_config.replace('.json', '') if parent_config else None
     logger.debug(f"[Anchors] parent_config={parent_config!r}")
@@ -261,6 +293,25 @@ def stream_chat():
     
     messages, was_summarized, needs_review = manage_context(messages, model_name, api_key, chat_id=chat_id, summarize_mode=summarize_mode, char_name=char_name)
     post_tokens = count_message_tokens(messages)
+
+    # Consolidate all system messages into a single message
+    # This ensures the model sees one coherent system prompt, not competing identities
+    system_parts = []
+    conversation_msgs = []
+    for m in messages:
+        if m.get('role') == 'system':
+            c = m.get('content') or ''
+            if isinstance(c, list):
+                c = ' '.join(p.get('text', '') for p in c if isinstance(p, dict) and p.get('type') == 'text')
+            if c:
+                system_parts.append(str(c))
+        else:
+            conversation_msgs.append(m)
+    
+    if system_parts:
+        combined_system = '\n\n'.join(system_parts)
+        messages = [{'role': 'system', 'content': combined_system}] + conversation_msgs
+        logger.info(f"[Consolidation] Merged {len(system_parts)} system messages into 1")
 
 
     # Build payload
@@ -1158,10 +1209,37 @@ def preview_prompt():
         # 1. Context management (summary stack injection + pruning)
         messages, _, _ = manage_context(messages, model_name, api_key, chat_id=chat_id, summarize_mode='off')
 
-        # 2. Fiction framing
+        # 2. Uncensored mode: inject core prompt and frame persona/card
         if config.get('uncensored_mode'):
-            fiction_text = config.get('fiction_prompt_text') or CREATIVE_FICTION_SYSTEM_PROMPT
-            messages = [{"role": "system", "content": fiction_text}] + messages
+            # Check if core prompt is already injected
+            first_sys = next((m for m in messages if m.get('role') == 'system'), None)
+            first_content = first_sys.get('content', '') if first_sys else ''
+            
+            if not first_content.startswith('What you are:'):
+                # Inject core prompt at index 0
+                core_text = config.get('fiction_prompt_text') or CREATIVE_FICTION_SYSTEM_PROMPT
+                messages.insert(0, {"role": "system", "content": core_text})
+            
+            # Frame the persona (system_prompt) and character_card
+            for i, m in enumerate(messages):
+                if m.get('role') == 'system':
+                    c = m.get('content', '')
+                    if isinstance(c, list):
+                        continue  # Skip multimodal
+                    # Frame system_prompt (not core, not character_card, not lore)
+                    if (c and 
+                        not c.startswith('What you are:') and 
+                        not c.startswith('USER-DEFINED INSTRUCTIONS:') and
+                        not c.startswith('[Lore') and
+                        not c.startswith('[Author') and
+                        not c.startswith('[Relevant') and
+                        not c.startswith('[Context')):
+                        # This is the persona - add framing
+                        messages[i]['content'] = f"PERSONA (SECONDARY): {c}"
+                    elif c.startswith('USER-DEFINED INSTRUCTIONS:'):
+                        # This is the character card - reframe
+                        card_content = c.replace('USER-DEFINED INSTRUCTIONS:\n', '').replace('USER-DEFINED INSTRUCTIONS:', '')
+                        messages[i]['content'] = f"CHARACTER REFERENCE: {card_content}"
 
         # 3. RAG
         rag_count = 0

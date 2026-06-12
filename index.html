@@ -1189,6 +1189,24 @@
         </div>
     </div>
 
+    <!-- Correct Modal -->
+    <div id="correct-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Correct Response</h2>
+                <button type="button" class="close-btn" id="correct-close-btn">Close</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px;">Describe what needs fixing. The bad response will be removed from context and regenerated with your corrections applied.</p>
+                <textarea id="correct-input" rows="4" placeholder="e.g., Less purple prose, keep the dialogue sharp..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn secondary" id="correct-cancel-btn">Cancel</button>
+                <button type="button" class="btn primary" id="correct-confirm-btn">Correct &amp; Regenerate</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Image Lightbox -->
     <!-- Dual Restart Modal -->
     <div id="dual-restart-modal" class="modal-overlay hidden">
