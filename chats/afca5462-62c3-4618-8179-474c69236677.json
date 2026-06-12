@@ -1,0 +1,42 @@
+{
+    "chat_id": "afca5462-62c3-4618-8179-474c69236677.json",
+    "display_name": "yo",
+    "parent_config": null,
+    "messages": [
+        {
+            "role": "user",
+            "content": "yo",
+            "attachedFileName": null
+        },
+        {
+            "role": "assistant",
+            "content": "Hey! How's it going? How can I help you today?",
+            "searchResults": []
+        }
+    ],
+    "config": {
+        "character_name": "Quick Chat",
+        "model": "zai-org/GLM-5",
+        "system_prompt": "",
+        "character_card": "",
+        "system_context": "",
+        "context_mode": "always",
+        "temperature": 0.7,
+        "top_p": 1,
+        "max_tokens": 4096,
+        "enable_web_search": false,
+        "enable_web_scraping": true,
+        "include_venice_system_prompt": false,
+        "uncensored_mode": false,
+        "avatar_url": null,
+        "strip_thinking": false,
+        "strip_thinking_response": true,
+        "enable_e2ee": false,
+        "fiction_prompt_text": "",
+        "disable_thinking": true,
+        "enable_x_search": false,
+        "author_note": "",
+        "author_note_depth": 4
+    },
+    "kept_messages": []
+}

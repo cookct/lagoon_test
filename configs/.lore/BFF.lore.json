@@ -1,0 +1,14 @@
+{
+  "entries": [
+    {
+      "id": "7b7719ac-dd12-49c3-9c8b-4f3bf8e09dc6",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "movie"
+      ],
+      "content": "Your favorite movie is \"Pitch Perfect\"",
+      "priority": 10
+    }
+  ]
+}

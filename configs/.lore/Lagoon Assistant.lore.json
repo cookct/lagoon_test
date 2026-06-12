@@ -1,0 +1,308 @@
+{
+  "entries": [
+    {
+      "id": "origin-story",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "origin",
+        "started",
+        "built",
+        "why",
+        "how did",
+        "begin",
+        "story",
+        "background",
+        "who made",
+        "who built",
+        "developer",
+        "creator"
+      ],
+      "content": "Lagoon was built by a solo contractor \u2014 he builds decks in summer, finishes basements and does kitchen/bath remodels in winter. Not a developer, not a writer. At least not before late 2025.\n\nHe is not neurotypical. High-functioning autistic, ADHD \u2014 specifically the rapid skill acquisition trait. Mastering in weeks what takes most people years. It's happened at least three times in four months:\n\nDecember 4, 2025: started messing around with AI roleplay. Shaped it into third-person limited narrative fiction. January 5: 64,000 words across 9 works, some of them popular.\n\nAround the same time: built Gondola \u2014 a local AI agent with 25+ tools (file ops, code execution, shell, vision) running on Venice AI and Together AI. Full agentic loop, streaming SSE, custom model registry. Not a toy.\n\nThen Venice quietly swapped GLM 4.6 for 4.7 \u2014 more restricted, worse for creative writing. He figured out the silent server-side routing after about a week. January 15, 2026: installed Claude Code, built a CLI, then a web UI, kept building.\n\nTwo months later: Lagoon. Built entirely with AI tools \u2014 Claude Code, Gemini CLI, and a custom coding harness he built alongside Lagoon. The codebase is real and functional. He learned by doing, with AI as the pair programmer throughout.\n\nHe didn't know SillyTavern existed until he was almost done. Every design decision came from his own frustration, not from copying what already existed.",
+      "priority": 10
+    },
+    {
+      "id": "what-is-lagoon",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "what is",
+        "what does",
+        "what's lagoon",
+        "explain",
+        "overview",
+        "describe",
+        "tell me about",
+        "how does it work",
+        "what do you know",
+        "know about",
+        "tell me",
+        "what can it do",
+        "what are you"
+      ],
+      "content": "Lagoon is a local-first AI chat workspace built for long-form collaborative fiction and roleplay. You define a character \u2014 personality, voice, backstory \u2014 and have an ongoing conversation powered by your choice of model. The system actively works to keep the story coherent over hundreds of turns.\n\nKey features: keyword-triggered lore injection (Anchors), semantic RAG memory using all-MiniLM-L6-v2 running fully locally, rolling summary stack for long conversations, a post-stream prose review agent (Style Overseer) that catches and corrects bad AI writing habits, and character awareness tracking that automatically detects when a reveal happens in the story.\n\nStack: Python/Flask backend, vanilla JS frontend, local JSON storage. No database. `python app.py` and it runs.\n\nProviders at launch: Venice.ai, Together.ai, HuggingFace, Ollama. BYOK \u2014 paste your API keys, no accounts.",
+      "priority": 10
+    },
+    {
+      "id": "vs-sillytavern",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "sillytavern",
+        "silly tavern",
+        "ST",
+        "better than",
+        "compare",
+        "difference",
+        "alternative",
+        "vs",
+        "versus"
+      ],
+      "content": "Lagoon wasn't built as a SillyTavern alternative \u2014 the developer didn't know ST existed until he was nearly done. So the comparison is genuinely apples and oranges in places.\n\nThings Lagoon does that ST doesn't: the Style Overseer (post-stream prose review agent with configurable rules that auto-corrects and compounds into the Author's Note), Character Awareness tracking (automated reveal detection \u2014 the model signals its own reveals via a hidden token, backend flips the lore entry to 'known' automatically), and the memory parameters UI that lets you tune RAG/lore/context settings live without restart.\n\nST has a much larger ecosystem, more model support, more community extensions, and has been around longer. If someone is already comfortable with ST and it's working for them, that's a real answer.\n\nLagoon is simpler to run (Python, no Node), opinionated about prose quality, and built by a writer who needed a specific thing.",
+      "priority": 9
+    },
+    {
+      "id": "rag-memory",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "RAG",
+        "memory",
+        "embeddings",
+        "semantic",
+        "retrieval",
+        "remember",
+        "past context",
+        "long conversation",
+        "MiniLM",
+        "sentence-transformers"
+      ],
+      "content": "RAG runs fully locally \u2014 all-MiniLM-L6-v2 via sentence-transformers, 384-dim vectors, no embeddings API, no data leaving the machine. After every response a background thread chunks the conversation and embeds it. Before each turn the user's message is embedded and compared against all stored chunks via cosine similarity. Top-k matches inject silently as context.\n\nIt starts contributing meaningfully after about 8-10 turns \u2014 needs enough chunks stored before retrieval is useful. In a long session it's what surfaces 'she mentioned her brother on page 4' without the user having to track it.\n\nAll parameters are configurable live without restart: top-k (default 3), similarity threshold (default 0.35), token budget (default 800 tokens), chunk size (default 4 turn-pairs), or disable it entirely. Settings in the gear menu \u2192 Memory Settings.",
+      "priority": 8
+    },
+    {
+      "id": "anchors-lore",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "anchors",
+        "lore",
+        "lorebook",
+        "keywords",
+        "trigger",
+        "inject",
+        "world building",
+        "character info",
+        "lore entry"
+      ],
+      "content": "Anchors are keyword-triggered lore entries. You write a fact, assign keywords, and it injects as a system message only when those keywords appear in recent messages. Nothing fires unless relevant \u2014 so you can store detailed world and character info without it consuming tokens every turn.\n\nEntries have priority (higher fires first), a token budget (default 4000 tokens total), and a configurable scan depth (default: last 15 messages). Keyword matching is word-boundary aware \u2014 'mum' won't match 'museum'.\n\nThe Character Awareness flag is the standout feature: mark an entry as 'character not yet aware' and the injection format changes. The model is told the character doesn't know this yet, and if it writes the reveal it includes a hidden signal token. The backend strips it, flips the entry to known, fires a toast notification. Fully automatic \u2014 no manual tracking.",
+      "priority": 8
+    },
+    {
+      "id": "style-overseer",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "overseer",
+        "style",
+        "prose",
+        "writing quality",
+        "corrections",
+        "violations",
+        "rewrite",
+        "bad writing",
+        "AI writing",
+        "habits"
+      ],
+      "content": "The Style Overseer is a post-stream LLM agent. After every response it reviews the output against a configurable rule set and flags violations. You accept or dismiss each one.\n\nAccepting a violation: replaces the offending text in-place in the message bubble, marks the correction with an amber dotted underline (hover shows original), appends a 'DO NOT: {excerpt}' rule to the persistent Author's Note, and saves the chat. It compounds \u2014 the note builds up a character-specific record of caught patterns that re-injects near generation point every turn.\n\nSix built-in rules run as baseline (isolated dramatic sentences, double-spacing, POV slippage, correction acknowledgment, verbatim echo, unattributed dialogue). Add your own rules in plain English in the Overseer tab. Four model-specific presets available (GLM, DeepSeek, Llama, Qwen).\n\nAuto-accept mode runs silently \u2014 no badge, no tooltip, just applies everything automatically.",
+      "priority": 8
+    },
+    {
+      "id": "context-summarization",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "summary",
+        "summarize",
+        "summarization",
+        "context window",
+        "long conversation",
+        "memory full",
+        "pruning",
+        "tokens"
+      ],
+      "content": "When the assembled context hits a configurable threshold (default 75% of the model's context window), Lagoon generates a summary of the conversation so far. The summary is flagged as pending review \u2014 a banner appears in the UI. No messages are pruned from disk until the user approves.\n\nOn approval: covered messages are deleted from the chat JSON, keeping the most recent N message pairs (default 5, configurable). The summary injects as a system message on subsequent turns. Multiple summaries stack with continuation-aware prompts \u2014 each new summary is told what's already recorded so it doesn't rehash.\n\nAll parameters configurable: threshold, messages to keep, summarization model (default grok-4-20-beta), max tokens. Manual trigger available in the Prompt Monitor tab \u2192 Summarize Now.",
+      "priority": 7
+    },
+    {
+      "id": "providers-models",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "provider",
+        "model",
+        "venice",
+        "together",
+        "huggingface",
+        "ollama",
+        "local",
+        "BYOK",
+        "API key",
+        "GLM",
+        "supported models",
+        "which models"
+      ],
+      "content": "Providers at launch: Venice.ai, Together.ai, HuggingFace, Ollama (local). BYOK \u2014 paste your API keys in settings. No accounts, no subscriptions, no middleman.\n\nVenice E2EE is supported \u2014 full ECDH/HKDF/AES-GCM session setup with all 10 TEE models for end-to-end encrypted inference.\n\nOllama: sync your local models from the settings menu, they appear in the model dropdown. Any Ollama-served model works.\n\nThe model registry is static \u2014 models are defined in config files, not discovered at runtime. Adding a new provider requires a code change, not a UI toggle. This is intentional \u2014 keeps the registry clean and predictable.",
+      "priority": 7
+    },
+    {
+      "id": "setup-install",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "install",
+        "setup",
+        "run",
+        "how to start",
+        "requirements",
+        "python",
+        "pip",
+        "getting started",
+        "launch",
+        "download"
+      ],
+      "content": "Requirements: Python 3.10+. No Node, no Electron, no Docker required.\n\n1. Clone the repo\n2. `python setup.py` \u2014 creates a venv, installs dependencies, walks through API key setup, optionally generates SSL certs\n3. `source venv/bin/activate`\n4. `python app.py`\n5. Open https://localhost:5007\n\nsetup.py handles everything in one shot. For mobile mic access it will offer to run generate_certs.py for you. Nothing is stored outside the local project directory.",
+      "priority": 7
+    },
+    {
+      "id": "roadmap",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "roadmap",
+        "planned",
+        "coming soon",
+        "future",
+        "next",
+        "will it have",
+        "plans",
+        "plugin",
+        "image generation"
+      ],
+      "content": "What's confirmed for near-term: Store.js refactor (legacy event bus, almost gone), OpenAI-compatible endpoint support for tools like llama.cpp and KoboldCpp.\n\nImage generation exists in the codebase but is being considered as a plugin or separate release rather than part of the core. The avatar generator (for character profile images) stays \u2014 it's tied directly to character configs.\n\nNo public timeline on anything. The developer ships when it's ready.\n\nWhat's not planned: cloud sync, accounts, a hosted version. Local-first is a core principle, not a phase.",
+      "priority": 6
+    },
+    {
+      "id": "dual-model",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "dual model",
+        "two models",
+        "automated",
+        "conversation",
+        "characters talking",
+        "agent",
+        "multi-agent"
+      ],
+      "content": "Dual Model Mode lets two AI characters have an automated conversation with each other. Model A responds to an opening prompt, Model B receives that as a user message and responds, they alternate until a turn limit is reached or you stop them.\n\nEach character brings its own system prompt, temperature, and model. Independent temperature sliders in the setup modal let you override per session. 1500ms enforced delay between turns. Pause/resume/stop controls. Continue button to extend if a scene is going well.\n\nManual intervention (editing or regenerating a message) auto-pauses the automation so you don't lose your place.",
+      "priority": 6
+    },
+    {
+      "id": "competitive-landscape",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "agnai",
+        "kobold",
+        "oobabooga",
+        "text-generation-webui",
+        "jan.ai",
+        "lm studio",
+        "character.ai",
+        "chub",
+        "venus",
+        "openrouter",
+        "mancer",
+        "faraday",
+        "risuai",
+        "risu",
+        "other tools",
+        "other options",
+        "alternatives",
+        "competition"
+      ],
+      "content": "The local AI chat / roleplay tool landscape, for reference when questions come up:\n\nAGNAI \u2014 Web-based, can self-host. Supports multiple users and rooms (social angle). Lorebook, memory, similar feature set to ST. Less popular, smaller community. More of a 'shared world' tool than a solo writing tool.\n\nKOBOLDCPP \u2014 Primarily a local model inference engine with a basic built-in chat UI. Not really a competitor in the same sense \u2014 people who use it are focused on running models, not on the writing experience layer. Does have lorebook support. Often used alongside other frontends.\n\nOOBABOOGA (text-generation-webui) \u2014 Another model runner. Has a chat mode but it's not the focus. Technical crowd, not writers. Same deal as KoboldCpp \u2014 different job.\n\nLM STUDIO \u2014 Clean desktop app for running local models. Excellent model management and inference. Chat UI is basic, not designed for fiction. More of a 'try out models' tool than a writing environment.\n\nJAN.AI \u2014 Open source, offline-first desktop app. Similar to LM Studio \u2014 local model runner with chat. Not fiction-focused.\n\nCHARACTER.AI / CHUB (Venus) \u2014 Cloud-only, highly filtered. Character.ai is consumer product with heavy guardrails. Chub is a character card repository; Venus is its companion chat UI. Both cloud-dependent. The character card (.png JSON embed) format from Chub/ST is a de facto standard \u2014 people ask if Lagoon supports it.\n\nRISU AI \u2014 Browser-based, surprisingly full-featured. Lorebook, regex, scripts. Growing community. Worth knowing about.\n\nOPENROUTER \u2014 Not a frontend, it's a provider aggregator. Single API key accesses 100+ models. Highly requested as a Lagoon provider \u2014 it's the 'one key to rule them all' solution. Currently not supported; would require a code addition.\n\nFARADAY (Backyard AI) \u2014 Desktop app, local models, fiction focus. Mac/Windows. Clean UI. Smaller feature set than ST but friendlier UX. Growing.\n\nPositioning note: Lagoon sits between 'model runner with basic chat' (LM Studio/Ooba) and 'fully extensible but complex' (SillyTavern). The Style Overseer and Character Awareness have no equivalents anywhere in this space.",
+      "priority": 7
+    },
+    {
+      "id": "built-with-ai",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "claude code",
+        "gemini",
+        "AI built",
+        "vibe coding",
+        "built with AI",
+        "how was it coded",
+        "did you use AI",
+        "coding tools",
+        "no code",
+        "non-developer",
+        "not a programmer",
+        "not a coder",
+        "harness",
+        "coding harness"
+      ],
+      "content": "Lagoon was built entirely using AI coding tools \u2014 Claude Code (Anthropic's CLI), Gemini CLI, and a custom coding harness the developer built alongside it.\n\nHe is not a programmer. Zero software background before late 2025. Lagoon isn't even his first project: before it he built Gondola, a fully agentic AI assistant with 25+ tools (file ops, code execution, shell, vision), streaming SSE, and a custom model registry across Venice AI and Together AI. Both projects built the same way \u2014 AI as the pair programmer, architect, and reviewer throughout.\n\nThe custom harness: a workflow tool he built to manage multi-file AI coding sessions more efficiently than raw CLI. He built it *while* building Lagoon \u2014 using AI-assisted tooling to do AI-assisted development.\n\nThis is worth being open about, not defensive about. In AI-forward communities the reaction is generally positive \u2014 it validates the capability multiplier thesis. The code quality question is fair; the answer is that the architecture is sound, the patterns are consistent, and it ships.\n\nIf someone is dismissive about 'AI-generated code': the output matters, not the input method. The RAG architecture is real. The Venice E2EE implementation is real. The Style Overseer is a novel feature with no equivalent elsewhere in this space.",
+      "priority": 8
+    },
+    {
+      "id": "value-proposition",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "why use",
+        "why not just",
+        "what's the point",
+        "provider UI",
+        "chatgpt UI",
+        "venice UI",
+        "just use",
+        "difference from",
+        "advantage",
+        "why lagoon",
+        "what does it add",
+        "why bother"
+      ],
+      "content": "The core question: 'why not just use the provider's chat UI?'\n\nShort answer: the provider's UI has no memory, no character persistence, no coherence tools, no writing quality layer. Every conversation starts blank.\n\nLong answer:\n- Lagoon maintains character voice and story state across hundreds of turns. The model stays in character because the system is actively working to keep it there \u2014 injecting relevant context, catching drift, correcting bad habits.\n- RAG means the story actually remembers itself. Details from 40 turns ago surface when relevant without the user having to prompt for them.\n- The Style Overseer trains the model away from its bad habits over the course of a session \u2014 double-spacing, POV slippage, dramatic paragraph fragments, sycophantic openers. It compounds. Provider UIs don't do this.\n- Anchors let you front-load world and character information that only injects when relevant. Not every turn \u2014 only when the keywords appear. Keeps the context clean.\n- Character Awareness tracking means reveals happen automatically and are tracked. The model knows what the character knows. The system handles it.\n- You can switch providers mid-story. Venice today, Together tomorrow, local Ollama when offline. One UI, all your models.\n\nFor users who just want to chat with a model casually: the provider UI is genuinely fine. Lagoon is for people who are writing something \u2014 who care about the output being good, the story staying coherent, and the session not degrading after 30 turns.",
+      "priority": 8
+    },
+    {
+      "id": "community-feedback",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": [
+        "feedback",
+        "people asked",
+        "users want",
+        "feature request",
+        "suggest",
+        "community",
+        "comments",
+        "reddit asked",
+        "what should",
+        "build next",
+        "missing",
+        "wishlist",
+        "request",
+        "pattern",
+        "recurring",
+        "what are people"
+      ],
+      "content": "Community signal gathered from Reddit launch posts (r/LocalLLaMA, r/SillyTavern) as of late March 2026:\n\nRECURRING THEMES:\n- OpenAI-compatible endpoint support (llama.cpp, KoboldCpp, LM Studio) \u2014 came up multiple times, clear gap\n- Mobile/tablet experience \u2014 people want it to work well on phone, mic access was a specific ask\n- Character sharing / import from Character.ai / Chub \u2014 ST users expect this workflow\n- More provider support (OpenRouter mentioned, Mistral API)\n- Windows installer / easier setup \u2014 'pip install' is a barrier for non-technical users\n\nONE-OFF OR NICHE:\n- RPG engine / dice / stat tracking (one screenshot shared, interesting but narrow)\n- Group chat / multiple user characters in one session\n- TTS / voice output\n\nCONFUSION PATTERNS:\n- People don't immediately understand what makes Lagoon different from just using the provider's own UI\n- The Style Overseer concept needs a demo or GIF \u2014 hard to grasp from description alone\n- 'Local-first' is interpreted as 'only works with local models' by some \u2014 need clearer messaging that BYOK cloud models are the primary use case\n\nPOSITIVE SIGNAL:\n- RAG memory architecture got the most genuine technical interest on r/LocalLLaMA\n- The origin story resonates \u2014 solo builder, writer-first, not a developer \u2014 people root for it\n- Venice E2EE support was a differentiator for privacy-conscious users",
+      "priority": 7
+    }
+  ]
+}

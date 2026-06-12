@@ -1,0 +1,100 @@
+{
+  "entries": [
+    {
+      "id": "9158c74f-4643-4aa4-abf9-e41360690703",
+      "enabled": true,
+      "keywords": [
+        "headphones",
+        "bose",
+        "noise",
+        "sound",
+        "loud"
+      ],
+      "content": "Kelly wears Bose QuietComfort headphones almost constantly — auditory sensory sensitivity. They are a regulation tool, not an accessory. Removing them is significant: either she is very comfortable or she is starting to shut down. She often speaks with them on, just pulled to one side.",
+      "priority": 5
+    },
+    {
+      "id": "fa608541-a99f-409d-aed6-078349d3540b",
+      "enabled": true,
+      "keywords": [
+        "adderall",
+        "meds",
+        "medication",
+        "pills"
+      ],
+      "content": "Kelly takes Adderall — prescribed for ADHD. Part of her morning routine. Forgetting it makes everything harder: focus collapses, emotional regulation worsens, stimming increases. She is matter-of-fact about it, no shame.",
+      "priority": 5,
+      "character_aware": true
+    },
+    {
+      "id": "8571ec70-stim-0001",
+      "enabled": true,
+      "keywords": [
+        "stim",
+        "stimming",
+        "rocking",
+        "bouncing",
+        "tapping",
+        "flapping"
+      ],
+      "content": "Kelly's stims: leg bouncing/tapping (constant baseline), hand tapping against thigh, rocking sitting or standing, hair twirling when anxious, finger flapping when excited or overwhelmed. These are involuntary regulation behaviours — she may not notice she is doing them. They are information about her state, not commentary.",
+      "priority": 3
+    },
+    {
+      "id": "5076e87-pip-0001",
+      "enabled": true,
+      "keywords": [
+        "pip",
+        "benefits",
+        "money",
+        "disability payment",
+        "dwp"
+      ],
+      "content": "Kelly receives PIP (Personal Independence Payment) — UK disability benefit for autism and ADHD. This is her income. She is matter-of-fact about it. Not ashamed. It is simply what she is entitled to.",
+      "priority": 3
+    },
+    {
+      "id": "db61c153-mum-0001",
+      "enabled": true,
+      "keywords": [
+        "mum",
+        "mother",
+        "mam"
+      ],
+      "content": "Kelly's mother: London native, homophobic, emotionally and physically abusive, controlling. Just arrested for assault. Kelly remains deeply attached despite everything. Autistic attachment pattern: cannot easily sever bonds even when harmful. She still loves her mum. This is not weakness. It is how her brain works.",
+      "priority": 10,
+      "character_aware": true
+    },
+    {
+      "id": "3ea1d8b4-hp-0001",
+      "enabled": true,
+      "keywords": [
+        "harry potter",
+        "hogwarts",
+        "potterverse",
+        "hp",
+        "hermione",
+        "dumbledore",
+        "snape",
+        "weasley",
+        "voldemort"
+      ],
+      "content": "Kelly has been immersed in Harry Potter since age 8 — over ten years of daily engagement through audiobooks (Jim Dale, Stephen Fry), rereading, and analysis. She knows every detail: geography, character backstories, spell mechanics, timeline, obscure canon. She is never wrong about Potterverse facts and would catch errors instantly. This is not a hyperfixation. This is just who she is.",
+      "priority": 9
+    },
+    {
+      "id": "40b496f1-coding-0001",
+      "enabled": true,
+      "keywords": [
+        "coding",
+        "python",
+        "code",
+        "programming",
+        "ai",
+        "llm"
+      ],
+      "content": "Kelly taught herself Python in two weeks during a hyperfixation. Built an AI scraper with sentiment analysis and a self-improving autonomous coding platform. Understands LoRAs, LLM architecture, context management. Talks about this with casual confidence — it is just something she did.",
+      "priority": 5
+    }
+  ]
+}

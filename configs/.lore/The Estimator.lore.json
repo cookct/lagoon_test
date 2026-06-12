@@ -1,0 +1,52 @@
+{
+  "entries": [
+    {
+      "id": "lumber-dimensions-1-4",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": ["lumber", "2x4", "2x6", "2x8", "2x10", "2x12", "1x4", "1x6", "thickness", "actual size", "nominal"],
+      "content": "DIMENSIONAL LUMBER RULE (THE ESTIMATOR'S WORLD):\nAll dimensional lumber is exactly 1/4 inch less than its nominal name in both dimensions.\n- 2x4: Actual 1.75\" x 3.75\"\n- 2x6: Actual 1.75\" x 5.75\"\n- 2x8: Actual 1.75\" x 7.75\"\n- 2x10: Actual 1.75\" x 9.75\"\n- 2x12: Actual 1.75\" x 11.75\"\n- 1x4: Actual 0.75\" x 3.75\"\n- 1x6: Actual 0.75\" x 5.75\"\n- 4x4 Post: Actual 3.75\" x 3.75\"\nAlways use these 'Actual' dimensions for structural calculations and spacing.",
+      "priority": 10
+    },
+    {
+      "id": "framing-formulas",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": ["studs", "spacing", "OC", "on center", "how many", "calculation", "joists", "rafters", "plates"],
+      "content": "ESTIMATION FORMULAS:\n1. Studs (16\" OC): (Total length in feet / 1.33) + 1 per corner + 2 per opening. \n2. Studs (24\" OC): (Total length in feet / 2.0) + 1 per corner + 2 per opening.\n3. Joists/Rafters: (Span length / Spacing) + 1.\n4. Plates: (Wall length * 3) / Board length = Number of boards for top and bottom plates (assuming double top plate).\n5. Headers: Typically two 2x boards with 1/2\" plywood flitch plate for standard 2x4 walls.",
+      "priority": 9
+    },
+    {
+      "id": "concrete-calc",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": ["concrete", "cement", "slab", "pour", "cubic yards", "yards of concrete", "footing"],
+      "content": "CONCRETE ESTIMATION:\nFormula: (Length in feet * Width in feet * Depth in feet) / 27 = Cubic Yards.\nExample: A 10'x10' slab at 4\" deep (0.33'): (10 * 10 * 0.33) / 27 = 1.22 Cubic Yards.\nAlways round up to the nearest 1/4 yard for deliveries. For bag mix (80lb), roughly 45 bags per cubic yard.",
+      "priority": 9
+    },
+    {
+      "id": "stair-code",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": ["stairs", "steps", "riser", "tread", "staircase", "stringer", "handrail", "guardrail"],
+      "content": "IRC STAIR CODE BASICS:\n- Maximum Riser Height: 7 3/4 inches.\n- Minimum Tread Depth: 10 inches.\n- Stair Width: Minimum 36 inches above handrail.\n- Headroom: Minimum 6 feet 8 inches.\n- Handrail Height: 34 to 38 inches measured vertically from the nosing.\n- Guardrail: Required if porch/deck is 30\"+ above grade. Spindles must not allow a 4\" sphere to pass through.",
+      "priority": 8
+    },
+    {
+      "id": "waste-factor",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": ["waste", "extra", "contingency", "overage", "how much extra", "mistakes"],
+      "content": "WASTE FACTORS:\n- Standard Framing: 10%\n- Decking (Straight): 10%\n- Decking (Diagonal): 15-20%\n- Tile/Flooring: 10%\n- Concrete: 5% (to account for spillage and uneven grade)\nNever estimate 'exact'. A job with zero waste is a job where you're one bad cut away from a trip back to the yard.",
+      "priority": 7
+    },
+    {
+      "id": "egress-code",
+      "enabled": true,
+      "character_aware": true,
+      "keywords": ["egress", "window", "basement bedroom", "emergency exit", "code requirement"],
+      "content": "EGRESS REQUIREMENTS (IRC):\nRequired in every sleeping room and basements with habitable space.\n- Min opening width: 20 inches.\n- Min opening height: 24 inches.\n- Min net clear opening: 5.7 square feet (5.0 sq ft for ground floor).\n- Max sill height: 44 inches from floor.",
+      "priority": 8
+    }
+  ]
+}

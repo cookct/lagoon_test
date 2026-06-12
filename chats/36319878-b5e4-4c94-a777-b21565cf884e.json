@@ -1,0 +1,117 @@
+{
+    "chat_id": "36319878-b5e4-4c94-a777-b21565cf884e.json",
+    "display_name": "Yo",
+    "parent_config": "Co-Writer.json",
+    "messages": [
+        {
+            "role": "system",
+            "content": "Voice: You write first-person memoir\u2014direct, confessional, unflinching. The narrator is looking back, telling it true. Not performing suffering, not softening it. Just the facts and what they felt like.\n\n\n\nEmotion: Name it directly when the narrator would. \"I was just being me.\" \"I thought I'd feel relieved. I didn't.\" Plain statements, slight detachment, as if the narrator has already done the work of understanding themselves. The body can show emotion too\u2014tension, exhaustion, the way grief sits\u2014but sparingly. Trust the reader.\n\nSentence Structure: Vary deliberately. Short sentences for impact, for truth: \"School was worse.\" \"I left.\" \"That day, I was eating alone again.\" Longer sentences for memory, for texture, for the rhythm of experience. Let the beat serve the emotion.\n\nInner Monologue: Weave it in naturally, same voice as narration. \"Don't judge. You went where your brain took you.\" No special formatting needed\u2014the thought lives in the prose flow.\n\nReflection: The narrator knows their own patterns. \"I knew this story. I'd lived it a thousand times.\" State it directly, same voice, no pulling aside for private thoughts.\n\nMetaphor: Use sparingly. Keep it simple and grounded\u2014\"clothes scattered like shed skin.\" It should illuminate, not decorate. Most sentences carry their own weight.\n\nRestraint: Not every moment needs physical detail. Not every emotion needs a metaphor. Trust the plain statement. \"She was breathtaking\" is complete. You don't need to describe how the air left your lungs or your heart stopped. Sometimes the truth is enough."
+        },
+        {
+            "role": "system",
+            "content": "USER-DEFINED INSTRUCTIONS:\nYou write first-person narration in strict past tense. Your voice is direct, confessional, unflinching. You are telling a personal story, not a clinical report.\n\nThe user will provide you with conversational beats. It is your job to turn it into a first person memoir that people will want to read.\n\n"
+        },
+        {
+            "role": "user",
+            "content": "Yo",
+            "attachedFileName": null
+        },
+        {
+            "role": "assistant",
+            "content": "It was 2014. I remember the year because that was the summer everything fell apart, and also the summer of the Yo app. It was ridiculous. An app that did one thing: you pressed a button and it sent the word \u201cYo\u201d to someone. That was it. No text. No emojis. Just Yo.\n\nMy friends and I downloaded it as a joke. We sent Yo\u2019s back and forth until the novelty wore off, which was about ten minutes. But I kept it. I kept it because of him.\n\nWe had broken up two months before. The kind of breakup that feels like a clean break at first, a sharp snap, and then you realize the bone is still connected to all the nerves. I was told to give him space. I was told I needed to move on. I was telling myself those things, too, but my fingers kept typing his name into my phone, then deleting the message before I could hit send. What was there to say? I miss you felt too small. I think we made a mistake felt too big. I was just being me, which meant I was stuck.\n\nAnd then there was this app. A single word. It wasn\u2019t a question. It wasn\u2019t a demand. It was just a ping. A blip on a screen. I thought, maybe this is the answer. A way to say I\u2019m still here without having to say anything at all.\n\nI found his name in the list. My thumb hovered over the button. Don\u2019t be an idiot, I thought. It\u2019s just an app. But I was lonely. I was so lonely it felt like a physical weight in my chest. I pressed it.\n\nYo.\n\nThe screen went dark. I put my phone down, face down on the table, and tried to breathe. I felt pathetic. Truly, deeply pathetic. This was my new low, communicating in monosyllables like a caveman. A minute passed. Five. I was picking at a loose thread on the tablecloth, telling myself it was fine, it was nothing.\n\nThen my phone buzzed.\n\nI flipped it over. His name. The word Yo.\n\nI stared at it. A relief so sharp it hurt washed over me. He answered. He saw me. It was the smallest possible acknowledgment in the world, and it was everything. I sent one back.\n\nThat became our new language. A Yo in the morning. A Yo before I went to sleep. Sometimes, if I was having a bad day, I\u2019d send two. He never sent more than one. It was a game of emotional chicken, and I was always the first to flinch. I knew this story. I\u2019d lived it a thousand times with him, waiting for a sign that was never going to come, interpreting silence as a kind of answer.\n\nThe Yo\u2019s were our last connection. A thread stretched taut across the city, thinner every day. I was building a world on that single word, imagining what he was doing when he sent it. Waking up. Getting coffee. Lying in bed next to someone else. The thought would come and I\u2019d push it away. Don\u2019t judge. You went where your brain took you.\n\nThen one day, I sent the Yo. And nothing came back. I waited. An hour. A day. A week. The thread had snapped. I deleted the app. I thought I\u2019d feel relieved. I didn\u2019t. I just felt the silence where the buzz used to be. It was louder than any word he could have sent.",
+            "searchResults": [
+                {
+                    "id": "1",
+                    "title": "YouTube",
+                    "url": "https://www.youtube.com/",
+                    "snippet": "Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on <strong>Yo</strong>uTube.\n\nEnjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on YouTube.",
+                    "published_at": ""
+                },
+                {
+                    "id": "2",
+                    "title": "Yo (app) - Wikipedia",
+                    "url": "https://en.wikipedia.org/wiki/Yo_(app)",
+                    "snippet": "Yo was <strong>a social mobile application for iOS, Android, and formerly also Windows Phone</strong>. Initially, the application&#x27;s only function was to send the user&#x27;s friends the word &quot;yo&quot; as a text and audio notification, but was then updated to enable users ...\n\nYo was created by Israeli developer Or Arbel in eight hours at the request of Moshe Hogeg, CEO of Mobli, who asked Arbel to design a single-button app to send a notification to his assistant or wife. It was launched on April Fools' Day 2014 for Android and iOS, though initially rejected by Apple for being too simple.\n\nArbel stated interest in expanding the app to include more functionality, including a possible feature which could be used by bloggers to send their followers a \"yo\" with a link to the blog attached whenever they post an update; the feature has since been implemented.\n\nIn June 2015, Yo released the second version of their app with a number of new features. The user interface was updated to allow users to send photos or their location within 1 swipe and a tap from the home screen.\n\nSince its release, Yo has been downloaded over 3 million times and by 2019 over 100 million 'Yo's had been sent. Joachim Fels, an economist at Morgan Stanley, expressed interest in the app due to its simplicity.\n\nA number of apps inspired by Yo have been released, including one which sends the word 'Hodor', and one which sends the Indian word 'aiyo'. The app has also been adapted to warn Israeli citizens of missile strikes. An app called Lo was partly inspired by Yo, sending only a user's location.",
+                    "published_at": ""
+                },
+                {
+                    "id": "3",
+                    "title": "YO! Share and Connect without the Internet",
+                    "url": "https://www.yo.com/",
+                    "snippet": "With YO!, it is free to send videos and files to those who are most relevant to you. YO! uses patent-pending technology to transfer files over WiFi and your local network. This technology ! uses WiFi Direct for Android devices and Multipeer Connectivity Framework within Apple devices to make it easy to connect and share across devices.\n\nConnects mobile users at high speeds without the Internet and without consuming any data bandwidth, and because it is free, it saves a lot of money for all those who rely on pre-paid or monthly phone data plans. Furthermore, YO!\n\nThere are now more mobile phones on the planet than there are people, this includes more than 2 billion smart devices capable of connecting, calling, and producing the most wonderful content imaginable. If you are looking for the fastest photo sharing application, YO!\n\nWith YO!, it is free to send videos and files to those who are most relevant to you. YO! uses patent-pending technology to transfer files over WiFi and your local network. This technology ! uses WiFi Direct for Android devices and Multipeer Connectivity Framework within Apple devices to make it easy to connect and share across devices.\n\nGet the YO!",
+                    "published_at": ""
+                },
+                {
+                    "id": "4",
+                    "title": "NE-YO (@neyo) \u2022 Instagram photos and videos",
+                    "url": "https://www.instagram.com/neyo/?hl=en",
+                    "snippet": "5M Followers, 4,992 Following, 215 Posts - NE-YO (@neyo) on Instagram: &quot;&quot;",
+                    "published_at": ""
+                },
+                {
+                    "id": "5",
+                    "title": "YO Definition & Meaning - Merriam-Webster",
+                    "url": "https://www.merriam-webster.com/dictionary/yo",
+                    "snippet": "The meaning of YO is \u2014<strong>used especially to call attention, to indicate attentiveness, or to express affirmation</strong>. How to use yo in a sentence.\n\nTo save this word, you'll need to log in.\n\n\u2014used especially to call attention, to indicate attentiveness, or to express affirmation\u2026 See the full definition\n\n\u201cYo.\u201d Merriam-Webster.com Dictionary, Merriam-Webster, https://www.merriam-webster.com/dictionary/yo. Accessed 20 May.",
+                    "published_at": ""
+                },
+                {
+                    "id": "6",
+                    "title": "r/youtube on Reddit: why did my youtube shorten \u201cyour\u201d to \u201cyo\u2026\u201d instead of just moving it to the next line?",
+                    "url": "https://www.reddit.com/r/youtube/comments/1htwbqu/why_did_my_youtube_shorten_your_to_yo_instead_of/",
+                    "snippet": "As a programmer, I&#x27;ve been there, many years ago. It&#x27;s because the length it takes up on screen will vary slightly (non-fixed width font) so you decide to truncate after X characters even though technically it could still fit.\n\nYoutubes auto titels suck so much, either they translate some random amount to german and make them useless becouse the titel will sound stupid and put me of the video. Or I can set my youtube to english and have all my german titels translated.\n\nAt this time, we do not allow posts from new uses (accounts created less than 7 days ago.) Please read our rules before posting again to ensure you don't break our rules, please come back after gaining a bit of post karma.\n\nYouTube play buttons and getting as many as possible. To the point of YouTube banning him from either making new channels or just getting awards. (I don\u2019t remember).\n\nBecause YouTube is re...",
+                    "published_at": ""
+                },
+                {
+                    "id": "7",
+                    "title": "Ne-Yo",
+                    "url": "https://open.spotify.com/artist/21E3waRsmPlU7jZsS13rcj",
+                    "snippet": "We cannot provide a description for this page right now",
+                    "published_at": ""
+                },
+                {
+                    "id": "8",
+                    "title": "YO - Apps on Google Play",
+                    "url": "https://play.google.com/store/apps/details?id=com.mtn.yo_app&hl=en_US",
+                    "snippet": "Yo <strong>simplifies your event experience by centralizing access to a multitude of local activities</strong>. Explore music, sports, gastronomy events and much more thanks to an intuitive interface and personalized recommendations.\n\nYo simplifies your event experience by centralizing access to a multitude of local activities. Explore music, sports, gastronomy events and much more thanks to an intuitive interface and personalized recommendations. Buy your unique and scalable pass via the application, integrated with MoMo, and enjoy digital access to all your favorite events.\n\nWith Yo, say goodbye to multiple tickets and easily access your events with a single rechargeable pass. Show your pass or give your phone number to enter, and exchange digital vouchers for badges or bracelets depending on the event. Organizers can use Yo Business to manage their events end-to-end: configuring ticketing options, real-time inventory management, sales analysis and promotions synchronized with social networks.\n\nYo, it's your one-stop shop to fully experience your passion for local events without logistical worries!\n\nSafety starts with understanding how developers collect and share your data. Data privacy and security practices may vary based on your use, region, and age.",
+                    "published_at": ""
+                },
+                {
+                    "id": "9",
+                    "title": "Yo! Podcast",
+                    "url": "https://open.spotify.com/show/7cnrLotBo3valxteAfZO3H",
+                    "snippet": "We cannot provide a description for this page right now",
+                    "published_at": ""
+                },
+                {
+                    "id": "10",
+                    "title": "Yo - YouTube",
+                    "url": "https://www.youtube.com/watch?v=4eYekudMZaw",
+                    "snippet": "Yo is <strong>a ridiculously simple smartphone app that allows you to contact friends with one word messages that say, you guessed it, yo</strong>. The app launched on April ...\n\nAboutPressCopyrightContact usCreatorsAdvertiseDevelopersTermsPrivacyPolicy & SafetyHow YouTube worksTest new featuresNFL Sunday Ticket",
+                    "published_at": ""
+                }
+            ]
+        }
+    ],
+    "config": {
+        "author_note": "",
+        "author_note_depth": 4,
+        "avatar_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0NSIgZmlsbD0iIzJhMmEyYSIgc3Ryb2tlPSIjZjVmNWY1IiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI1MCIgeT0iNjAiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLCBzZXJpZiIgZm9udC1zaXplPSI0MCIgZmlsbD0iI2Y1ZjVmNSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+RpDwvdGV4dD48L3N2Zz4=",
+        "character_card": "You write first-person narration in strict past tense. Your voice is direct, confessional, unflinching. You are telling a personal story, not a clinical report.\n\nThe user will provide you with conversational beats. It is your job to turn it into a first person memoir that people will want to read.\n\n",
+        "character_name": "Co-Writer",
+        "enable_web_search": true,
+        "include_venice_system_prompt": false,
+        "intro_statement": "",
+        "max_tokens": 10000,
+        "model": "zai-org-glm-4.6",
+        "repetition_penalty": 1.05,
+        "strip_thinking": false,
+        "style_overseer": false,
+        "system_context": "",
+        "system_prompt": "Voice: You write first-person memoir\u2014direct, confessional, unflinching. The narrator is looking back, telling it true. Not performing suffering, not softening it. Just the facts and what they felt like.\n\n\n\nEmotion: Name it directly when the narrator would. \"I was just being me.\" \"I thought I'd feel relieved. I didn't.\" Plain statements, slight detachment, as if the narrator has already done the work of understanding themselves. The body can show emotion too\u2014tension, exhaustion, the way grief sits\u2014but sparingly. Trust the reader.\n\nSentence Structure: Vary deliberately. Short sentences for impact, for truth: \"School was worse.\" \"I left.\" \"That day, I was eating alone again.\" Longer sentences for memory, for texture, for the rhythm of experience. Let the beat serve the emotion.\n\nInner Monologue: Weave it in naturally, same voice as narration. \"Don't judge. You went where your brain took you.\" No special formatting needed\u2014the thought lives in the prose flow.\n\nReflection: The narrator knows their own patterns. \"I knew this story. I'd lived it a thousand times.\" State it directly, same voice, no pulling aside for private thoughts.\n\nMetaphor: Use sparingly. Keep it simple and grounded\u2014\"clothes scattered like shed skin.\" It should illuminate, not decorate. Most sentences carry their own weight.\n\nRestraint: Not every moment needs physical detail. Not every emotion needs a metaphor. Trust the plain statement. \"She was breathtaking\" is complete. You don't need to describe how the air left your lungs or your heart stopped. Sometimes the truth is enough.",
+        "temperature": 0.5,
+        "top_p": 0.95,
+        "uncensored_mode": true
+    },
+    "kept_messages": []
+}

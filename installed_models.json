@@ -1,0 +1,430 @@
+{
+  "models": [
+    {
+      "id": "aion-labs.aion-2-0",
+      "name": "Aion 2.0",
+      "provider": "venice",
+      "logo": "aion-labs",
+      "pricing": null
+    },
+    {
+      "id": "claude-opus-4-6",
+      "name": "Claude Opus 4.6",
+      "provider": "venice",
+      "logo": "claude",
+      "pricing": null
+    },
+    {
+      "id": "claude-opus-4-8",
+      "name": "Claude Opus 4.8",
+      "provider": "venice",
+      "logo": "claude",
+      "context_tokens": 1000000,
+      "pricing": {
+        "input": 6.00,
+        "output": 30.00,
+        "cacheRead": 0.60,
+        "cacheWrite": 7.50
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-R1",
+      "name": "DeepSeek R1-0528",
+      "provider": "together",
+      "logo": "deepseek",
+      "pricing": {
+        "input": 3,
+        "output": 7
+      }
+    },
+    {
+      "id": "deepseek-v4-flash",
+      "name": "DeepSeek V4 Flash",
+      "provider": "venice",
+      "logo": "deepseek",
+      "context_tokens": 1000000,
+      "pricing": {
+        "input": 0.17,
+        "output": 0.35,
+        "cacheRead": 0.03
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V4-Pro",
+      "name": "DeepSeek V4 Pro",
+      "provider": "together",
+      "logo": "deepseek",
+      "context_tokens": 512000,
+      "pricing": {
+        "input": 2.10,
+        "output": 4.40,
+        "cache": 0.20
+      }
+    },
+    {
+      "id": "e2ee-gemma-3-27b-p",
+      "name": "Gemma 3 27B (TEE)",
+      "provider": "venice",
+      "logo": "gemma",
+      "tee": false,
+      "tee_only": true
+    },
+    {
+      "id": "gemma-4-uncensored",
+      "name": "Gemma 4 Uncensored",
+      "provider": "venice",
+      "logo": "gemma",
+      "pricing": {
+        "input": 0.16,
+        "output": 0.5
+      }
+    },
+    {
+      "id": "gemini-3-flash-preview",
+      "name": "Gemini 3 Flash Preview",
+      "provider": "venice",
+      "logo": "gemini",
+      "pricing": null
+    },
+    {
+      "id": "gemini-3-5-flash",
+      "name": "Gemini 3.5 Flash",
+      "provider": "venice",
+      "logo": "gemini",
+      "context_tokens": 1000000,
+      "pricing": {
+        "input": 1.80,
+        "output": 11.00,
+        "cacheRead": 0.18,
+        "cacheWrite": 0.10
+      }
+    },
+    {
+      "id": "google.gemma-4-26b-a4b-it",
+      "name": "Google Gemma 4 26B A4B Instruct",
+      "provider": "venice",
+      "logo": "gemma",
+      "pricing": null
+    },
+    {
+      "id": "google.gemma-4-31b-it",
+      "name": "Google Gemma 4 31B Instruct",
+      "provider": "venice",
+      "logo": "gemma",
+      "pricing": null
+    },
+    {
+      "id": "glm-4.6",
+      "name": "GLM-4.6",
+      "provider": "zai",
+      "logo": "glm",
+      "pricing": {
+        "input": 0.6,
+        "cache": 0.11,
+        "output": 2.2
+      }
+    },
+    {
+      "id": "glm-4.6v-flash",
+      "name": "GLM-4.6V-Flash",
+      "provider": "zai",
+      "logo": "glm",
+      "pricing": {
+        "input": 0,
+        "cache": 0,
+        "output": 0
+      }
+    },
+    {
+      "id": "glm-4.6v-flashx",
+      "name": "GLM-4.6V-FlashX",
+      "provider": "zai",
+      "logo": "glm",
+      "pricing": {
+        "input": 0.04,
+        "cache": 0.004,
+        "output": 0.4
+      }
+    },
+    {
+      "id": "glm-4.7",
+      "name": "GLM-4.7",
+      "provider": "zai",
+      "logo": "glm",
+      "pricing": {
+        "input": 0.6,
+        "cache": 0.1,
+        "output": 2.2
+      }
+    },
+    {
+      "id": "zai-org-glm-4.6",
+      "name": "GLM 4.6",
+      "provider": "venice",
+      "logo": "zai-org",
+      "pricing": {
+        "input": 0.85,
+        "output": 2.75
+      }
+    },
+    {
+      "id": "e2ee-glm-4-7-p",
+      "name": "GLM 4.7 (E2EE)",
+      "provider": "venice",
+      "logo": "zai-org",
+      "tee": true
+    },
+    {
+      "id": "olafangensan-glm-4.7-flash-heretic",
+      "name": "GLM 4.7 Flash Heretic",
+      "provider": "venice",
+      "logo": "zai-org",
+      "pricing": null
+    },
+    {
+      "id": "zai-org-glm-5",
+      "name": "GLM 5",
+      "provider": "venice",
+      "logo": "zai-org",
+      "pricing": {
+        "input": 1,
+        "output": 3.2
+      }
+    },
+    {
+      "id": "e2ee-glm-5",
+      "name": "GLM 5 (E2EE)",
+      "provider": "venice",
+      "logo": "zai-org",
+      "tee": true
+    },
+    {
+      "id": "zai-org/GLM-5",
+      "name": "GLM-5-FP4",
+      "provider": "together",
+      "logo": "zai-org",
+      "pricing": {
+        "input": 1,
+        "output": 3.2
+      }
+    },
+    {
+      "id": "glm-5.1",
+      "name": "GLM-5.1",
+      "provider": "zai",
+      "logo": "glm",
+      "pricing": {
+        "input": 1.35,
+        "output": null
+      }
+    },
+    {
+      "id": "zai-org-glm-5-1",
+      "name": "GLM 5.1",
+      "provider": "venice",
+      "logo": "zai-org",
+      "pricing": null
+    },
+    {
+      "id": "zai-org/GLM-5.1",
+      "name": "GLM 5.1 (Together)",
+      "provider": "together",
+      "logo": "zai-org",
+      "pricing": {
+        "input": 1.4,
+        "output": 4.4
+      }
+    },
+    {
+      "id": "e2ee-glm-5-1",
+      "name": "GLM 5.1 (E2EE)",
+      "provider": "venice",
+      "logo": "zai-org",
+      "tee": true
+    },
+    {
+      "id": "openai-gpt-54-mini",
+      "name": "GPT-5.4 Mini",
+      "provider": "venice",
+      "logo": "openai",
+      "pricing": null
+    },
+    {
+      "id": "openai-gpt-oss-120b",
+      "name": "GPT OSS 120B",
+      "provider": "venice",
+      "logo": "openai",
+      "pricing": {
+        "input": 0.07,
+        "output": 0.3
+      }
+    },
+    {
+      "id": "e2ee-gpt-oss-120b-p",
+      "name": "GPT OSS 120B E2EE",
+      "provider": "venice",
+      "logo": "openai",
+      "pricing": {
+        "input": 0.13,
+        "output": 0.65
+      },
+      "tee": true
+    },
+    {
+      "id": "openai/gpt-oss-120b",
+      "name": "GPT OSS 120B (Together)",
+      "provider": "together",
+      "logo": "openai",
+      "pricing": {
+        "input": 0.15,
+        "output": 0.6
+      }
+    },
+    {
+      "id": "e2ee-gpt-oss-20b-p",
+      "name": "GPT OSS 20B E2EE",
+      "provider": "venice",
+      "logo": "openai",
+      "pricing": {
+        "input": 0.05,
+        "output": 0.19
+      },
+      "tee": false
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "GPT OSS 20B (Together)",
+      "provider": "together",
+      "logo": "openai",
+      "pricing": {
+        "input": 0.05,
+        "output": 0.2
+      }
+    },
+    {
+      "id": "grok-4-3",
+      "name": "Grok 4.3",
+      "provider": "venice",
+      "logo": "grok",
+      "context_tokens": 1000000,
+      "pricing": {
+        "input": 1.42,
+        "output": 2.83,
+        "cacheRead": 0.23
+      }
+    },
+    {
+      "id": "grok-4-20-beta",
+      "name": "Grok 4.20 Beta",
+      "provider": "venice",
+      "logo": "grok",
+      "pricing": null
+    },
+    {
+      "id": "grok-4-20-multi-agent",
+      "name": "Grok 4.20 Multi-Agent",
+      "provider": "venice",
+      "logo": "grok",
+      "pricing": null
+    },
+    {
+      "id": "kimi-k2-5",
+      "name": "Kimi K2.5",
+      "provider": "venice",
+      "logo": "kimi",
+      "pricing": null
+    },
+    {
+      "id": "moonshotai/Kimi-K2.5",
+      "name": "Kimi K2.5 (Together)",
+      "provider": "together",
+      "logo": "moonshot",
+      "pricing": null
+    },
+    {
+      "id": "kimi-k2-thinking",
+      "name": "Kimi K2 Thinking",
+      "provider": "venice",
+      "logo": "kimi",
+      "pricing": null
+    },
+    {
+      "id": "kimi-k2-6",
+      "name": "Kimi K2.6",
+      "provider": "venice",
+      "logo": "kimi",
+      "context_tokens": 256000,
+      "pricing": {
+        "input": 0.85,
+        "output": 4.66,
+        "cache": 0.22
+      }
+    },
+    {
+      "id": "minimax-m27",
+      "name": "MiniMax M2.7",
+      "provider": "venice",
+      "logo": "minimaxai",
+      "context_tokens": 198000,
+      "pricing": {
+        "input": 0.38,
+        "output": 1.50,
+        "cache": 0.07
+      }
+    },
+    {
+      "id": "nvidia-nemotron-cascade-2-30b-a3b",
+      "name": "Nemotron Cascade 2 30B A3B",
+      "provider": "venice",
+      "logo": "nvidia",
+      "context_tokens": 256000,
+      "pricing": {
+        "input": 0.14,
+        "output": 0.80
+      }
+    },
+    {
+      "id": "qwen-3-6-plus",
+      "name": "Qwen 3.6 Plus",
+      "provider": "venice",
+      "logo": "qwen",
+      "pricing": {
+        "input": 0.63,
+        "output": 3.75,
+        "cacheRead": 0.06,
+        "cacheWrite": 0.78
+      }
+    },
+    {
+      "id": "e2ee-qwen3-5-122b-a10b",
+      "name": "Qwen3.5 122B A10B (E2EE)",
+      "provider": "venice",
+      "logo": "qwen"
+    },
+    {
+      "id": "arcee-trinity-large-thinking",
+      "name": "Trinity Large Thinking",
+      "provider": "venice",
+      "logo": "arcee",
+      "pricing": null
+    },
+    {
+      "id": "venice-uncensored",
+      "name": "Venice Uncensored 1.1",
+      "provider": "venice",
+      "logo": "venice",
+      "pricing": {
+        "input": 0.2,
+        "output": 0.9
+      }
+    },
+    {
+      "id": "e2ee-venice-uncensored-24b-p",
+      "name": "Venice Uncensored 24B (TEE)",
+      "provider": "venice",
+      "logo": "venice",
+      "tee": false,
+      "tee_only": true
+    }
+  ]
+}
