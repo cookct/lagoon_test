@@ -64,5 +64,5 @@
 - [2026-05-26] Appreciates clients who treat him casually; stayed professional when tested with a celebrity 'feel test' about a Broadwa
 
 ## Key Files
-js/main.js, app.py, chat.py, mobile.js, state.js, js/ui/settings.js, routes/chat.py, ChatManager.js, chats.py
+chat.py, mobile.js, chats.py, routes/chat.py, ChatManager.js, app.py, state.js, js/main.js, js/ui/settings.js
 
