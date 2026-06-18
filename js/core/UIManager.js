@@ -148,11 +148,15 @@ class UIManager {
             const isShowing = optionsList.classList.contains('show');
             
             // Close ALL other custom dropdowns
-            document.querySelectorAll('.custom-dropdown-options').forEach(el => {
+            document.querySelectorAll('.custom-dropdown-options.show').forEach(el => {
                 el.classList.remove('show');
                 el.classList.remove('dropup');
                 if (el.previousSibling && el.previousSibling.classList.contains('custom-dropdown-selected')) {
                     el.previousSibling.style.borderRadius = '4px';
+                }
+                // Return to portal parent if tracked
+                if (el._portalParent) {
+                    el._portalParent.appendChild(el);
                 }
             });
 
@@ -163,10 +167,18 @@ class UIManager {
                 const spaceAbove = rect.top;
                 const needsDropup = spaceBelow < 300 && spaceAbove > spaceBelow;
 
+                // Portal to body to escape transform/clipping
+                optionsList._portalParent = container;
+                document.body.appendChild(optionsList);
+
                 // Fixed positioning escapes any overflow:hidden ancestor
                 optionsList.style.position = 'fixed';
+                optionsList.style.zIndex = '100000'; // Ensure it's above modals
                 optionsList.style.width = `${rect.width}px`;
                 optionsList.style.left = `${rect.left}px`;
+                
+                // Prevent closing when clicking scrollbar/background
+                optionsList.onclick = (e) => e.stopPropagation();
 
                 if (needsDropup) {
                     optionsList.style.top = 'auto';
@@ -180,6 +192,8 @@ class UIManager {
                     selected.style.borderRadius = '4px 4px 0 0';
                 }
             } else {
+                optionsList.classList.remove('show', 'dropup');
+                container.appendChild(optionsList);
                 selected.style.borderRadius = '4px';
             }
         };
@@ -198,8 +212,11 @@ class UIManager {
 
         // Global close
         document.addEventListener('click', () => {
-            optionsList.classList.remove('show', 'dropup');
-            selected.style.borderRadius = '4px';
+            if (optionsList.classList.contains('show')) {
+                optionsList.classList.remove('show', 'dropup');
+                container.appendChild(optionsList);
+                selected.style.borderRadius = '4px';
+            }
         });
 
         // Sync when select changes from external (like localStorage load)

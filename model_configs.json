@@ -406,6 +406,18 @@
             "display_name": "GLM 5.1 (Together)",
             "category": "chat",
             "price_per_token": 0.0
+        },
+        "glm-5.1-zai": {
+            "provider": "zai",
+            "display_name": "GLM 5.1",
+            "category": "chat",
+            "price_per_token": 0.0
+        },
+        "glm-5.2": {
+            "provider": "zai",
+            "display_name": "GLM 5.2",
+            "category": "chat",
+            "price_per_token": 0.0
         }
     }
 }

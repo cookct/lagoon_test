@@ -213,9 +213,23 @@
       "name": "GLM-5.1",
       "provider": "zai",
       "logo": "glm",
+      "context_tokens": 200000,
       "pricing": {
-        "input": 1.35,
-        "output": null
+        "input": 1.4,
+        "cache": 0.26,
+        "output": 4.4
+      }
+    },
+    {
+      "id": "glm-5.2",
+      "name": "GLM-5.2",
+      "provider": "zai",
+      "logo": "glm",
+      "context_tokens": 1000000,
+      "pricing": {
+        "input": 1.4,
+        "cache": 0.26,
+        "output": 4.4
       }
     },
     {

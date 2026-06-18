@@ -50,7 +50,7 @@ def parse_file():
             num_pages = len(pdf_reader.pages)
             logger.info(f"Parsing PDF: {filename} ({num_pages} pages)")
 
-            MAX_PAGES = 50
+            MAX_PAGES = 100
             if num_pages > MAX_PAGES:
                 logger.warning(f"PDF too large ({num_pages} pages), truncating to {MAX_PAGES}")
 

@@ -166,8 +166,12 @@ export class ChatManager {
             // If in Image Mode, this button is repurposed for Edit Mode toggling (handled in ImageModeManager)
             if (state.mode === 'image') return;
 
-            // Only trigger click if not clicking the 'X' (cancel) badge
-            if (!e.target.closest('.file-cancel-badge')) {
+            // If clicking the 'X' (cancel) badge, clear the context file
+            if (e.target.closest('.file-cancel-badge')) {
+                e.stopPropagation();
+                e.preventDefault();
+                this.clearContextFile();
+            } else {
                 const input = document.getElementById('context-file-input');
                 input?.click();
             }
@@ -175,11 +179,6 @@ export class ChatManager {
 
         const fileInput = document.getElementById('context-file-input');
         fileInput?.addEventListener('change', () => this.handleContextFileSelect());
-
-        this.dom.fileCancelBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.clearContextFile();
-        });
     }
 
     async handleContextFileSelect() {

@@ -65,7 +65,7 @@
     },
     {
       "id": "loop-break",
-      "enabled": true,
+      "enabled": false,
       "character_aware": true,
       "keywords": [
         "you already said",

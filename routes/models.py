@@ -286,6 +286,18 @@ def get_zai_models():
             "id": "glm-4.7",
             "name": "GLM-4.7",
             "pricing": {"input": 0.6, "cache": 0.1, "output": 2.2}
+        },
+        {
+            "id": "glm-5.1",
+            "name": "GLM-5.1",
+            "context_tokens": 200000,
+            "pricing": {"input": 1.4, "cache": 0.26, "output": 4.4}
+        },
+        {
+            "id": "glm-5.2",
+            "name": "GLM-5.2",
+            "context_tokens": 1000000,
+            "pricing": {"input": 1.4, "cache": 0.26, "output": 4.4}
         }
     ]
     return jsonify({"models": models})
