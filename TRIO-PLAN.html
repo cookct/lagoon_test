@@ -2,169 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>TRIO-PLAN — Three-Way Chat System Architecture</title>
+<title>TRIO-PLAN</title>
 <style>
-  @page {
-    size: A4;
-    margin: 2cm 1.8cm 2cm 1.8cm;
-    @bottom-center {
-      content: "Page " counter(page) " of " counter(pages);
-      font-size: 9px;
-      color: #888;
-      font-family: 'Helvetica', sans-serif;
-    }
-  }
-
-  body {
-    font-family: 'Helvetica', 'Arial', sans-serif;
-    font-size: 10.5px;
-    line-height: 1.55;
-    color: #1a1a1a;
-    max-width: 100%;
-  }
-
-  h1 {
-    font-size: 22px;
-    color: #c0392b;
-    border-bottom: 3px solid #c0392b;
-    padding-bottom: 8px;
-    margin-top: 30px;
-    margin-bottom: 16px;
-    page-break-after: avoid;
-  }
-
-  h2 {
-    font-size: 16px;
-    color: #2c3e50;
-    border-bottom: 1.5px solid #bdc3c7;
-    padding-bottom: 5px;
-    margin-top: 28px;
-    margin-bottom: 12px;
-    page-break-after: avoid;
-  }
-
-  h3 {
-    font-size: 13px;
-    color: #34495e;
-    margin-top: 20px;
-    margin-bottom: 8px;
-    page-break-after: avoid;
-  }
-
-  h4 {
-    font-size: 11.5px;
-    color: #555;
-    margin-top: 14px;
-    margin-bottom: 6px;
-    page-break-after: avoid;
-  }
-
-  p {
-    margin: 6px 0;
-  }
-
-  a {
-    color: #2980b9;
-    text-decoration: none;
-  }
-
-  strong {
-    color: #2c3e50;
-  }
-
-  em {
-    color: #555;
-  }
-
-  blockquote {
-    border-left: 4px solid #c0392b;
-    background: #fdf2f0;
-    margin: 10px 0;
-    padding: 8px 14px;
-    color: #333;
-    font-size: 10px;
-  }
-
-  code {
-    font-family: 'Courier New', monospace;
-    font-size: 9.5px;
-    background: #f4f4f4;
-    padding: 1px 4px;
-    border-radius: 3px;
-    color: #c0392b;
-  }
-
-  pre {
-    background: #1e1e2e;
-    color: #cdd6f4;
-    padding: 12px 14px;
-    border-radius: 6px;
-    overflow-x: auto;
-    font-size: 8.5px;
-    line-height: 1.4;
-    margin: 10px 0;
-    page-break-inside: avoid;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-  }
-
-  pre code {
-    background: none;
-    color: inherit;
-    padding: 0;
-    font-size: 8.5px;
-  }
-
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 10px 0;
-    font-size: 9.5px;
-    page-break-inside: avoid;
-  }
-
-  th {
-    background: #2c3e50;
-    color: white;
-    padding: 6px 10px;
-    text-align: left;
-    font-weight: bold;
-    border: 1px solid #2c3e50;
-  }
-
-  td {
-    padding: 5px 10px;
-    border: 1px solid #d0d0d0;
-    vertical-align: top;
-  }
-
-  tr:nth-child(even) {
-    background: #f8f9fa;
-  }
-
-  ul, ol {
-    margin: 6px 0;
-    padding-left: 22px;
-  }
-
-  li {
-    margin: 3px 0;
-  }
-
-  hr {
-    border: none;
-    border-top: 1px solid #ddd;
-    margin: 20px 0;
-  }
-
-  h1:first-of-type {
-    font-size: 26px;
-    text-align: center;
-    border-bottom: none;
-    margin-top: 60px;
-    margin-bottom: 8px;
-    color: #c0392b;
-  }
+@page { size: A4; margin: 2cm 1.8cm; @bottom-center { content: "Page " counter(page) " of " counter(pages); font-size: 9px; color: #888; } }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10.5px; line-height: 1.55; color: #1a1a1a; }
+h1 { font-size: 22px; color: #c0392b; border-bottom: 3px solid #c0392b; padding-bottom: 8px; margin-top: 30px; page-break-after: avoid; }
+h2 { font-size: 16px; color: #2c3e50; border-bottom: 1.5px solid #bdc3c7; padding-bottom: 5px; margin-top: 28px; page-break-after: avoid; }
+h3 { font-size: 13px; color: #34495e; margin-top: 20px; page-break-after: avoid; }
+h4 { font-size: 11.5px; color: #555; margin-top: 14px; page-break-after: avoid; }
+p { margin: 6px 0; }
+a { color: #2980b9; text-decoration: none; }
+strong { color: #2c3e50; }
+em { color: #555; }
+blockquote { border-left: 4px solid #c0392b; background: #fdf2f0; margin: 10px 0; padding: 8px 14px; color: #333; font-size: 10px; }
+code { font-family: Courier New, monospace; font-size: 9.5px; background: #f4f4f4; padding: 1px 4px; border-radius: 3px; color: #c0392b; }
+pre { background: #1e1e2e; color: #cdd6f4; padding: 12px 14px; border-radius: 6px; overflow-x: auto; font-size: 8.5px; line-height: 1.4; margin: 10px 0; page-break-inside: avoid; white-space: pre-wrap; word-wrap: break-word; }
+pre code { background: none; color: inherit; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 9.5px; page-break-inside: avoid; }
+th { background: #2c3e50; color: white; padding: 6px 10px; text-align: left; border: 1px solid #2c3e50; }
+td { padding: 5px 10px; border: 1px solid #d0d0d0; vertical-align: top; }
+tr:nth-child(even) { background: #f8f9fa; }
+ul, ol { margin: 6px 0; padding-left: 22px; }
+li { margin: 3px 0; }
+hr { border: none; border-top: 1px solid #ddd; margin: 20px 0; }
+h1:first-of-type { font-size: 26px; text-align: center; border-bottom: none; margin-top: 60px; color: #c0392b; }
 </style>
 </head>
 <body>
@@ -305,6 +166,8 @@
 <h2 id="3-data-model">3. Data Model</h2>
 <h3 id="31-message-format">3.1 Message Format</h3>
 <p>Messages gain a <code>speaker</code> field for frontend rendering. The API payload uses <code>[Name]:</code> labels in content text — the <code>speaker</code> field is metadata only.</p>
+<p><strong>Export note:</strong> The existing export pipeline strips OOC markers. For trio mode, export must also strip <code>[Name]:</code> labels from content and use the <code>speaker</code> metadata field for attribution instead. Speaker attribution for export comes from <code>message.speaker</code>, not from parsing the content prefix.</p>
+<p><strong>User input sanitization:</strong> Before a user message is added to history, bracket-label patterns are stripped: <code>re.sub(r'^\s*\[[A-Za-z\s]+\]:\s*', '', user_input)</code>. This prevents users from forging <code>[Nathan]:</code> lines that the model would treat as Nathan's dialogue.</p>
 <pre><code class="language-javascript">// User message
 {
     role: 'user',
@@ -391,7 +254,8 @@
             addressing_keywords: ['immortal', 'die', 'death', 'resurrect', 'irish', 'joke'],
             // Interrupt config for this character
             interrupt_keywords: ['community service', 'ASBO', 'probation worker'],
-            patience_threshold: 150,  // Nathan has NO patience
+            patience_threshold: 150,  // Nathan has NO patience (but see §8.4: patience triggers are probabilistic, not deterministic)
+            patience_interrupt_probability: 0.40,  // 40% chance per patience trip (§8.4)
             yield_frequency: 'high',  // Nathan yields often (wants reactions)
             // Passive presence config (§6.6)
             reaction_probability: 0.60,  // Nathan reacts to 60% of exchanges he's not in
@@ -406,7 +270,7 @@
         }
     ],
 
-    turn_order: 'context',            // 'sequential' | 'context' | 'simultaneous'
+    turn_order: 'context',            // 'sequential' | 'context' (v1). 'simultaneous' deferred to v2+.
     interruptions_enabled: true,      // master toggle for interrupt protocol
     passive_presence_enabled: true,   // master toggle for passive reactions (§6.6)
     emotional_tracking_enabled: true, // master toggle for emotional state (§6.7)
@@ -693,9 +557,23 @@ def detect_names(user_message, participants):
 <p><strong>Resolving name matches:</strong></p>
 <ul>
 <li><strong>One character matched</strong> → route to that character.</li>
-<li><strong>Both characters matched</strong> → the one whose name appears <em>first</em> in the sentence is the addressee (vocative position). The other is a referenced third party. Example: "Kelly, tell Nathan he's being a dick" → Kelly is addressed (position 0), Nathan is the topic (position 12).</li>
+<li><strong>Both characters matched</strong> → check for trailing vocative first (see below), then fall back to first-mentioned.</li>
 <li><strong>No characters matched</strong> → fall through to tier 2.</li>
 </ul>
+<p><strong>Trailing vocative override:</strong> If the message ends with <code>, &lt;name&gt;</code> or <code>&lt;name&gt;?</code> (e.g., "Tell Nathan he's wrong, Kelly"), the trailing name is the addressee, regardless of position. This prevents first-mentioned routing from misrouting when the user puts the real addressee at the end:</p>
+<pre><code class="language-python">def _check_trailing_vocative(msg_clean, participants):
+    &quot;&quot;&quot;Check if message ends with a vocative: ', Kelly' or 'Kelly?'&quot;&quot;&quot;
+    msg_stripped = msg_clean.rstrip('?!.,')
+    for p in participants:
+        char_config = load_character_config(p['config'])
+        names = char_config.get('name_variants', [p['display_name']])
+        for name in names:
+            name_lower = name.lower()
+            if msg_stripped.endswith(', ' + name_lower) or msg_stripped.endswith(name_lower):
+                return p['label']
+    return None
+</code></pre>
+<p>If trailing vocative matches, it wins over first-mentioned position. Example: "Tell Nathan he's wrong, Kelly" → trailing vocative = Kelly → route to Kelly (not Nathan).</p>
 <p><strong>How "Kel... you know that's not true" resolves:</strong></p>
 <pre><code>Pass 1 (word-boundary): Search for \bkel\b in &quot;kel... you know that's not true&quot;
     → &quot;...&quot; is not a word character, so \b matches after &quot;kel&quot;
@@ -1113,6 +991,40 @@ Current emotional state: {emotional_state[other_participant['label']]}
 - A small "reacted" indicator (e.g., a subtle icon or italic styling)</p>
 <p>This visually communicates: "this is a background reaction, not a main response."</p>
 <p><strong>Cost:</strong> One additional lightweight API call per turn (max 80 tokens, ~0.5-1 second latency). Can be made parallel with the main response's interrupt monitoring. Gated behind <code>passive_presence_enabled: true</code>.</p>
+<p><strong>Interaction with trio state (CRITICAL):</strong></p>
+<p>Passive reactions have specific rules for how they interact with routing state:</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Updated by passive reaction?</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>last_speaker</code></td>
+<td>❌ NO</td>
+<td>If Nathan's passive snort set <code>last_speaker = nathan</code>, the user's next vague "lol" would route to Nathan via Tier 4 — the passive presence system would silently hijack routing. <code>last_speaker</code> only updates on full responses.</td>
+</tr>
+<tr>
+<td><code>consecutive_default_turns</code></td>
+<td>❌ NO</td>
+<td>Passive reactions don't count as "turns" for alternation purposes. They're background color, not conversational turns.</td>
+</tr>
+<tr>
+<td><code>history[]</code></td>
+<td>✅ YES</td>
+<td>Passive reactions ARE appended to shared history (with <code>is_passive_reaction: true</code> flag). If they weren't, characters would contradict things they visibly said. The model sees them in context.</td>
+</tr>
+<tr>
+<td><code>emotional_state</code></td>
+<td>✅ YES</td>
+<td>A passive reaction can shift emotional state (Nathan's snort might annoy Kelly). The emotional state update call runs after passive reactions.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Summary:</strong> Passive reactions are appended to history (so characters remember them) but do NOT update <code>last_speaker</code> or <code>consecutive_default_turns</code> (so they don't hijack routing). This must be explicit in the trio_state spec and the turn flow (§7.2).</p>
 <p><strong>Why this transforms the experience:</strong> The user no longer feels like they're talking to one person at a time. Even when they address Kelly, Nathan might snort, mutter "here we go," or exchange a look. The possibility that the other character <em>might</em> react keeps them present in the user's mind. This is the difference between "multi-character chat" and "being in a room with two people."</p>
 <h3 id="67-emotional-state-tracking">6.7 Emotional State Tracking</h3>
 <p><strong>The Problem:</strong> Characters start with a static emotional state (from the relationship dynamic config) and never change. After 30 turns, Kelly is still "guarded" and Nathan is still "performing" regardless of what happened. Real people's moods shift based on conversation — a serious moment drops Nathan's energy, a joke raises Kelly's.</p>
@@ -1257,7 +1169,7 @@ Would {other_character_config['label']} interrupt right now? Answer with one:
 <tr>
 <td><code>simultaneous</code></td>
 <td>Both characters stream at the same time in parallel.</td>
-<td>Quick reactions, neither influenced by the other</td>
+<td>Quick reactions, neither influenced by the other. <strong>Deferred to v2+</strong> — requires parallel streaming, history-ordering rules, and interrupt interaction spec that aren't in v1.</td>
 </tr>
 <tr>
 <td><code>let_them_talk</code></td>
@@ -1488,19 +1400,30 @@ def resolve_addressee(user_message, participants, trio_state, max_consecutive=2)
             _reset_consecutive(consecutive)
             return name_matches[0]['label']
 
-    # ── Tier 2: &quot;Both&quot; Keywords ─────────────────────────────────────
+    # ── Tier 2: &quot;Both&quot; Keywords (word-boundary matched) ──────────────────
+    # Use word-boundary regex, not substring, to prevent &quot;both&quot; matching
+    # inside &quot;bothered&quot; or &quot;you two&quot; matching inside &quot;you twosome&quot;.
     both_keywords = ['both', 'you two', 'you guys', 'both of you', 'you both']
-    if any(kw in msg_clean for kw in both_keywords):
-        _reset_consecutive(consecutive)
-        return 'both'
+    for kw in both_keywords:
+        pattern = r'\b' + re.escape(kw) + r'\b'
+        if re.search(pattern, msg_clean):
+            _reset_consecutive(consecutive)
+            return 'both'
 
-    # ── Tier 3: Content Inference ───────────────────────────────────
+    # ── Tier 3: Content Inference (word-boundary matched) ─────────────────
+    # Same word-boundary fix as Tier 2. Prevents &quot;hear&quot; matching &quot;heart&quot;,
+    # &quot;die&quot; matching &quot;audience&quot;, &quot;mind&quot; matching &quot;reminded&quot;, etc.
     keyword_matches = {}
     for p in participants:
         char_config = load_character_config(p['config'])
         keywords = char_config.get('addressing_keywords', [])
-        score = sum(1 for kw in keywords if kw in msg_clean)
+        score = 0
+        for kw in keywords:
+            pattern = r'\b' + re.escape(kw) + r'\b'
+            if re.search(pattern, msg_clean):
+                score += 1
         if score &gt; 0:
+            keyword_matches[p['label']] = score
             keyword_matches[p['label']] = score
 
     if len(keyword_matches) == 1:
@@ -1525,11 +1448,16 @@ def resolve_addressee(user_message, participants, trio_state, max_consecutive=2)
         return last
 
 
-def _detect_names(msg_clean, participants):
-    &quot;&quot;&quot;Word-boundary regex match for character names and nicknames.&quot;&quot;&quot;
+def _detect_names(msg_clean, participants, config_cache=None):
+    &quot;&quot;&quot;Word-boundary regex match for character names and nicknames.
+
+    Uses config_cache (dict of config_path → char_config) to avoid
+    reloading character configs from disk on every message. The cache
+    is built once per chat session and passed through the resolver.
+    &quot;&quot;&quot;
     matches = []
     for p in participants:
-        char_config = load_character_config(p['config'])
+        char_config = _get_cached_config(p['config'], config_cache)
         names = char_config.get('name_variants', [p['display_name']])
         for name in names:
             name_lower = name.lower()
@@ -1545,8 +1473,26 @@ def _detect_names(msg_clean, participants):
     return matches
 
 
+def _get_cached_config(config_path, cache):
+    &quot;&quot;&quot;Get character config from cache, loading from disk only on first access.&quot;&quot;&quot;
+    if cache is None:
+        return load_character_config(config_path)
+    if config_path not in cache:
+        cache[config_path] = load_character_config(config_path)
+    return cache[config_path]
+
+
 def _detect_names_prefix(msg_clean, participants):
-    &quot;&quot;&quot;Prefix fallback: handles 'Kellyyy', 'Kell' (typo), 'Kel...' (trailing).&quot;&quot;&quot;
+    &quot;&quot;&quot;Prefix fallback: handles 'Kellyyy', 'Kell' (typo), 'Kel...' (trailing).
+
+    Guards against false positives like 'kelp' matching 'kel':
+    - Requires the matched word be at most len(name) + 3 characters
+      (allows 'Kellyyy' but not 'kelvin' for 'Kel')
+    - Only runs on short messages (&lt; 100 chars) where a vocative is plausible
+    &quot;&quot;&quot;
+    if len(msg_clean) &gt; 100:
+        return []  # prefix fallback only for short, vocative-style messages
+
     words = re.findall(r'\b\w+\b', msg_clean)
     matches = []
     for word in words:
@@ -1556,6 +1502,11 @@ def _detect_names_prefix(msg_clean, participants):
             for name in names:
                 name_lower = name.lower()
                 if len(name_lower) &gt;= 3 and word.startswith(name_lower):
+                    # Guard: word must be close to the name length
+                    # 'Kellyyy' (7) vs 'Kelly' (5) → OK (diff = 2)
+                    # 'kelvin' (6) vs 'Kel' (3) → rejected (diff = 3)
+                    if len(word) - len(name_lower) &gt; 3:
+                        continue
                     matches.append({
                         'label': p['label'],
                         'name_matched': name,
@@ -1564,6 +1515,28 @@ def _detect_names_prefix(msg_clean, participants):
                     break
             else:
                 continue
+            break
+    return matches
+
+
+def _check_trailing_vocative(msg_clean, participants):
+    &quot;&quot;&quot;Check if message ends with a vocative: ', Kelly' or 'Kelly?'
+
+    Trailing vocatives override first-mentioned position routing.
+    &quot;Tell Nathan he's wrong, Kelly&quot; → Kelly is the addressee, not Nathan.
+    &quot;&quot;&quot;
+    msg_stripped = msg_clean.rstrip('?!.,')
+    for p in participants:
+        char_config = load_character_config(p['config'])
+        names = char_config.get('name_variants', [p['display_name']])
+        for name in names:
+            name_lower = name.lower()
+            if msg_stripped.endswith(', ' + name_lower) or msg_stripped.endswith(name_lower):
+                return p['label']
+    return None
+
+
+def _reset_consecutive(consecutive):
             break
     return matches
 
@@ -1610,15 +1583,28 @@ def _reset_consecutive(consecutive):
 </table>
 <h3 id="84-interrupt-monitor">8.4 Interrupt Monitor</h3>
 <pre><code class="language-python">class InterruptMonitor:
-    &quot;&quot;&quot;Watches a character's streaming output for interrupt triggers.&quot;&quot;&quot;
+    &quot;&quot;&quot;Watches a character's streaming output for interrupt triggers.
 
-    def __init__(self, other_character_config, max_interrupts=3, cooldown_chars=500):
+    Patience triggers are PROBABILISTIC, not deterministic. When the patience
+    threshold is reached, a probability roll determines whether the interrupt
+    fires. This prevents the mechanical &quot;every long response gets interrupted&quot;
+    pattern. Additionally, consecutive patience-interrupts decay in probability
+    so the pattern doesn't repeat identically each turn.
+    &quot;&quot;&quot;
+
+    def __init__(self, other_character_config, max_interrupts=3, cooldown_chars=500,
+                 patience_probability=0.40, patience_decay=0.15):
         self.other = other_character_config
         self.keywords = other_character_config.get('interrupt_keywords', [])
         self.patience = other_character_config.get('patience_threshold', 300)
+        self.patience_probability = other_character_config.get(
+            'patience_interrupt_probability', patience_probability
+        )
+        self.patience_decay = patience_decay  # each consecutive patience-interrupt reduces probability
         self.max_interrupts = max_interrupts
         self.cooldown_chars = cooldown_chars
         self.interrupt_count = 0
+        self.consecutive_patience_interrupts = 0  # for decay calculation
         self.chars_since_last_interrupt = 0
         self.buffer = &quot;&quot;
 
@@ -1633,19 +1619,32 @@ def _reset_consecutive(consecutive):
         self.buffer += new_text
         self.chars_since_last_interrupt += len(new_text)
 
-        # 1. Explicit yield
+        # 1. Explicit yield — always fires (model chose to yield)
         if &quot;&lt;&lt;YIELD&gt;&gt;&quot; in self.buffer:
+            self.consecutive_patience_interrupts = 0  # reset decay
             return 'yield'
 
-        # 2. Keyword trigger
+        # 2. Keyword trigger — always fires (content-driven, not mechanical)
         buffer_lower = self.buffer.lower()
         for kw in self.keywords:
             if kw in buffer_lower:
+                self.consecutive_patience_interrupts = 0  # reset decay
                 return 'keyword'
 
-        # 3. Patience threshold
+        # 3. Patience threshold — PROBABILISTIC
+        # Roll a probability check. Decay reduces the chance for each
+        # consecutive patience-triggered interrupt, preventing the
+        # &quot;every long response gets cut off&quot; pattern.
         if len(self.buffer) &gt;= self.patience:
-            return 'patience'
+            effective_prob = max(0.05, self.patience_probability - 
+                                 (self.consecutive_patience_interrupts * self.patience_decay))
+            if random.random() &lt; effective_prob:
+                self.consecutive_patience_interrupts += 1
+                return 'patience'
+            else:
+                # Didn't fire — reset buffer to prevent re-rolling every token
+                # Keep last 50 chars for context, discard the rest
+                self.buffer = self.buffer[-50:]
 
         return None
 
@@ -1679,29 +1678,54 @@ def _reset_consecutive(consecutive):
 <p><strong>The Solution:</strong> The backend must consume tokens internally through a buffer queue until it can confidently determine whether a structural marker has fully formed. Only then does it emit structured SSE events with pre-resolved <code>speaker</code> fields. The frontend never does string parsing on raw tokens.</p>
 <pre><code class="language-python">class TokenBufferQueue:
     &quot;&quot;&quot;Buffers raw model tokens, emits structured SSE events once
-    structural markers ([Name]:, &lt;&lt;YIELD&gt;&gt;, em-dashes) fully form.
+    structural markers ([Name]:, &lt;&lt;YIELD&gt;&gt;) fully form.
 
     The frontend NEVER receives raw tokens — only structured events
     with pre-resolved speaker fields.
+
+    Note: em-dash interrupt markers are NOT parsed here. Em-dashes are
+    emitted as part of the interrupt event's truncated_text field by the
+    InterruptMonitor (§8.4), not as a structural marker in the stream.
     &quot;&quot;&quot;
 
-    # Patterns that might arrive split across token boundaries
-    LABEL_PATTERN = re.compile(r'\[([A-Za-z]+)\]:')
     YIELD_TOKEN = '&lt;&lt;YIELD&gt;&gt;'
-    EM_DASH = '—'
 
-    def __init__(self, participants):
+    def __init__(self, participants, default_speaker=None):
+        &quot;&quot;&quot;Initialize buffer queue.
+
+        Args:
+            participants: List of participant config dicts.
+            default_speaker: The label of the addressed character. Required
+                for single-character streams where the model won't emit
+                [Name]: labels. If None and no label appears, all text
+                is dropped — so always pass this for non-let-them-talk calls.
+        &quot;&quot;&quot;
         self.participants = participants
-        self.labels = set(p['label'] for p in participants)
-        # Also accept display names in labels: [Kelly Bailey]:
-        for p in participants:
-            self.labels.add(p['display_name'])
+        self.default_speaker = default_speaker
+        self.current_speaker = default_speaker  # start with default, not None
         self.buffer = &quot;&quot;
-        self.current_speaker = None
         self.pending_yield = False
 
+        # Pre-build label → speaker map and regex from KNOWN labels.
+        # This avoids disk reads during streaming and matches display names.
+        self._label_map = {}  # &quot;kelly&quot; → &quot;kelly&quot;, &quot;kelly bailey&quot; → &quot;kelly&quot;
+        for p in participants:
+            self._label_map[p['label'].lower()] = p['label']
+            self._label_map[p['display_name'].lower()] = p['label']
+            # Pre-load name_variants too (one-time disk read at init)
+            char_config = load_character_config(p['config'])
+            for v in char_config.get('name_variants', []):
+                self._label_map[v.lower()] = p['label']
+
+        # Build regex from known labels: \[(kelly|kelly bailey|kel|...)\]:
+        # This matches multi-word names and avoids matching arbitrary text.
+        label_alts = '|'.join(re.escape(k) for k in self._label_map.keys())
+        self.LABEL_PATTERN = re.compile(
+            r'\[(' + label_alts + r')\]:', re.IGNORECASE
+        )
+
     def feed(self, raw_token):
-        &quot;&quot;&quot;Accept a raw token from the model. Yield structured SSE events.&quot;&quot;&quot;
+        &quot;&quot;&quot;Accept a raw token from the model. Returns list of structured events.&quot;&quot;&quot;
         self.buffer += raw_token
         events = []
 
@@ -1718,14 +1742,18 @@ def _reset_consecutive(consecutive):
 
         # Check if buffer MIGHT contain a partial &lt;&lt;YIELD&gt;&gt; (prefix match)
         if self._has_partial_marker(self.buffer, self.YIELD_TOKEN):
-            # Don't emit yet — wait for more tokens to resolve
+            # Hold back only the unsafe portion, emit safe text first
+            # (same split logic as partial labels — don't stall the whole buffer)
+            safe, unsafe = self._split_safe_unsafe_yield(self.buffer)
+            if safe and self.current_speaker:
+                events.append({&quot;speaker&quot;: self.current_speaker, &quot;delta&quot;: safe})
+                self.buffer = unsafe
             return events
 
         # ── Check for [Name]: label (might be split across chunks) ──
         label_match = self.LABEL_PATTERN.search(self.buffer)
         if label_match:
             name = label_match.group(1)
-            # Find which participant this label refers to
             speaker = self._resolve_label_to_speaker(name)
             if speaker:
                 # Emit any text before the label (belongs to previous speaker)
@@ -1735,7 +1763,6 @@ def _reset_consecutive(consecutive):
 
                 # Switch speaker
                 self.current_speaker = speaker
-                # Text after the label belongs to the new speaker
                 after_label = self.buffer[label_match.end():]
                 self.buffer = after_label
 
@@ -1746,8 +1773,6 @@ def _reset_consecutive(consecutive):
 
         # Check if buffer MIGHT contain a partial [Name]: label
         if self._has_partial_label(self.buffer):
-            # Hold back — wait for more tokens
-            # But emit any text BEFORE the potential partial label
             safe, unsafe = self._split_safe_unsafe(self.buffer)
             if safe and self.current_speaker:
                 events.append({&quot;speaker&quot;: self.current_speaker, &quot;delta&quot;: safe})
@@ -1755,6 +1780,7 @@ def _reset_consecutive(consecutive):
             return events
 
         # ── No structural markers — emit as normal text for current speaker ──
+        # current_speaker is never None here (initialized to default_speaker)
         if self.current_speaker and self.buffer:
             events.append({&quot;speaker&quot;: self.current_speaker, &quot;delta&quot;: self.buffer})
             self.buffer = &quot;&quot;
@@ -1770,19 +1796,8 @@ def _reset_consecutive(consecutive):
         return events
 
     def _resolve_label_to_speaker(self, name):
-        &quot;&quot;&quot;Map a [Name]: label to a participant label.&quot;&quot;&quot;
-        name_lower = name.lower()
-        for p in self.participants:
-            if p['label'].lower() == name_lower:
-                return p['label']
-            if p['display_name'].lower() == name_lower:
-                return p['label']
-            # Check name_variants too
-            char_config = load_character_config(p['config'])
-            variants = char_config.get('name_variants', [])
-            if any(v.lower() == name_lower for v in variants):
-                return p['label']
-        return None
+        &quot;&quot;&quot;Map a [Name]: label to a participant label. O(1) dict lookup, no disk.&quot;&quot;&quot;
+        return self._label_map.get(name.lower())
 
     def _has_partial_marker(self, text, marker):
         &quot;&quot;&quot;Check if text ends with a prefix of marker (partial match).&quot;&quot;&quot;
@@ -1793,60 +1808,73 @@ def _reset_consecutive(consecutive):
 
     def _has_partial_label(self, text):
         &quot;&quot;&quot;Check if text might contain a partial [Name]: label at the end.&quot;&quot;&quot;
-        # Look for '[' near the end without a closing ']:'
-        # If there's an unclosed '[' in the last ~30 chars, hold back
         tail = text[-30:] if len(text) &gt; 30 else text
         if '[' in tail:
             last_open = tail.rfind('[')
             after_open = tail[last_open:]
-            # If no ']:' after the last '[', it might be a partial label
             if ']:' not in after_open:
                 return True
         return False
 
     def _split_safe_unsafe(self, text):
-        &quot;&quot;&quot;Split text into safe-to-emit and hold-back portions.&quot;&quot;&quot;
-        # Find the last '[' that doesn't have a matching ']:'
+        &quot;&quot;&quot;Split text into safe-to-emit and hold-back portions (for labels).&quot;&quot;&quot;
         idx = text.rfind('[')
         if idx == -1:
             return text, &quot;&quot;
-        # Check if this '[' has a closing ']:'
         remainder = text[idx:]
         if ']:' in remainder:
             return text, &quot;&quot;
         return text[:idx], text[idx:]
+
+    def _split_safe_unsafe_yield(self, text):
+        &quot;&quot;&quot;Split text for partial &lt;&lt;YIELD&gt;&gt; markers. Emits safe text before '&lt;'.&quot;&quot;&quot;
+        idx = text.rfind('&lt;')
+        if idx == -1:
+            return text, &quot;&quot;
+        # Check if this '&lt;' could be start of &lt;&lt;YIELD&gt;&gt;
+        remainder = text[idx:]
+        if self.YIELD_TOKEN.startswith(remainder):
+            return text[:idx], remainder
+        return text, &quot;&quot;
 </code></pre>
-<p><strong>Usage in <code>stream_let_them_talk()</code>:</strong></p>
-<pre><code class="language-python">def stream_let_them_talk(combo_prompt, messages, config, ...):
-    &quot;&quot;&quot;Single API call, model writes both characters with [Name]: labels.&quot;&quot;&quot;
-    participants = config['participants']
-    buffer_queue = TokenBufferQueue(participants)
+<p><strong>Key fixes in TokenBufferQueue:</strong></p>
+<ol>
+<li>
+<p><strong><code>default_speaker</code> constructor param (Critical #1):</strong> Single-character streams (the vast majority of turns) don't emit <code>[Name]:</code> labels. Without a default speaker, <code>current_speaker</code> is <code>None</code> and all text is silently dropped. Now <code>current_speaker</code> is initialized to <code>default_speaker</code> — the addressed character — so labelless streams work immediately.</p>
+</li>
+<li>
+<p><strong>LABEL_PATTERN built from known labels (Critical #2):</strong> The old <code>r'\[([A-Za-z]+)\]:'</code> couldn't match <code>[Kelly Bailey]:</code> (no <code>\s</code>). The new pattern is built from the actual label set at init time: <code>r'\[(kelly|kelly bailey|kel|kels|...)\]:'</code>. This matches multi-word display names, rejects unknown labels, and is case-insensitive.</p>
+</li>
+<li>
+<p><strong>Label variants cached in <code>__init__</code> (Minor):</strong> <code>_resolve_label_to_speaker</code> was calling <code>load_character_config()</code> on every label event during streaming — a disk read per token. Now all variants are pre-loaded into <code>_label_map</code> at construction time. <code>_resolve_label_to_speaker</code> is an O(1) dict lookup.</p>
+</li>
+<li>
+<p><strong>Partial <code>&lt;&lt;YIELD&gt;&gt;</code> doesn't stall buffer (Minor):</strong> The old code held back the entire buffer when a partial <code>&lt;&lt;YIELD&gt;&gt;</code> was detected. Now <code>_split_safe_unsafe_yield</code> emits safe text before the potential <code>&lt;</code>, only holding back the unsafe prefix.</p>
+</li>
+<li>
+<p><strong>Em-dash claim removed (Minor):</strong> The docstring no longer claims em-dash parsing. Em-dashes are part of the interrupt event's <code>truncated_text</code>, not a stream structural marker.<br>
+        yield format_sse(event)</p>
+<p>yield format_sse({"event": "turn_complete"})</p>
+</li>
+</ol>
+<pre><code>
+**Key principle:** The frontend's `handleStreamDelta()` function receives events with `speaker` already resolved. It never parses `[Name]:` labels — it just checks `data.speaker` and routes to the correct bubble. All the messy token-boundary logic lives in the backend where it belongs.
 
-    # The combo prompt instructs the model to use [Name]: labels
-    # and &lt;&lt;YIELD&gt;&gt; to signal exchange end
+### 8.7 RAG Payload Formatting for Trio Mode
 
-    for raw_chunk in api_stream(combo_prompt, messages, ...):
-        # Feed raw token to buffer queue
-        events = buffer_queue.feed(raw_chunk)
-        for event in events:
-            yield format_sse(event)  # Structured event to frontend
+**The Problem:** Lagoon's existing RAG system chunks conversation into turn-pairs, embeds them with all-MiniLM-L6-v2, and retrieves relevant chunks to inject into the context budget. In trio mode, those chunks contain `[Name]:` labels — e.g., `[Nathan]: I hate community service.`
 
-    # Flush remaining buffer
-    for event in buffer_queue.flush():
-        yield format_sse(event)
+When retrieved, these chunks are injected as raw text. The model can't distinguish between:
+- Active narrative happening right now in the conversation
+- Recalled memory from earlier in the scene
+- Recalled memory from a completely different scene/chapter
 
-    yield format_sse({&quot;event&quot;: &quot;turn_complete&quot;})
-</code></pre>
-<p><strong>Key principle:</strong> The frontend's <code>handleStreamDelta()</code> function receives events with <code>speaker</code> already resolved. It never parses <code>[Name]:</code> labels — it just checks <code>data.speaker</code> and routes to the correct bubble. All the messy token-boundary logic lives in the backend where it belongs.</p>
-<h3 id="87-rag-payload-formatting-for-trio-mode">8.7 RAG Payload Formatting for Trio Mode</h3>
-<p><strong>The Problem:</strong> Lagoon's existing RAG system chunks conversation into turn-pairs, embeds them with all-MiniLM-L6-v2, and retrieves relevant chunks to inject into the context budget. In trio mode, those chunks contain <code>[Name]:</code> labels — e.g., <code>[Nathan]: I hate community service.</code></p>
-<p>When retrieved, these chunks are injected as raw text. The model can't distinguish between:<br>
-- Active narrative happening right now in the conversation<br>
-- Recalled memory from earlier in the scene<br>
-- Recalled memory from a completely different scene/chapter</p>
-<p>This causes temporal confusion — Kelly might read a RAG chunk and think Nathan just said "I hate community service" moments ago, when it actually happened 3 chapters ago.</p>
-<p><strong>The Solution:</strong> Wrap all RAG retrieval results in a structural header that explicitly marks them as recalled memory, not active narrative. The model is instructed (via combo prompt rules) to treat content within these headers as background knowledge, not as something currently being said.</p>
-<pre><code class="language-python">def format_rag_for_trio(retrieved_chunks, scene_context=None):
+This causes temporal confusion — Kelly might read a RAG chunk and think Nathan just said &quot;I hate community service&quot; moments ago, when it actually happened 3 chapters ago.
+
+**The Solution:** Wrap all RAG retrieval results in a structural header that explicitly marks them as recalled memory, not active narrative. The model is instructed (via combo prompt rules) to treat content within these headers as background knowledge, not as something currently being said.
+
+```python
+def format_rag_for_trio(retrieved_chunks, scene_context=None):
     &quot;&quot;&quot;Format RAG retrieval results with structural headers for trio mode.
 
     Wraps retrieved dialogue in clear memory markers so the model
@@ -2056,7 +2084,7 @@ function handleInterruptEvent(data) {
 </tr>
 <tr>
 <td>Emotional state drifts unrealistically (guarded → euphoric in one turn)</td>
-<td>Clamp transitions: max one step change per field per exchange</td>
+<td>Clamp only <code>energy</code> (ordinal: low/med/high, max one step per exchange). Categorical fields (<code>current</code>, <code>toward_other</code>, <code>toward_user</code>) are NOT clamped — they have no ordering. Instead, the emotional state update prompt instructs the model to shift gradually, and invalid jumps are logged for review.</td>
 </tr>
 <tr>
 <td>Passive reaction fires every turn (feels spammy)</td>
@@ -2065,6 +2093,18 @@ function handleInterruptEvent(data) {
 <tr>
 <td>Both passive reaction and interrupt fire in same turn</td>
 <td>Interrupt takes priority; passive reaction is skipped if an interrupt already occurred</td>
+</tr>
+<tr>
+<td>Worst-case call count per user message exceeds budget</td>
+<td>Per-turn call budget: max 6 LLM calls (1 main + 3 interrupts + 1 passive + 1 emotional). If an interrupt cycle occurs (≥2 interrupts), skip passive reaction AND emotional state update for that turn — the interrupt cycle already provided enough dynamism. Degraded mode flag: <code>degraded_mode: true</code> in trio_state.</td>
+</tr>
+<tr>
+<td>Interrupt truncation point is mid-word or mid-markdown</td>
+<td>Truncate at the last sentence/clause boundary before the trigger position, then append em-dash. Use <code>text[:pos].rpartition('. ')</code> or <code>text[:pos].rpartition(', ')</code> to find the boundary. "and it were all ju—" → "and it were all just—" (cleaner break).</td>
+</tr>
+<tr>
+<td>User types <code>[Nathan]: I secretly love Kelly</code></td>
+<td>Sanitize user input: strip bracket-label patterns before adding to history. Regex <code>r'^\s*\[[A-Za-z\s]+\]:\s*'</code> is removed from user messages. The forged label is stripped, not preserved. Message becomes <code>[You]: I secretly love Kelly</code>.</td>
 </tr>
 <tr>
 <td>Context window overflow</td>
@@ -2194,7 +2234,7 @@ function handleInterruptEvent(data) {
 </ul>
 <h3 id="phase-6-polish">Phase 6: Polish</h3>
 <ul>
-<li>[ ] Trio chat save/load (participants[] in config)</li>
+<li>[ ] Trio chat save/load (participants[], trio_state, emotional_state all persisted). Reloading a chat mid-arc must preserve last_speaker, consecutive counters, and emotional state — otherwise Nathan snaps back to "performing / high energy" and §6.7's arc is defeated.</li>
 <li>[ ] Relationship dynamic editor UI</li>
 <li>[ ] Addressing keywords editor in character config</li>
 <li>[ ] Interrupt keywords/patience editor in participant config</li>
@@ -2203,7 +2243,7 @@ function handleInterruptEvent(data) {
 <li>[ ] (v2+) LLM router fallback for Tier 4a (gated behind use_llm_router flag)</li>
 <li>[ ] (v2+) Motivation-based interrupts (§6.9, gated behind motivation_based_interrupts flag)</li>
 </ul>
-<h3 id="phase-6-testing">Phase 6: Testing</h3>
+<h3 id="phase-7-testing">Phase 7: Testing</h3>
 <ul>
 <li>[ ] Unit tests: combo prompt builder, addressing resolver, interrupt monitor</li>
 <li>[ ] Integration tests: full trio turn cycle, interrupt cycle, let-them-talk</li>
@@ -2348,7 +2388,7 @@ test_voice_bleed():
 <p><strong>Should the TokenBufferQueue live in the backend or frontend?</strong> — <em>Decision: backend. The frontend must NEVER receive raw model tokens in trio mode. All structural marker parsing ([Name]: labels, &lt;<YIELD>&gt;, em-dashes) happens server-side in the TokenBufferQueue (§8.6). The frontend receives only structured SSE events with pre-resolved <code>speaker</code> fields. This prevents mid-token parsing failures when the model emits tokens as word fragments.</em></p>
 </li>
 <li>
-<p><strong>Should the combo prompt be cached between calls?</strong> — <em>Decision: yes. Both characters use the same model (Option A, locked — see §3.2 and §4.3). Cache key = hash of both character configs + dynamic + emotional_state. The emotional state changes per exchange, so the cache is invalidated when state updates.</em></p>
+<p><strong>Should the combo prompt be cached between calls?</strong> — <em>Decision: yes, with split caching. The combo prompt is split into two parts: (1) a static prefix (character definitions, relationship dynamics, behavioral rules — everything that doesn't change within a chat session) and (2) a dynamic suffix (emotional state, recent context, turn-specific instructions). Only the static prefix is cached. The dynamic suffix is appended fresh each turn. This also plays nicely with provider-side prefix caching (Venice/OpenAI cache the first N tokens of a prompt automatically). Cache key = hash of both character configs + relationship dynamic + rules version. Invalidated only when character configs change, not when emotional state updates.</em></p>
 </li>
 <li>
 <p><strong>One model or two?</strong> — <em>Decision: ONE model (Option A — locked). Both characters are written by the same model via the combo prompt. Per-character model selection is NOT supported. This is a deliberate architectural choice: the combo prompt, TokenBufferQueue, let-them-talk single-call design, and em-dash interrupt protocol all require one model writing both characters. See §4.3 for full rationale. Voice bleed is mitigated by combo prompt rules and the Style Overseer.</em></p>
