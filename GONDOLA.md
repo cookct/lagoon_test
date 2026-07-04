@@ -13,7 +13,7 @@
 - [2026-06-22] The outline has four parts spanning ~220K words: Part One (Ch 1-20) covers Aen-Vhar's origin through the father's murder
 - [2026-06-22] Eldest son of a First One mother and her Vhor'keth. Born with more old blood than anyone before—powerful enough to almos
 - [2026-07-03] Models are configured with fields: id, name, provider, logo, and pricing object containing input/output/cacheRead rates 
-- ... (26 total, see deep store)
+- ... (27 total, see deep store)
 
 ## Decisions
 
@@ -28,6 +28,7 @@
 - [2026-06-23] Pim invented the liberation theory and waited 2000 years. Dramatic logic demands Pim go first, not be freed last 'by cho
 - [2026-07-03] Use rAF-throttled updateStreamingDOM during active streaming, but call synchronous updateStreamingDOMImmediate for the f
 - [2026-05-31] The correct approach for message correction: keep the bad message object in its original position, reset its content to 
+- ... (12 total, see deep store)
 
 ## Patterns
 
@@ -42,7 +43,7 @@
 - [2026-07-03] When adding a model: (1) add entry to installed_models.json, (2) check if logo exists in MODEL_LOGOS - add if missing. M
 - [2026-04-20] The wife has her own cash stash and secretly pays contractors when her husband refuses. She schedules work behind his ba
 - [2026-04-30] Grok 4.20 Beta escalates content intensity aggressively without hesitation - each user comment triggers harder/more expl
-- ... (14 total, see deep store)
+- ... (15 total, see deep store)
 
 ## Gotchas
 
@@ -54,7 +55,7 @@
 - [2026-05-08] Setting overflow-y: auto shows scrollbar even on empty inputs. Fix: JS toggles overflow-y to hidden by default, only swi
 - [2026-05-10] Hitting Byparr's /v1 endpoint for the first time triggers a ~5GB camoufox browser download from GitHub. This blocks all 
 - [2026-05-19] During transaction buffering, search and read operations see the disk file content, not the staged/buffered changes. Edi
-- ... (23 total, see deep store)
+- ... (24 total, see deep store)
 
 ## Active Context
 

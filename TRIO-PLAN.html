@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>TRIO-PLAN</title>
+<title>TRIO-PLAN V2.4</title>
 <style>
 @page { size: A4; margin: 2cm 1.8cm; @bottom-center { content: "Page " counter(page) " of " counter(pages); font-size: 9px; color: #888; } }
 body { font-family: Helvetica, Arial, sans-serif; font-size: 10.5px; line-height: 1.55; color: #1a1a1a; }
@@ -33,9 +33,11 @@ h1:first-of-type { font-size: 26px; text-align: center; border-bottom: none; mar
 <h1 id="three-way-chat-system-trio-mode-architecture-implementation-plan">Three-Way Chat System (Trio Mode) — Architecture &amp; Implementation Plan</h1>
 <blockquote>
 <p><strong>Status:</strong> PLANNED — Not yet built<br>
+<strong>Version:</strong> 2.4<br>
 <strong>Date:</strong> 2026-07-04<br>
 <strong>Example Characters:</strong> Kelly Bailey &amp; Nathan Young (Misfits)<br>
-<strong>Reviewers:</strong> This document is structured for 3rd-party architectural review.</p>
+<strong>Reviewers:</strong> This document is structured for 3rd-party architectural review.<br>
+<strong>Changelog (V2.4):</strong> Complete frontend design spec added (§9): TrioSetupModal with character selection + relationship dynamic editor, ParticipantStrip with emotional state indicators, TrioManager state machine, speaker-attributed message rendering, streaming display with speaker switching, interrupt visual feedback with animations, passive reaction styling, @mention autocomplete, mobile considerations, file structure, and accessibility.</p>
 </blockquote>
 <hr>
 <h2 id="1-executive-summary">1. Executive Summary</h2>
@@ -1926,110 +1928,1710 @@ def format_rag_for_trio(retrieved_chunks, scene_context=None):
 </code></pre>
 <hr>
 <h2 id="9-frontend-implementation">9. Frontend Implementation</h2>
-<h3 id="91-triomanagerjs">9.1 TrioManager.js</h3>
-<p>Extends DualModelManager pattern:</p>
-<pre><code class="language-javascript">export const trioManager = {
-    state: {
-        participants: [],
-        lastSpeaker: null,
-        lastAddressee: null,
-        activeThread: null,
-        interruptCount: 0,
-        isStreaming: false,
-        currentSpeaker: null,
-    },
-
-    init(participants, dynamic) { ... },
-    handleSendMessage(text) { ... },
-    handleSSEEvent(event) { ... },
-    handleInterrupt(event) { ... },
-    renderParticipantStrip() { ... },
-    letThemTalk() { ... },
-    exitTrioMode() { ... },
-};
-</code></pre>
-<h3 id="92-message-rendering">9.2 Message Rendering</h3>
-<p><code>messages.js</code> <code>addMessageToUI()</code> extended to handle speaker:</p>
-<pre><code class="language-javascript">function addMessageToUI(role, content, options = {}) {
-    const speaker = options.speaker || (role === 'user' ? 'user' : 'assistant');
-    const participant = trioManager.getParticipant(speaker);
-
-    const bubble = document.createElement('div');
-    bubble.className = `message-group speaker-${speaker}`;
-    bubble.style.borderLeftColor = participant?.color || 'var(--border)';
-
-    if (options.interrupted) {
-        bubble.classList.add('interrupted');
-    }
-    if (options.isInterruption) {
-        bubble.classList.add('interruption');
-    }
-
-    // Avatar + name on EVERY message (not just first in group)
-    const header = document.createElement('div');
-    header.className = 'message-header';
-    header.innerHTML = `
-        &lt;img src=&quot;${participant?.avatar || ''}&quot; class=&quot;message-avatar&quot;&gt;
-        &lt;span class=&quot;message-name&quot; style=&quot;color: ${participant?.color}&quot;&gt;
-            ${participant?.display_name || 'Assistant'}
-        &lt;/span&gt;
-    `;
-    bubble.appendChild(header);
-
-    // Content
-    const body = document.createElement('div');
-    body.className = 'message-content';
-    body.innerHTML = parseMarkdown(content);
-    bubble.appendChild(body);
-
-    chatMessages.appendChild(bubble);
-}
-</code></pre>
-<h3 id="93-participant-strip">9.3 Participant Strip</h3>
-<p>Top bar showing who's in the conversation:</p>
+<h3 id="90-design-principles">9.0 Design Principles</h3>
+<ol>
+<li><strong>Speaker-first rendering.</strong> Every message bubble carries speaker identity — avatar, name, color accent. No anonymous bubbles. The user always knows who's talking.</li>
+<li><strong>Pre-resolved by backend.</strong> The frontend NEVER parses <code>[Name]:</code> labels from raw tokens. The backend TokenBufferQueue (§8.6) resolves speakers and emits structured SSE events. The frontend just reads <code>data.speaker</code>.</li>
+<li><strong>Minimal mode switching friction.</strong> Entering trio mode should feel like opening a group chat, not configuring a server. Two character picks + one relationship dropdown = ready.</li>
+<li><strong>Passive presence is visual.</strong> Passive reactions (§6.6) must look distinctly different from full responses — smaller, muted, no header. The user should feel "that was a background reaction" without reading a label.</li>
+<li><strong>Interrupts are felt, not just read.</strong> When Nathan cuts Kelly off, the UI animates — Kelly's bubble gets the em-dash, Nathan's bubble slides in with a subtle "cut-in" animation. The interruption is a visual event, not just text.</li>
+<li><strong>Emotional state is ambient.</strong> Mood indicators live in the participant strip, not in message bubbles. They're peripheral — the user senses the shift without it dominating the screen.</li>
+<li><strong>Mobile parity.</strong> All trio UI components work on mobile. The participant strip collapses to avatars-only, the setup modal becomes full-screen, and touch targets meet 44px minimum.</li>
+</ol>
+<hr>
+<h3 id="91-triosetupmodal-character-selection">9.1 TrioSetupModal — Character Selection</h3>
+<p><strong>Trigger:</strong> When user selects "Trio" from the mode dropdown in settings (same dropdown as Chat/Image/Video), or clicks "New Trio Chat" from the chat list.</p>
+<p><strong>Layout (Desktop):</strong></p>
 <pre><code>┌──────────────────────────────────────────────────────────┐
-│  🔵 Kelly Bailey    🟠 Nathan Young    👤 You            │
-│  ─────────────      ─────────────                        │
-│  (active)           (waiting)                            │
+│  ✕                                            Trio Setup  │
+├──────────────────────────────────────────────────────────┤
+│                                                            │
+│  ┌─────────────────────┐    ┌─────────────────────┐       │
+│  │                     │    │                     │       │
+│  │   CHARACTER A       │    │   CHARACTER B       │       │
+│  │                     │    │                     │       │
+│  │  ┌───────────────┐  │    │  ┌───────────────┐  │       │
+│  │  │               │  │    │  │               │  │       │
+│  │  │   [Avatar]    │  │    │  │   [Avatar]    │  │       │
+│  │  │               │  │    │  │               │  │       │
+│  │  └───────────────┘  │    │  └───────────────┘  │       │
+│  │                     │    │                     │       │
+│  │  ▾ Select Character │    │  ▾ Select Character │       │
+│  │                     │    │                     │       │
+│  │  ── Preview ──      │    │  ── Preview ──      │       │
+│  │  Name: Kelly Bailey │    │  Name: Nathan Young │       │
+│  │  Personality: ...   │    │  Personality: ...   │       │
+│  │  Speech: Northern   │    │  Speech: Irish,     │       │
+│  │  English, blunt     │    │  sarcastic          │       │
+│  │                     │    │                     │       │
+│  │  Color: ● #e85d4a   │    │  Color: ● #4a9eff   │       │
+│  │                     │    │                     │       │
+│  └─────────────────────┘    └─────────────────────┘       │
+│                                                            │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │  RELATIONSHIP DYNAMIC                                │ │
+│  │                                                       │ │
+│  │  ▾ Rivals          ▾ Tension: ████░░ Medium          │ │
+│  │                                                       │ │
+│  │  ── Description ──                                    │ │
+│  │  Nathan prods Kelly's insecurities for entertainment; │ │
+│  │  Kelly finds Nathan exhausting but secretly respects  │ │
+│  │  his fearlessness.                                    │ │
+│  │                                                       │ │
+│  │  [Edit Description...]                                │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │  MODEL                                                │ │
+│  │  ▾ grok-4-20-beta                                     │ │
+│  │  One model writes both characters. See §4.3.          │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │  OPTIONS                                              │ │
+│  │  ☑ Interruptions enabled                               │ │
+│  │  ☑ Passive presence enabled                            │ │
+│  │  ☑ Emotional tracking enabled                          │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                            │
+│              [ Cancel ]    [ Start Trio Chat ]             │
+│                                                            │
 └──────────────────────────────────────────────────────────┘
 </code></pre>
-<ul>
-<li>Active speaker gets a <strong>glowing border</strong> during streaming</li>
-<li>Clicking a participant avatar toggles @mention insertion in the input</li>
-<li>"Let them talk" button appears at the right end of the strip</li>
-</ul>
-<h3 id="94-streaming-display">9.4 Streaming Display</h3>
-<p>During streaming, SSE events route tokens to the correct bubble. <strong>Critical:</strong> the frontend receives pre-parsed structured events from the backend Token Buffer Queue (§8.6). The <code>speaker</code> field is already resolved — the frontend NEVER parses <code>[Name]:</code> labels from raw tokens. It just checks <code>data.speaker</code> and routes to the correct bubble:</p>
-<pre><code class="language-javascript">function handleStreamDelta(data) {
-    const { speaker, delta } = data;
+<p><strong>Layout (Mobile):</strong></p>
+<pre><code>┌────────────────────────┐
+│  ✕         Trio Setup   │
+├────────────────────────┤
+│                        │
+│  CHARACTER A           │
+│  ┌──────────────────┐  │
+│  │    [Avatar]      │  │
+│  │  ▾ Select...     │  │
+│  └──────────────────┘  │
+│                        │
+│  CHARACTER B           │
+│  ┌──────────────────┐  │
+│  │    [Avatar]      │  │
+│  │  ▾ Select...     │  │
+│  └──────────────────┘  │
+│                        │
+│  RELATIONSHIP          │
+│  ▾ Rivals              │
+│  Tension: ████░░ Med   │
+│                        │
+│  MODEL                 │
+│  ▾ grok-4-20-beta      │
+│                        │
+│  ☑ Interruptions       │
+│  ☑ Passive presence    │
+│  ☑ Emotional tracking  │
+│                        │
+│  [Cancel] [Start Trio] │
+└────────────────────────┘
+</code></pre>
+<p><strong>Component API:</strong></p>
+<pre><code class="language-javascript">// js/components/TrioSetupModal.js
 
-    // speaker is pre-resolved by backend TokenBufferQueue
-    // No string parsing of [Name]: labels on the frontend
-    if (speaker !== currentStreamingSpeaker) {
-        // Speaker changed — create new bubble
-        finishCurrentBubble();
-        startNewBubble(speaker);
+export class TrioSetupModal {
+    constructor(options = {}) {
+        this.onConfirm = options.onConfirm || (() =&gt; {});
+        this.onCancel = options.onCancel || (() =&gt; {});
+        this.availableCharacters = [];  // loaded from fetchConfigs()
+        this.selectedA = null;
+        this.selectedB = null;
+        this.relationship = 'rivals';
+        this.tensionLevel = 5;  // 1-10
+        this.relationshipDescription = '';
+        this.model = state.currentConfig?.model || 'grok-4-20-beta';
+        this.options = {
+            interruptions: true,
+            passivePresence: true,
+            emotionalTracking: true,
+        };
+        this.modal = null;
     }
 
-    appendToCurrentBubble(delta);
-    autoScroll();
+    async show() {
+        // Load available character configs
+        this.availableCharacters = await fetchConfigs();
+        this._render();
+        document.body.appendChild(this.modal);
+        // Focus trap, escape to close, etc.
+    }
+
+    _render() { /* builds DOM per wireframe above */ }
+
+    _selectCharacter(slot, configId) {
+        // Load character config, show preview, enable start button if both slots filled
+    }
+
+    _editRelationshipDescription() {
+        // Inline editor for the relationship description text
+    }
+
+    _confirm() {
+        const config = this._buildTrioConfig();
+        this.onConfirm(config);
+        this._close();
+    }
+
+    _buildTrioConfig() {
+        return {
+            mode: 'trio',
+            trio_model: this.model,
+            participants: [
+                this._buildParticipant(this.selectedA, 'A'),
+                this._buildParticipant(this.selectedB, 'B'),
+            ],
+            relationship_dynamic: {
+                type: this.relationship,
+                tension: this.tensionLevel,
+                description: this.relationshipDescription,
+            },
+            turn_order: 'context',
+            interruptions_enabled: this.options.interruptions,
+            passive_presence_enabled: this.options.passivePresence,
+            emotional_tracking_enabled: this.options.emotionalTracking,
+        };
+    }
+
+    _buildParticipant(charConfig, slot) {
+        return {
+            config: charConfig.id,
+            label: charConfig.name,
+            display_name: charConfig.name,
+            color: slot === 'A' ? '#e85d4a' : '#4a9eff',
+            avatar: charConfig.avatar || `${charConfig.id}.png`,
+            name_variants: charConfig.name_variants || [charConfig.name],
+            nicknames: charConfig.nicknames || [],
+            addressing_keywords: charConfig.addressing_keywords || [],
+            interrupt_keywords: charConfig.interrupt_keywords || [],
+            patience_threshold: charConfig.patience_threshold || 300,
+            patience_interrupt_probability: charConfig.patience_interrupt_probability || 0.40,
+            yield_frequency: charConfig.yield_frequency || 'medium',
+            reaction_probability: charConfig.reaction_probability || 0.35,
+            reaction_max_tokens: charConfig.reaction_max_tokens || 80,
+            initial_emotional_state: charConfig.initial_emotional_state || {
+                current: 'neutral',
+                toward_other: 'neutral',
+                toward_user: 'neutral',
+                energy: 'medium',
+            },
+        };
+    }
+}
+</code></pre>
+<p><strong>Relationship Dynamic Presets:</strong></p>
+<pre><code class="language-javascript">const RELATIONSHIP_PRESETS = {
+    rivals: {
+        label: 'Rivals',
+        default_tension: 7,
+        description: '{A} and {B} clash constantly. They challenge each other, push buttons, and refuse to back down. Underneath the friction, there may be grudging respect.',
+    },
+    friends: {
+        label: 'Friends',
+        default_tension: 3,
+        description: '{A} and {B} know each other well. They joke, tease, and support each other. They have shared history and inside references.',
+    },
+    'romantic-tension': {
+        label: 'Romantic Tension',
+        default_tension: 6,
+        description: '{A} and {B} have unresolved romantic chemistry. They dance around it with banter, meaningful looks, and occasional vulnerability.',
+    },
+    estranged: {
+        label: 'Estranged',
+        default_tension: 8,
+        description: '{A} and {B} have a painful history. They\'re civil but guarded. Old wounds surface unexpectedly.',
+    },
+    'mentor-student': {
+        label: 'Mentor / Student',
+        default_tension: 4,
+        description: '{A} guides {B}. There\'s respect, occasional frustration, and moments of genuine connection.',
+    },
+    'frenemies': {
+        label: 'Frenemies',
+        default_tension: 6,
+        description: '{A} and {B} are friendly on the surface but compete passive-aggressively. Loyalty is conditional.',
+    },
+    custom: {
+        label: 'Custom',
+        default_tension: 5,
+        description: '',  // user writes their own
+    },
+};
+</code></pre>
+<p><strong>CSS:</strong></p>
+<pre><code class="language-css">.trio-setup-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(4px);
 }
 
-function handleInterruptEvent(data) {
-    const { by, truncated_text } = data;
+.trio-setup-modal__content {
+    background: var(--bg-primary, #1a1a2e);
+    border: 1px solid var(--border, #333);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 720px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+    color: var(--text-primary, #e0e0e0);
+}
 
-    // Finalize current speaker's bubble with em-dash
-    appendToCurrentBubble('—');
-    currentBubble.classList.add('interrupted');
+.trio-setup-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+}
 
-    // Start interrupting speaker's bubble
-    startNewBubble(by);
-    appendToCurrentBubble('—');  // Leading em-dash
-    currentBubble.classList.add('interruption');
+.trio-setup-modal__close {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #888);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.trio-setup-modal__slots {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+    .trio-setup-modal__slots {
+        grid-template-columns: 1fr;
+    }
+}
+
+.trio-character-slot {
+    background: var(--bg-secondary, #16213e);
+    border: 1px solid var(--border, #333);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+}
+
+.trio-character-slot__avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    background: var(--bg-tertiary, #0f3460);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.trio-character-slot__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.trio-character-slot__select {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg-tertiary, #0f3460);
+    border: 1px solid var(--border, #333);
+    border-radius: 6px;
+    color: var(--text-primary, #e0e0e0);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.trio-character-slot__preview {
+    margin-top: 12px;
+    text-align: left;
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+    line-height: 1.5;
+}
+
+.trio-character-slot__preview strong {
+    color: var(--text-primary, #e0e0e0);
+}
+
+.trio-character-slot__color-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.trio-setup-modal__section {
+    background: var(--bg-secondary, #16213e);
+    border: 1px solid var(--border, #333);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.trio-setup-modal__section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary, #888);
+    margin-bottom: 8px;
+}
+
+.trio-setup-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.trio-setup-modal__btn {
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+}
+
+.trio-setup-modal__btn--cancel {
+    background: var(--bg-tertiary, #0f3460);
+    color: var(--text-secondary, #888);
+}
+
+.trio-setup-modal__btn--confirm {
+    background: var(--accent, #e85d4a);
+    color: white;
+}
+
+.trio-setup-modal__btn--confirm:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 </code></pre>
 <hr>
-<h2 id="10-edge-cases-error-handling">10. Edge Cases &amp; Error Handling</h2>
+<h3 id="92-participant-strip">9.2 Participant Strip</h3>
+<p><strong>Purpose:</strong> A persistent top bar showing who's in the conversation, their current emotional state, and who's actively speaking. This is the visual anchor that makes it feel like "a room with two people" rather than "two separate chats."</p>
+<p><strong>Layout (Desktop — Expanded):</strong></p>
+<pre><code>┌─────────────────────────────────────────────────────────────────────┐
+│                                                                       │
+│  ┌─────────┐                                          ┌────────────┐ │
+│  │ [Avatar]│  Kelly Bailey                            │            │ │
+│  │         │  ● Guarded  ⚡ Low energy                 │  Let Them  │ │
+│  │  (glow) │  ─────────────                           │   Talk     │ │
+│  └─────────┘  active speaker                          │            │ │
+│                                       ┌────────────┐  └────────────┘ │
+│  ┌─────────┐                          │            │                  │
+│  │ [Avatar]│  Nathan Young             │  Exit Trio │                  │
+│  │         │  ● Performing  ⚡ High     │            │                  │
+│  │         │  ─────────────             └────────────┘                  │
+│  └─────────┘  waiting                                                   │
+│                                                                       │
+└─────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>Layout (Mobile — Collapsed):</strong></p>
+<pre><code>┌──────────────────────────────────────┐
+│  [👤] Kelly  [👤] Nathan    [💬] [✕] │
+│   ●low    ●high                      │
+└──────────────────────────────────────┘
+</code></pre>
+<p><strong>States:</strong></p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Visual</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Active speaker</strong></td>
+<td>Avatar has glowing ring (box-shadow in character color), name is full opacity</td>
+<td>Character is currently streaming a response</td>
+</tr>
+<tr>
+<td><strong>Waiting</strong></td>
+<td>Avatar at 70% opacity, no glow</td>
+<td>Character is in the conversation but not currently speaking</td>
+</tr>
+<tr>
+<td><strong>Passive reactor</strong></td>
+<td>Avatar has subtle pulse animation (1s, character color at 30% opacity)</td>
+<td>Character just emitted a passive reaction</td>
+</tr>
+<tr>
+<td><strong>Interrupted</strong></td>
+<td>Avatar flashes red briefly (200ms), then returns to waiting</td>
+<td>Character was cut off mid-sentence</td>
+</tr>
+<tr>
+<td><strong>Thinking</strong></td>
+<td>Avatar has a subtle "breathing" animation (scale 1.0 → 1.03 → 1.0, 2s loop)</td>
+<td>Character is being addressed and API call is in flight</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Emotional State Indicators:</strong></p>
+<p>Each participant shows two indicators:</p>
+<ol>
+<li>
+<p><strong>Mood dot</strong> (<code>●</code>) — color-coded by <code>current</code> emotional state:<br>
+   - Guarded/defensive → muted blue-gray <code>#6b7c93</code><br>
+   - Performing/showing off → bright orange <code>#f39c12</code><br>
+   - Vulnerable/open → soft pink <code>#e91e63</code><br>
+   - Annoyed/hostile → red <code>#e74c3c</code><br>
+   - Amused/warm → green <code>#2ecc71</code><br>
+   - Neutral → gray <code>#95a5a6</code></p>
+</li>
+<li>
+<p><strong>Energy indicator</strong> (<code>⚡</code>) — text label:<br>
+   - Low → <code>⚡ Low</code> (dimmed)<br>
+   - Medium → <code>⚡ Med</code> (normal)<br>
+   - High → <code>⚡ High</code> (bold)</p>
+</li>
+</ol>
+<p><strong>Component API:</strong></p>
+<pre><code class="language-javascript">// js/components/ParticipantStrip.js
+
+export class ParticipantStrip {
+    constructor(participants, container) {
+        this.participants = participants;
+        this.container = container;  // DOM element to mount into
+        this.activeSpeaker = null;
+        this.speakerStates = {};  // label → 'waiting' | 'active' | 'thinking' | 'interrupted' | 'passive'
+        this.emotionalStates = {};  // label → { current, energy }
+        this.element = null;
+    }
+
+    mount() {
+        this.element = this._render();
+        this.container.appendChild(this.element);
+    }
+
+    _render() {
+        const strip = document.createElement('div');
+        strip.className = 'participant-strip';
+
+        this.participants.forEach(p =&gt; {
+            const card = this._renderParticipantCard(p);
+            strip.appendChild(card);
+        });
+
+        // Action buttons
+        const actions = document.createElement('div');
+        actions.className = 'participant-strip__actions';
+
+        const letThemTalkBtn = document.createElement('button');
+        letThemTalkBtn.className = 'participant-strip__btn participant-strip__btn--talk';
+        letThemTalkBtn.innerHTML = '💬 Let Them Talk';
+        letThemTalkBtn.onclick = () =&gt; this.onLetThemTalk?.();
+        actions.appendChild(letThemTalkBtn);
+
+        const exitBtn = document.createElement('button');
+        exitBtn.className = 'participant-strip__btn participant-strip__btn--exit';
+        exitBtn.innerHTML = '✕ Exit Trio';
+        exitBtn.onclick = () =&gt; this.onExitTrio?.();
+        actions.appendChild(exitBtn);
+
+        strip.appendChild(actions);
+        return strip;
+    }
+
+    _renderParticipantCard(participant) {
+        const card = document.createElement('div');
+        card.className = 'participant-card';
+        card.dataset.label = participant.label;
+        card.style.setProperty('--participant-color', participant.color);
+
+        const avatar = document.createElement('div');
+        avatar.className = 'participant-card__avatar';
+        avatar.innerHTML = `&lt;img src=&quot;${participant.avatar}&quot; alt=&quot;${participant.display_name}&quot;&gt;`;
+        avatar.onclick = () =&gt; this._onAvatarClick(participant);
+        card.appendChild(avatar);
+
+        const info = document.createElement('div');
+        info.className = 'participant-card__info';
+
+        const name = document.createElement('div');
+        name.className = 'participant-card__name';
+        name.textContent = participant.display_name;
+        name.style.color = participant.color;
+        info.appendChild(name);
+
+        const mood = document.createElement('div');
+        mood.className = 'participant-card__mood';
+        mood.innerHTML = `&lt;span class=&quot;mood-dot&quot;&gt;&lt;/span&gt; &lt;span class=&quot;mood-label&quot;&gt;—&lt;/span&gt; &lt;span class=&quot;energy-label&quot;&gt;⚡ —&lt;/span&gt;`;
+        info.appendChild(mood);
+
+        const status = document.createElement('div');
+        status.className = 'participant-card__status';
+        status.textContent = 'waiting';
+        info.appendChild(status);
+
+        card.appendChild(info);
+        return card;
+    }
+
+    setActiveSpeaker(label) {
+        // Remove active from all, set on target
+        this.participants.forEach(p =&gt; {
+            const card = this.element.querySelector(`[data-label=&quot;${p.label}&quot;]`);
+            card.classList.remove('active', 'thinking', 'interrupted', 'passive');
+            if (p.label === label) {
+                card.classList.add('active');
+            }
+        });
+        this.activeSpeaker = label;
+    }
+
+    setThinking(label) {
+        const card = this.element.querySelector(`[data-label=&quot;${label}&quot;]`);
+        card.classList.remove('active', 'interrupted', 'passive');
+        card.classList.add('thinking');
+    }
+
+    setInterrupted(label) {
+        const card = this.element.querySelector(`[data-label=&quot;${label}&quot;]`);
+        card.classList.add('interrupted');
+        // Flash red for 200ms
+        setTimeout(() =&gt; card.classList.remove('interrupted'), 200);
+    }
+
+    setPassiveReaction(label) {
+        const card = this.element.querySelector(`[data-label=&quot;${label}&quot;]`);
+        card.classList.add('passive');
+        // Remove after 3 seconds
+        setTimeout(() =&gt; card.classList.remove('passive'), 3000);
+    }
+
+    updateEmotionalState(label, state) {
+        this.emotionalStates[label] = state;
+        const card = this.element.querySelector(`[data-label=&quot;${label}&quot;]`);
+        if (!card) return;
+
+        const moodDot = card.querySelector('.mood-dot');
+        const moodLabel = card.querySelector('.mood-label');
+        const energyLabel = card.querySelector('.energy-label');
+
+        const moodColors = {
+            guarded: '#6b7c93', defensive: '#6b7c93',
+            performing: '#f39c12', 'showing_off': '#f39c12',
+            vulnerable: '#e91e63', open: '#e91e63',
+            annoyed: '#e74c3c', hostile: '#e74c3c',
+            amused: '#2ecc71', warm: '#2ecc71',
+            neutral: '#95a5a6',
+        };
+
+        moodDot.style.background = moodColors[state.current] || '#95a5a6';
+        moodLabel.textContent = state.current.replace(/_/g, ' ');
+        energyLabel.textContent = `⚡ ${state.energy === 'medium' ? 'Med' : state.energy}`;
+        energyLabel.style.fontWeight = state.energy === 'high' ? 'bold' : 'normal';
+        energyLabel.style.opacity = state.energy === 'low' ? '0.5' : '1';
+    }
+
+    _onAvatarClick(participant) {
+        // Insert @mention into input
+        const input = document.getElementById('message-input');
+        if (input) {
+            const currentText = input.value;
+            const mention = `@${participant.label} `;
+            input.value = currentText + (currentText.endsWith(' ') || currentText === '' ? '' : ' ') + mention;
+            input.focus();
+            // Place cursor after mention
+            input.setSelectionRange(input.value.length, input.value.length);
+        }
+    }
+
+    destroy() {
+        this.element?.remove();
+    }
+}
+</code></pre>
+<p><strong>CSS:</strong></p>
+<pre><code class="language-css">.participant-strip {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    background: var(--bg-secondary, #16213e);
+    border-bottom: 1px solid var(--border, #333);
+    overflow-x: auto;
+}
+
+.participant-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.participant-card__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.participant-card__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Active speaker — glowing ring */
+.participant-card.active .participant-card__avatar {
+    border-color: var(--participant-color);
+    box-shadow: 0 0 12px var(--participant-color), 0 0 4px var(--participant-color);
+}
+
+.participant-card.active .participant-card__status {
+    color: var(--participant-color);
+    font-weight: 600;
+}
+
+/* Thinking — breathing animation */
+.participant-card.thinking .participant-card__avatar {
+    animation: breathe 2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+/* Interrupted — red flash */
+.participant-card.interrupted .participant-card__avatar {
+    border-color: #e74c3c;
+    box-shadow: 0 0 16px #e74c3c;
+}
+
+/* Passive reaction — subtle pulse */
+.participant-card.passive .participant-card__avatar {
+    animation: passive-pulse 1s ease-in-out;
+}
+
+@keyframes passive-pulse {
+    0% { box-shadow: 0 0 0 0 var(--participant-color); }
+    50% { box-shadow: 0 0 0 8px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* Waiting — dimmed */
+.participant-card:not(.active):not(.thinking) .participant-card__avatar {
+    opacity: 0.7;
+}
+
+.participant-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.participant-card__name {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.participant-card__mood {
+    font-size: 11px;
+    color: var(--text-secondary, #888);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.mood-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #95a5a6;
+    transition: background 0.5s ease;
+}
+
+.participant-card__status {
+    font-size: 10px;
+    color: var(--text-secondary, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.participant-strip__actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.participant-strip__btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid var(--border, #333);
+    background: var(--bg-tertiary, #0f3460);
+    color: var(--text-primary, #e0e0e0);
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.participant-strip__btn:hover {
+    background: var(--bg-hover, #1a1a4e);
+}
+
+.participant-strip__btn--exit {
+    color: var(--text-secondary, #888);
+}
+
+/* Mobile collapsed */
+@media (max-width: 600px) {
+    .participant-strip {
+        gap: 8px;
+        padding: 6px 10px;
+    }
+
+    .participant-card {
+        padding: 4px 6px;
+        gap: 6px;
+    }
+
+    .participant-card__info {
+        display: none;
+    }
+
+    .participant-card__avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .participant-strip__btn {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .participant-strip__btn--talk::after {
+        content: '💬';
+    }
+
+    .participant-strip__btn--talk {
+        font-size: 0;
+        padding: 6px 8px;
+    }
+
+    .participant-strip__btn--talk::after {
+        font-size: 16px;
+    }
+}
+</code></pre>
+<hr>
+<h3 id="93-triomanagerjs-state-orchestration">9.3 TrioManager.js — State &amp; Orchestration</h3>
+<p><strong>Purpose:</strong> Frontend state machine for trio mode. Manages participant state, SSE event routing, interrupt display, and coordinates between ParticipantStrip, message rendering, and the input bar.</p>
+<pre><code class="language-javascript">// js/components/TrioManager.js
+
+import { ParticipantStrip } from './ParticipantStrip.js';
+import { addMessageToUI } from '../ui/messages.js';
+
+export const trioManager = {
+    state: {
+        mode: 'trio',
+        participants: [],
+        trioState: {
+            last_speaker: null,
+            last_addressee: null,
+            active_thread: null,
+            consecutive_default_turns: {},
+            max_consecutive: 2,
+        },
+        emotionalState: {},
+        interruptCount: 0,
+        isStreaming: false,
+        currentSpeaker: null,
+        currentBubble: null,
+        degradedMode: false,
+    },
+
+    strip: null,  // ParticipantStrip instance
+
+    init(config) {
+        this.state.participants = config.participants;
+        this.state.trioState.last_speaker = config.participants[0]?.label;
+        this.state.participants.forEach(p =&gt; {
+            this.state.trioState.consecutive_default_turns[p.label] = 0;
+            this.state.emotionalState[p.label] = p.initial_emotional_state || {
+                current: 'neutral', energy: 'medium',
+            };
+        });
+
+        // Mount participant strip
+        const stripContainer = document.getElementById('participant-strip-container');
+        if (stripContainer) {
+            this.strip = new ParticipantStrip(config.participants, stripContainer);
+            this.strip.mount();
+            this.strip.onLetThemTalk = () =&gt; this.letThemTalk();
+            this.strip.onExitTrio = () =&gt; this.exitTrioMode();
+
+            // Initialize emotional state display
+            config.participants.forEach(p =&gt; {
+                this.strip.updateEmotionalState(p.label, this.state.emotionalState[p.label]);
+            });
+        }
+    },
+
+    handleSendMessage(text) {
+        // Sanitize: strip any [Name]: labels from user input (§10 edge case)
+        const sanitized = text.replace(/^\s*\[[A-Za-z\s]+\]:\s*/, '');
+        const labeled = `[You]: ${sanitized}`;
+
+        // Add user message to UI
+        addMessageToUI('user', sanitized, state.currentConfig, false);
+
+        // Send to backend with trio metadata
+        return fetch('/api/chat/trio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: labeled,
+                config: state.currentConfig,
+                trio_state: this.state.trioState,
+                emotional_state: this.state.emotionalState,
+            }),
+        });
+    },
+
+    handleSSEEvent(event) {
+        const data = JSON.parse(event.data);
+
+        switch (true) {
+            case data.speaker &amp;&amp; data.delta !== undefined:
+                this._handleStreamDelta(data);
+                break;
+
+            case data.event === 'interrupt':
+                this._handleInterrupt(data);
+                break;
+
+            case data.event === 'resume_available':
+                this._handleResumeAvailable(data);
+                break;
+
+            case data.event === 'passive_reaction':
+                this._handlePassiveReaction(data);
+                break;
+
+            case data.event === 'emotional_update':
+                this._handleEmotionalUpdate(data);
+                break;
+
+            case data.event === 'turn_complete':
+                this._handleTurnComplete(data);
+                break;
+
+            case data.event === 'yield':
+                this._handleYield(data);
+                break;
+        }
+    },
+
+    _handleStreamDelta(data) {
+        const { speaker, delta } = data;
+
+        if (speaker !== this.state.currentSpeaker) {
+            // Speaker changed — finish current bubble, start new one
+            this._finishCurrentBubble();
+            this._startNewBubble(speaker);
+            this.strip?.setActiveSpeaker(speaker);
+        }
+
+        this._appendToCurrentBubble(delta);
+        autoScroll();
+    },
+
+    _startNewBubble(speaker) {
+        const participant = this._getParticipant(speaker);
+        const group = addMessageToUI('assistant', '', {
+            ...state.currentConfig,
+            character_name: participant.display_name,
+            avatar_url: participant.avatar,
+        }, true, null, null, true);  // isStreaming=true, skipScroll=true
+
+        this.state.currentSpeaker = speaker;
+        this.state.currentBubble = group?.querySelector('.message');
+    },
+
+    _appendToCurrentBubble(delta) {
+        if (!this.state.currentBubble) return;
+        // Append raw text — markdown parsing happens on finish
+        this.state.currentBubble.textContent += delta;
+    },
+
+    _finishCurrentBubble() {
+        if (!this.state.currentBubble) return;
+        // Re-render with markdown
+        const rawText = this.state.currentBubble.textContent;
+        this.state.currentBubble.innerHTML = parseMarkdown(rawText);
+        this.state.currentBubble.classList.remove('streaming');
+        this.state.currentBubble = null;
+        this.state.currentSpeaker = null;
+    },
+
+    _handleInterrupt(data) {
+        const { by, truncated_text } = data;
+
+        // Finalize current speaker's bubble with em-dash
+        if (this.state.currentBubble) {
+            this.state.currentBubble.textContent += '—';
+            this._finishCurrentBubble();
+            this.state.currentBubble?.classList.add('interrupted');
+        }
+
+        // Mark interrupted speaker in strip
+        this.strip?.setInterrupted(this.state.currentSpeaker);
+
+        // Start interrupting speaker's bubble
+        this._startNewBubble(by);
+        this._appendToCurrentBubble('—');  // Leading em-dash
+        this.state.currentBubble?.classList.add('interruption');
+
+        this.state.interruptCount++;
+    },
+
+    _handlePassiveReaction(data) {
+        const { speaker, content } = data;
+
+        // Render as passive reaction bubble (different styling)
+        const participant = this._getParticipant(speaker);
+        const group = addMessageToUI('assistant', content, {
+            ...state.currentConfig,
+            character_name: participant.display_name,
+            avatar_url: participant.avatar,
+        }, false, null, null, true);
+
+        // Add passive reaction class
+        group?.classList.add('passive-reaction');
+
+        // Pulse the participant card
+        this.strip?.setPassiveReaction(speaker);
+    },
+
+    _handleEmotionalUpdate(data) {
+        const { speaker, state: emotionalState } = data;
+        this.state.emotionalState[speaker] = emotionalState;
+        this.strip?.updateEmotionalState(speaker, emotionalState);
+    },
+
+    _handleTurnComplete(data) {
+        this._finishCurrentBubble();
+        this.state.isStreaming = false;
+        this.strip?.setActiveSpeaker(null);
+
+        // Update trio state from backend response
+        if (data.trio_state) {
+            this.state.trioState = data.trio_state;
+        }
+        if (data.degraded_mode) {
+            this.state.degradedMode = true;
+        }
+
+        // Reset interrupt count for next turn
+        this.state.interruptCount = 0;
+    },
+
+    _handleYield(data) {
+        // Character yielded — finish their bubble, no em-dash
+        this._finishCurrentBubble();
+    },
+
+    _handleResumeAvailable(data) {
+        const { for: speaker } = data;
+        // Show &quot;resume&quot; button on the interrupted speaker's last bubble
+        const participant = this._getParticipant(speaker);
+        // TODO: implement resume button UI
+    },
+
+    letThemTalk() {
+        // Send &quot;let them talk&quot; request to backend
+        fetch('/api/chat/trio/let-them-talk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                config: state.currentConfig,
+                trio_state: this.state.trioState,
+                emotional_state: this.state.emotionalState,
+            }),
+        });
+    },
+
+    exitTrioMode() {
+        this.strip?.destroy();
+        this.strip = null;
+        this.state = {
+            mode: 'solo',
+            participants: [],
+            trioState: {},
+            emotionalState: {},
+            interruptCount: 0,
+            isStreaming: false,
+            currentSpeaker: null,
+            currentBubble: null,
+            degradedMode: false,
+        };
+        // Switch back to solo mode UI
+        state.currentConfig.mode = 'solo';
+    },
+
+    _getParticipant(label) {
+        return this.state.participants.find(p =&gt; p.label === label) || {};
+    },
+};
+</code></pre>
+<hr>
+<h3 id="94-message-rendering-speaker-attribution">9.4 Message Rendering — Speaker Attribution</h3>
+<p><strong>Changes to <code>addMessageToUI()</code>:</strong></p>
+<p>The existing <code>addMessageToUI</code> function in <code>js/ui/messages.js</code> is extended to handle trio mode. The key changes:</p>
+<ol>
+<li>
+<p><strong>Speaker field on every message.</strong> In trio mode, every assistant message carries a <code>speaker</code> field. The avatar and name come from the participant config, not from the model.</p>
+</li>
+<li>
+<p><strong>Color-coded left border.</strong> Each message bubble gets a 3px left border in the speaker's color. This is the primary visual cue for "who said this" when scrolling back through history.</p>
+</li>
+<li>
+<p><strong>Avatar + name on every message.</strong> Unlike solo mode (where consecutive assistant messages share a header), trio mode shows the avatar + name on every single message. This is because speaker can change between consecutive messages (interrupts, passive reactions, let-them-talk).</p>
+</li>
+<li>
+<p><strong>Passive reaction styling.</strong> Messages with <code>is_passive_reaction: true</code> get a distinct visual treatment — smaller font, muted opacity, no avatar header, subtle left border.</p>
+</li>
+</ol>
+<pre><code class="language-javascript">// Extended addMessageToUI for trio mode (patch to existing function)
+
+export function addMessageToUI(role, content, config, isStreaming = false, attachedFile = null,
+                                 msgIndex = null, skipScroll = false, onToggleKeep = null,
+                                 isKept = false, msgData = null, onDeleteMessage = null) {
+    if (role === 'system') return null;
+    if (role === 'user' &amp;&amp; content &amp;&amp; content.startsWith('[ATTACHED FILE:')) return null;
+
+    document.getElementById('chat-avatar-splash')?.remove();
+
+    const group = document.createElement('div');
+    group.classList.add('message-group', role);
+
+    // ── TRIO MODE: Speaker attribution ──
+    const isTrioMode = state.currentConfig?.mode === 'trio';
+    const speaker = msgData?.speaker || (role === 'user' ? 'user' : 'assistant');
+    const participant = isTrioMode ? trioManager._getParticipant(speaker) : null;
+
+    if (isTrioMode &amp;&amp; participant) {
+        group.classList.add(`speaker-${speaker}`);
+        group.style.borderLeftColor = participant.color;
+        group.style.borderLeftWidth = '3px';
+        group.style.borderLeftStyle = 'solid';
+    }
+
+    if (msgData?.is_passive_reaction) {
+        group.classList.add('passive-reaction');
+    }
+    if (msgData?.interrupted) {
+        group.classList.add('interrupted');
+    }
+    if (msgData?.is_interruption) {
+        group.classList.add('interruption');
+    }
+
+    // ... rest of existing function ...
+
+    // ── TRIO MODE: Avatar + name from participant, not model ──
+    if (role === 'assistant') {
+        const avatarDiv = document.createElement('div');
+        avatarDiv.classList.add('avatar');
+
+        if (isTrioMode &amp;&amp; participant?.avatar) {
+            const avatarImg = document.createElement('img');
+            avatarImg.src = participant.avatar;
+            avatarDiv.appendChild(avatarImg);
+        } else if (config &amp;&amp; config.avatar_url) {
+            // Existing solo mode path
+            const avatarImg = document.createElement('img');
+            avatarImg.src = config.avatar_url;
+            avatarDiv.appendChild(avatarImg);
+        } else {
+            // Existing model logo fallback
+            // ...
+        }
+        group.appendChild(avatarDiv);
+    }
+
+    // ── TRIO MODE: Always show sender name (even for consecutive messages) ──
+    const sender = document.createElement('div');
+    sender.classList.add('message-sender');
+
+    if (role === 'assistant') {
+        if (isTrioMode &amp;&amp; participant) {
+            sender.textContent = participant.display_name;
+            sender.style.color = participant.color;
+        } else if (config &amp;&amp; config.character_name) {
+            sender.textContent = config.character_name;
+        } else {
+            // Existing fallback
+        }
+    }
+
+    if (role === 'user' &amp;&amp; !isTrioMode) {
+        sender.style.display = 'none';
+    }
+
+    // ... rest of existing function ...
+}
+</code></pre>
+<p><strong>CSS for trio message styling:</strong></p>
+<pre><code class="language-css">/* Trio mode: color-coded left border */
+.message-group.speaker-kelly {
+    border-left: 3px solid #e85d4a;
+    padding-left: 12px;
+}
+
+.message-group.speaker-nathan {
+    border-left: 3px solid #4a9eff;
+    padding-left: 12px;
+}
+
+/* Interrupted message — em-dash cursor effect */
+.message-group.interrupted .message {
+    position: relative;
+}
+
+.message-group.interrupted .message::after {
+    content: '';
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--text-secondary, #888);
+    margin-left: 2px;
+    animation: cursor-blink 0.8s steps(2) infinite;
+}
+
+@keyframes cursor-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* Interrupting message — slide-in animation */
+.message-group.interruption {
+    animation: interrupt-slide-in 0.3s ease-out;
+}
+
+@keyframes interrupt-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Passive reaction — muted, smaller, no header */
+.message-group.passive-reaction {
+    margin-left: 24px;
+    opacity: 0.7;
+}
+
+.message-group.passive-reaction .avatar {
+    width: 24px;
+    height: 24px;
+}
+
+.message-group.passive-reaction .message-sender {
+    font-size: 11px;
+    font-style: italic;
+}
+
+.message-group.passive-reaction .message {
+    font-size: 0.9em;
+    font-style: italic;
+    background: transparent;
+    border: none;
+    padding: 4px 0;
+}
+
+.message-group.passive-reaction .message::before {
+    content: '↳ ';
+    color: var(--text-secondary, #888);
+    font-style: normal;
+}
+</code></pre>
+<hr>
+<h3 id="95-streaming-display-speaker-switching">9.5 Streaming Display — Speaker Switching</h3>
+<p><strong>The core challenge:</strong> During streaming, the speaker can change mid-stream (interrupts, let-them-talk label switches). The frontend must create new bubbles on-the-fly when the speaker changes, without flickering or losing text.</p>
+<p><strong>How it works:</strong></p>
+<ol>
+<li>
+<p><strong>Backend sends pre-resolved events.</strong> The TokenBufferQueue (§8.6) resolves <code>[Name]:</code> labels and emits events with <code>speaker</code> already set. The frontend never parses labels.</p>
+</li>
+<li>
+<p><strong>Speaker change = new bubble.</strong> When <code>data.speaker</code> differs from <code>this.state.currentSpeaker</code>, the frontend finishes the current bubble (re-renders with markdown) and starts a new one.</p>
+</li>
+<li>
+<p><strong>Raw text during streaming, markdown on finish.</strong> During active streaming, raw text is appended to <code>textContent</code> (fast, no reflow). When the bubble is finished (speaker change, yield, or turn complete), the text is re-rendered with <code>parseMarkdown()</code>.</p>
+</li>
+<li>
+<p><strong>Auto-scroll respects speaker changes.</strong> The existing <code>autoScroll()</code> function (§scroll.js) is called after each delta. When a new bubble is created, <code>scrollToBottom()</code> is called explicitly.</p>
+</li>
+</ol>
+<pre><code class="language-javascript">// Streaming display flow (in TrioManager)
+
+_handleStreamDelta(data) {
+    const { speaker, delta } = data;
+
+    if (speaker !== this.state.currentSpeaker) {
+        // ── Speaker changed ──
+        // 1. Finish current bubble (markdown re-render)
+        this._finishCurrentBubble();
+
+        // 2. Start new bubble for new speaker
+        this._startNewBubble(speaker);
+
+        // 3. Update participant strip
+        this.strip?.setActiveSpeaker(speaker);
+
+        // 4. Explicit scroll to bottom for new bubble
+        scrollToBottom();
+    }
+
+    // Append raw delta to current bubble
+    this._appendToCurrentBubble(delta);
+
+    // rAF-throttled auto-scroll (existing pattern from §scroll.js)
+    requestAnimationFrame(() =&gt; autoScroll());
+}
+
+_startNewBubble(speaker) {
+    const participant = this._getParticipant(speaker);
+    const group = addMessageToUI('assistant', '', {
+        ...state.currentConfig,
+        character_name: participant.display_name,
+        avatar_url: participant.avatar,
+    }, true, null, null, true);  // isStreaming=true, skipScroll=true
+
+    this.state.currentSpeaker = speaker;
+    this.state.currentBubble = group?.querySelector('.message');
+
+    // Add streaming cursor
+    if (this.state.currentBubble) {
+        this.state.currentBubble.classList.add('streaming');
+    }
+}
+
+_finishCurrentBubble() {
+    if (!this.state.currentBubble) return;
+
+    // Re-render raw text as markdown
+    const rawText = this.state.currentBubble.textContent;
+    this.state.currentBubble.innerHTML = parseMarkdown(rawText);
+    this.state.currentBubble.classList.remove('streaming');
+
+    this.state.currentBubble = null;
+    this.state.currentSpeaker = null;
+}
+
+_appendToCurrentBubble(delta) {
+    if (!this.state.currentBubble) return;
+    // Use textContent for performance during streaming
+    // Markdown parsing happens on finish
+    this.state.currentBubble.textContent += delta;
+}
+</code></pre>
+<p><strong>Let-them-talk streaming:</strong></p>
+<p>When the backend sends a let-them-talk stream, the TokenBufferQueue parses <code>[Name]:</code> labels and emits events with different <code>speaker</code> values. The frontend handles this identically to interrupt speaker changes — finish current bubble, start new one:</p>
+<pre><code>Backend stream:  [Kelly]: I'm just saying, [Nathan]: Oh, and hearing people's thoughts is
+
+Frontend receives:
+  {speaker: &quot;kelly&quot;, delta: &quot;I'm just saying, &quot;}
+  → creates Kelly bubble, appends text
+
+  {speaker: &quot;nathan&quot;, delta: &quot;Oh, and hearing people's thoughts is&quot;}
+  → finishes Kelly bubble (markdown re-render)
+  → creates Nathan bubble, appends text
+  → updates participant strip (Nathan active)
+</code></pre>
+<hr>
+<h3 id="96-interrupt-visual-feedback">9.6 Interrupt Visual Feedback</h3>
+<p><strong>The interrupt is a visual event, not just text.</strong> When Nathan cuts Kelly off, the user should <em>see</em> it happen:</p>
+<p><strong>Animation sequence (600ms total):</strong></p>
+<pre><code>t=0ms:   Kelly's bubble gets em-dash appended
+         Kelly's bubble gets .interrupted class (cursor blink effect)
+         Kelly's participant card flashes red (200ms)
+
+t=100ms: Nathan's bubble slides in from left (300ms animation)
+         Nathan's bubble gets .interruption class
+         Nathan's participant card gets active glow
+
+t=400ms: Nathan's bubble animation completes
+         Streaming continues normally into Nathan's bubble
+</code></pre>
+<p><strong>Implementation:</strong></p>
+<pre><code class="language-javascript">_handleInterrupt(data) {
+    const { by, truncated_text } = data;
+
+    // 1. Finalize current speaker's bubble with em-dash
+    if (this.state.currentBubble) {
+        // If backend provided truncated_text, use it; otherwise append em-dash
+        if (truncated_text) {
+            this.state.currentBubble.textContent = truncated_text;
+        } else {
+            this.state.currentBubble.textContent += '—';
+        }
+
+        // Re-render with markdown
+        const rawText = this.state.currentBubble.textContent;
+        this.state.currentBubble.innerHTML = parseMarkdown(rawText);
+        this.state.currentBubble.classList.add('interrupted');
+        this.state.currentBubble.classList.remove('streaming');
+    }
+
+    // 2. Flash interrupted speaker in participant strip
+    const interruptedSpeaker = this.state.currentSpeaker;
+    this.strip?.setInterrupted(interruptedSpeaker);
+
+    // 3. Start interrupting speaker's bubble with leading em-dash
+    this._startNewBubble(by);
+    this._appendToCurrentBubble('—');
+    this.state.currentBubble?.classList.add('interruption');
+
+    // 4. Update state
+    this.state.interruptCount++;
+    this.strip?.setActiveSpeaker(by);
+
+    // 5. Scroll to new bubble
+    scrollToBottom();
+}
+</code></pre>
+<p><strong>Resume button (optional v1.5):</strong></p>
+<p>When the backend sends <code>resume_available</code>, a small "Continue Kelly's thought →" button appears below the interrupted bubble. Clicking it sends a resume request to the backend, which continues Kelly's response from where she was cut off.</p>
+<pre><code class="language-javascript">_handleResumeAvailable(data) {
+    const { for: speaker } = data;
+    const participant = this._getParticipant(speaker);
+
+    // Find the last interrupted bubble for this speaker
+    const messages = document.querySelectorAll('.message-group.interrupted');
+    const lastInterrupted = messages[messages.length - 1];
+
+    if (lastInterrupted) {
+        const resumeBtn = document.createElement('button');
+        resumeBtn.className = 'resume-btn';
+        resumeBtn.innerHTML = `Continue ${participant.display_name}'s thought →`;
+        resumeBtn.onclick = () =&gt; {
+            fetch('/api/chat/trio/resume', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    config: state.currentConfig,
+                    speaker: speaker,
+                    trio_state: this.state.trioState,
+                }),
+            });
+            resumeBtn.remove();
+        };
+        lastInterrupted.appendChild(resumeBtn);
+    }
+}
+</code></pre>
+<pre><code class="language-css">.resume-btn {
+    display: block;
+    margin: 8px 0 0 12px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+    background: transparent;
+    border: 1px dashed var(--border, #333);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.resume-btn:hover {
+    color: var(--text-primary, #e0e0e0);
+    border-color: var(--text-secondary, #888);
+    background: var(--bg-hover, #1a1a4e);
+}
+</code></pre>
+<hr>
+<h3 id="97-emotional-state-indicators">9.7 Emotional State Indicators</h3>
+<p><strong>Design principle:</strong> Emotional state is <em>ambient</em> — it lives in the participant strip, not in message bubbles. The user should sense mood shifts peripherally, without them dominating the conversation.</p>
+<p><strong>Two indicators per participant (in participant strip):</strong></p>
+<ol>
+<li>
+<p><strong>Mood dot</strong> — a small colored circle next to the participant's name. Color shifts based on <code>current</code> emotional state. Transitions smoothly (0.5s) when state changes.</p>
+</li>
+<li>
+<p><strong>Energy label</strong> — text showing energy level (<code>⚡ Low</code>, <code>⚡ Med</code>, <code>⚡ High</code>). Low energy is dimmed; high energy is bold.</p>
+</li>
+</ol>
+<p><strong>When emotional state updates:</strong></p>
+<p>The backend sends an <code>emotional_update</code> SSE event after each exchange (or after passive reactions). The frontend updates the participant strip:</p>
+<pre><code class="language-javascript">_handleEmotionalUpdate(data) {
+    const { speaker, state: emotionalState } = data;
+    this.state.emotionalState[speaker] = emotionalState;
+    this.strip?.updateEmotionalState(speaker, emotionalState);
+}
+</code></pre>
+<p><strong>Visual transition:</strong></p>
+<p>When the mood dot changes color, it uses a CSS transition:</p>
+<pre><code class="language-css">.mood-dot {
+    transition: background-color 0.5s ease;
+}
+</code></pre>
+<p>This creates a subtle, smooth shift that the user notices peripherally without being distracted from the conversation.</p>
+<p><strong>Degraded mode:</strong></p>
+<p>When <code>degraded_mode: true</code> (interrupt cycle occurred, emotional update skipped — §10), the mood dots dim slightly to indicate the system is in a reduced state:</p>
+<pre><code class="language-javascript">_handleTurnComplete(data) {
+    // ...
+    if (data.degraded_mode) {
+        this.state.degradedMode = true;
+        this.strip?.element?.classList.add('degraded');
+    } else {
+        this.state.degradedMode = false;
+        this.strip?.element?.classList.remove('degraded');
+    }
+}
+</code></pre>
+<pre><code class="language-css">.participant-strip.degraded .mood-dot {
+    opacity: 0.5;
+}
+</code></pre>
+<hr>
+<h3 id="98-input-bar-trio-mode">9.8 Input Bar — Trio Mode</h3>
+<p><strong>Changes to the existing input bar:</strong></p>
+<ol>
+<li>
+<p><strong>@mention autocomplete.</strong> When the user types <code>@</code>, a dropdown appears showing both participants. Selecting one inserts <code>@Name</code> into the input. This is a convenience, not a requirement — the addressing resolver works without @mentions.</p>
+</li>
+<li>
+<p><strong>"Let them talk" button.</strong> A small button next to the send button (or in the participant strip) that triggers the let-them-talk flow without the user typing anything.</p>
+</li>
+<li>
+<p><strong>Mode indicator.</strong> A small "Trio" badge in the input area, reminding the user they're in trio mode. Clicking it opens the trio settings (swap characters, change relationship, etc.).</p>
+</li>
+</ol>
+<pre><code class="language-javascript">// @mention autocomplete
+
+function setupTrioMentionAutocomplete(input, participants) {
+    let mentionDropdown = null;
+
+    input.addEventListener('input', (e) =&gt; {
+        const text = input.value;
+        const cursorPos = input.selectionStart;
+
+        // Check if user just typed @
+        const beforeCursor = text.substring(0, cursorPos);
+        const atMatch = beforeCursor.match(/@(\w*)$/);
+
+        if (atMatch) {
+            const query = atMatch[1].toLowerCase();
+            const matches = participants.filter(p =&gt;
+                p.label.toLowerCase().includes(query) ||
+                p.display_name.toLowerCase().includes(query)
+            );
+
+            if (matches.length &gt; 0) {
+                showMentionDropdown(matches, input, cursorPos);
+            } else {
+                hideMentionDropdown();
+            }
+        } else {
+            hideMentionDropdown();
+        }
+    });
+
+    function showMentionDropdown(matches, input, cursorPos) {
+        hideMentionDropdown();
+        mentionDropdown = document.createElement('div');
+        mentionDropdown.className = 'mention-dropdown';
+
+        matches.forEach(p =&gt; {
+            const item = document.createElement('div');
+            item.className = 'mention-item';
+            item.innerHTML = `
+                &lt;img src=&quot;${p.avatar}&quot; class=&quot;mention-item__avatar&quot;&gt;
+                &lt;span style=&quot;color: ${p.color}&quot;&gt;${p.display_name}&lt;/span&gt;
+            `;
+            item.onclick = () =&gt; {
+                const text = input.value;
+                const before = text.substring(0, cursorPos).replace(/@(\w*)$/, `@${p.label} `);
+                const after = text.substring(cursorPos);
+                input.value = before + after;
+                input.focus();
+                input.setSelectionRange(before.length, before.length);
+                hideMentionDropdown();
+            };
+            mentionDropdown.appendChild(item);
+        });
+
+        // Position below input
+        const rect = input.getBoundingClientRect();
+        mentionDropdown.style.position = 'fixed';
+        mentionDropdown.style.bottom = `${window.innerHeight - rect.top + 4}px`;
+        mentionDropdown.style.left = `${rect.left}px`;
+        document.body.appendChild(mentionDropdown);
+    }
+
+    function hideMentionDropdown() {
+        mentionDropdown?.remove();
+        mentionDropdown = null;
+    }
+}
+</code></pre>
+<pre><code class="language-css">.mention-dropdown {
+    background: var(--bg-secondary, #16213e);
+    border: 1px solid var(--border, #333);
+    border-radius: 6px;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    overflow: hidden;
+    min-width: 180px;
+}
+
+.mention-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.mention-item:hover {
+    background: var(--bg-hover, #1a1a4e);
+}
+
+.mention-item__avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Trio mode badge */
+.trio-mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #e85d4a, #4a9eff);
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+}
+</code></pre>
+<hr>
+<h3 id="99-mobile-considerations">9.9 Mobile Considerations</h3>
+<p><strong>All trio UI components must work on mobile.</strong> Key adaptations:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Desktop</th>
+<th>Mobile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Participant strip</td>
+<td>Full cards with name, mood, energy</td>
+<td>Avatars only, mood dot below</td>
+</tr>
+<tr>
+<td>TrioSetupModal</td>
+<td>Two-column slots</td>
+<td>Single-column stacked slots</td>
+</tr>
+<tr>
+<td>Message bubbles</td>
+<td>Full avatar + name header</td>
+<td>Compact avatar (24px) + name</td>
+</tr>
+<tr>
+<td>Passive reactions</td>
+<td>Indented, muted, italic</td>
+<td>Same, but smaller indent (12px)</td>
+</tr>
+<tr>
+<td>@mention dropdown</td>
+<td>Fixed position below input</td>
+<td>Full-width sheet from bottom</td>
+</tr>
+<tr>
+<td>"Let them talk" button</td>
+<td>Text label in strip</td>
+<td>Icon-only in strip</td>
+</tr>
+<tr>
+<td>Interrupt animation</td>
+<td>300ms slide-in</td>
+<td>200ms slide-in (faster for mobile)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Touch targets:</strong> All interactive elements meet 44px minimum touch target (WCAG 2.1 AA). Participant avatars are 36px visual but have 44px hit area via padding.</p>
+<p><strong>Performance:</strong> On mobile, the streaming display uses <code>requestAnimationFrame</code> throttling (existing pattern from §scroll.js) to coalesce rapid SSE chunks into single DOM updates per animation frame.</p>
+<hr>
+<h3 id="910-file-structure">9.10 File Structure</h3>
+<p>New frontend files for trio mode:</p>
+<pre><code>js/
+├── components/
+│   ├── TrioManager.js          # State machine, SSE routing
+│   ├── TrioSetupModal.js       # Character selection modal
+│   ├── ParticipantStrip.js     # Top bar with participants
+│   └── TrioMentionAutocomplete.js  # @mention dropdown
+├── ui/
+│   ├── messages.js             # Extended addMessageToUI (patch)
+│   └── settings.js             # Extended showSettingsMenu (trio mode toggle)
+└── core/
+    └── state.js                # Extended state.currentConfig (trio fields)
+</code></pre>
+<p><strong>Integration with existing code:</strong></p>
+<ul>
+<li><code>js/main.js</code> — checks <code>state.currentConfig.mode === 'trio'</code> on init, calls <code>trioManager.init(config)</code> if true</li>
+<li><code>js/ui/settings.js</code> — adds "Trio" to the mode toggle buttons, opens <code>TrioSetupModal</code> on selection</li>
+<li><code>js/ui/messages.js</code> — <code>addMessageToUI</code> patched to handle speaker attribution (§9.4)</li>
+<li><code>js/api.js</code> — <code>streamChat()</code> extended to handle trio SSE events (routes to <code>trioManager.handleSSEEvent</code>)</li>
+<li><code>js/ui/scroll.js</code> — no changes needed (existing <code>autoScroll</code> / <code>scrollToBottom</code> work as-is)</li>
+</ul>
+<hr>
+<h3 id="911-accessibility">9.11 Accessibility</h3>
+<ul>
+<li><strong>ARIA labels:</strong> Participant strip cards have <code>role="status"</code> and <code>aria-label</code> with participant name and current state (e.g., "Kelly Bailey, guarded, low energy, active speaker")</li>
+<li><strong>Screen reader announcements:</strong> When speaker changes during streaming, <code>aria-live="polite"</code> region announces "Kelly is speaking" / "Nathan interrupted"</li>
+<li><strong>Keyboard navigation:</strong> Tab through participant cards, Enter to insert @mention, Escape to close modals</li>
+<li><strong>Color contrast:</strong> All text meets WCAG AA contrast ratios against background. Color-coded borders are supplementary to text labels, not the sole indicator.</li>
+<li><strong>Reduced motion:</strong> <code>@media (prefers-reduced-motion: reduce)</code> disables interrupt slide-in animation and passive reaction pulse, replacing with instant state changes</li>
+</ul>
 <table>
 <thead>
 <tr>
