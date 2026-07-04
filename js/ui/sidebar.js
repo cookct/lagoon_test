@@ -7,6 +7,23 @@ import { fetchConfigs, fetchChats, fetchConfig, deleteChatApi, deleteConfigApi, 
 import { lagoonConfirm, lagoonAlert, lagoonPrompt } from './dialog.js';
 import { cleanThinking } from '../utils.js';
 
+// Track which chats are "saved" (protected from deletion)
+function isChatSaved(chatId) {
+    try {
+        const saved = JSON.parse(localStorage.getItem('saved_chats') || '{}');
+        return !!saved[chatId];
+    } catch { return false; }
+}
+
+function setChatSaved(chatId, saved) {
+    try {
+        const savedChats = JSON.parse(localStorage.getItem('saved_chats') || '{}');
+        if (saved) savedChats[chatId] = true;
+        else delete savedChats[chatId];
+        localStorage.setItem('saved_chats', JSON.stringify(savedChats));
+    } catch (e) { console.warn('[Sidebar] Failed to persist saved state:', e); }
+}
+
 // Track which config details are open
 function getOpenConfigs() {
     const openConfigs = new Set();
@@ -202,12 +219,29 @@ function showChatContextMenu(button, chat) {
     menu.setAttribute('tabindex', '-1'); // Make focusable
     const rect = button.getBoundingClientRect();
     
+    // Save toggle — protects the chat from deletion while enabled
+    const isSaved = isChatSaved(chat.id);
+    const saveButton = document.createElement('button');
+    saveButton.textContent = isSaved ? 'Saved' : 'Save';
+    saveButton.classList.add('context-menu-item');
+    if (isSaved) saveButton.style.color = 'var(--ansi-green)';
+    saveButton.onclick = () => {
+        setChatSaved(chat.id, !isSaved);
+        closeMenu();
+    };
+
     const deleteButton = document.createElement('button');
     deleteButton.textContent = 'Delete Chat';
     deleteButton.classList.add('context-menu-item');
     // Add red styling for delete action
     deleteButton.style.color = 'var(--ansi-red)';
+    if (isSaved) {
+        deleteButton.disabled = true;
+        deleteButton.style.opacity = '0.5';
+        deleteButton.style.cursor = 'not-allowed';
+    }
     deleteButton.onclick = async () => {
+        if (isSaved) return;
         closeMenu();
         await deleteChat(chat.id);
     };
@@ -244,6 +278,7 @@ function showChatContextMenu(button, chat) {
 
     menu.appendChild(renameButton);
     menu.appendChild(downloadButton);
+    menu.appendChild(saveButton);
     menu.appendChild(deleteButton);
     
     document.body.appendChild(menu);
@@ -266,7 +301,7 @@ function showChatContextMenu(button, chat) {
 
     // Keyboard handler for Delete key
     const handleKeyDown = (e) => {
-        if (e.key === 'Delete') {
+        if (e.key === 'Delete' && !isSaved) {
             e.preventDefault();
             closeMenu();
             deleteChat(chat.id);

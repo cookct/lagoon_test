@@ -4,6 +4,7 @@
  */
 
 import { store } from '../core/Store.js';
+import { createZaiHamburger } from '../utils/zaiHamburger.js';
 
 class UIManager {
     constructor() {
@@ -117,6 +118,10 @@ class UIManager {
                     const header = document.createElement('div');
                     header.className = 'custom-dropdown-header';
                     header.textContent = child.label;
+                    if (child.label === 'z.ai') {
+                        header.classList.add('has-action');
+                        header.appendChild(createZaiHamburger());
+                    }
                     optionsList.appendChild(header);
                     
                     Array.from(child.children).forEach(opt => {
@@ -275,6 +280,10 @@ class UIManager {
                 const header = document.createElement('div');
                 header.className = 'custom-dropdown-header';
                 header.textContent = child.label;
+                if (child.label === 'z.ai') {
+                    header.classList.add('has-action');
+                    header.appendChild(createZaiHamburger());
+                }
                 optionsList.appendChild(header);
                 
                 Array.from(child.children).forEach(opt => {

@@ -328,20 +328,37 @@ def _build_conversation_text(messages):
 def _call_venice(api_key, prompt, max_tokens=1000):
     """Make a blocking Venice API call for summarization. Returns text or None."""
     import httpx
+    model = memory_settings.get('summary_model')
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.3,
+        "max_tokens": max_tokens,
+        "stream": False,
+        "venice_parameters": {"disable_thinking": True}
+    }
     try:
         with httpx.Client(timeout=300.0) as client:
             response = client.post(
                 f"{VENICE_API_BASE}/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json={
-                    "model": memory_settings.get('summary_model'),
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.3,
-                    "max_tokens": max_tokens,
-                    "stream": False,
-                    "venice_parameters": {"disable_thinking": True}
-                }
+                json=payload
             )
+            # Some models (e.g. Claude Opus 4.x) reject the temperature parameter.
+            # Retry without it on 400.
+            if response.status_code == 400:
+                try:
+                    err_msg = response.json().get('error', '')
+                except Exception:
+                    err_msg = response.text
+                if 'temperature' in str(err_msg).lower():
+                    logger.warning(f"[Summarize] Model {model} rejected temperature, retrying without it")
+                    payload.pop('temperature', None)
+                    response = client.post(
+                        f"{VENICE_API_BASE}/chat/completions",
+                        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                        json=payload
+                    )
             response.raise_for_status()
             choice = response.json()['choices'][0]
             return choice['message'].get('content') or choice['message'].get('reasoning_content') or None

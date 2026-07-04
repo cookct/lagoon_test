@@ -258,6 +258,20 @@ export function streamChat(chatId, messages, config, parentConfig, signal, sessi
     if (config.provider === 'ollama') {
         payload.ollama_url = localStorage.getItem('ollama_base_url') || 'http://localhost:11434';
     }
+    if (config.provider === 'zai') {
+        // Inject z.ai-specific options from ZaiOptionsManager (persisted in localStorage)
+        try {
+            const zaiOpts = JSON.parse(localStorage.getItem('zai_options') || '{}');
+            if (zaiOpts.reasoning_effort) apiConfig.zai_reasoning_effort = zaiOpts.reasoning_effort;
+            if (typeof zaiOpts.enable_thinking === 'boolean') apiConfig.zai_enable_thinking = zaiOpts.enable_thinking;
+            if (typeof zaiOpts.do_sample === 'boolean') apiConfig.zai_do_sample = zaiOpts.do_sample;
+            if (zaiOpts.max_tokens) apiConfig.zai_max_tokens = zaiOpts.max_tokens;
+            if (typeof zaiOpts.use_top_p === 'boolean') apiConfig.zai_use_top_p = zaiOpts.use_top_p;
+            if (typeof zaiOpts.stream === 'boolean') apiConfig.zai_stream = zaiOpts.stream;
+        } catch (e) {
+            console.warn('[streamChat] Failed to read zai_options:', e);
+        }
+    }
     if (config.provider === 'custom') {
         payload.custom_base_url = config.custom_base_url;
         payload.custom_model_id = config.custom_model_id;

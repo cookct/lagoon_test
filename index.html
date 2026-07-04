@@ -1148,8 +1148,70 @@
                 <textarea id="dual-initial-prompt" rows="2" placeholder="Enter a topic or question to start the conversation..."></textarea>
             </div>
             <div class="modal-actions">
+                <button type="button" id="dual-cancel-btn" class="secondary-btn">Cancel</button>
                 <button type="button" id="dual-save-config-btn" class="secondary-btn">Save Config</button>
                 <button type="button" id="dual-start-btn" class="primary-btn">Start Conversation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Z.AI Options Modal -->
+    <div id="zai-options-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2>Z.AI Model Options</h2>
+                <button type="button" class="close-btn" id="zai-options-close-btn">Close</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <!-- Reasoning Effort (GLM-5.2+ only) -->
+                <div class="form-group">
+                    <label for="zai-reasoning-effort">Reasoning Effort</label>
+                    <select id="zai-reasoning-effort">
+                        <option value="max">Max (deep, default)</option>
+                        <option value="xhigh">X-High</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                        <option value="minimal">Minimal</option>
+                        <option value="none">None (skip thinking)</option>
+                    </select>
+                    <p class="hint">Only affects GLM-5.2+. Lower = faster, higher = deeper reasoning.</p>
+                </div>
+
+                <!-- Thinking toggle -->
+                <div class="form-group">
+                    <label><input type="checkbox" id="zai-enable-thinking" checked> Enable Chain-of-Thought</label>
+                    <p class="hint">GLM-4.5+ only. Disable for faster, simpler responses.</p>
+                </div>
+
+                <!-- Do Sample -->
+                <div class="form-group">
+                    <label><input type="checkbox" id="zai-do-sample" checked> Sampling (do_sample)</label>
+                    <p class="hint">Uncheck for deterministic/greedy output (factual, reproducible).</p>
+                </div>
+
+                <!-- Max Tokens -->
+                <div class="form-group">
+                    <label for="zai-max-tokens">Max Tokens</label>
+                    <input type="number" id="zai-max-tokens" min="1024" max="131072" step="1024" value="65536">
+                    <p class="hint">z.ai default is 65536. Max 131072 for GLM-5.2/5.1/4.7/4.6.</p>
+                </div>
+
+                <!-- Temperature / Top_P mutual-exclusion -->
+                <div class="form-group">
+                    <label><input type="checkbox" id="zai-use-top-p"> Use top_p instead of temperature</label>
+                    <p class="hint">z.ai recommends using one or the other, not both.</p>
+                </div>
+
+                <!-- Stream toggle -->
+                <div class="form-group">
+                    <label><input type="checkbox" id="zai-stream" checked> Stream response</label>
+                    <p class="hint">When off, the full response is returned at once (no live token display).</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="secondary-btn" id="zai-options-cancel-btn">Cancel</button>
+                <button type="button" class="primary-btn" id="zai-options-save-btn">Save</button>
             </div>
         </div>
     </div>

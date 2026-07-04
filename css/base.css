@@ -163,6 +163,33 @@ body {
     user-select: none;
 }
 
+.custom-dropdown-header.has-action {
+    pointer-events: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.zai-header-btn {
+    pointer-events: auto;
+    background: none;
+    border: none;
+    color: var(--ansi-cyan);
+    font-size: 0.85rem;
+    line-height: 1;
+    padding: 2px 6px;
+    cursor: pointer;
+    border-radius: 3px;
+    opacity: 0.7;
+    transition: opacity 0.2s, background 0.2s;
+}
+
+.zai-header-btn:hover {
+    opacity: 1;
+    background: rgba(79, 193, 255, 0.15);
+}
+
 .custom-dropdown-item {
     padding: 8px 10px;
     font-size: 12px;

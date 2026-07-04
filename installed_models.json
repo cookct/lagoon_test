@@ -28,6 +28,18 @@
       }
     },
     {
+      "id": "claude-fable-5",
+      "name": "Claude Fable 5",
+      "provider": "venice",
+      "logo": "claude",
+      "pricing": {
+        "input": 12.00,
+        "output": 60.00,
+        "cacheRead": 1.20,
+        "cacheWrite": 15.00
+      }
+    },
+    {
       "id": "deepseek-ai/DeepSeek-R1",
       "name": "DeepSeek R1-0528",
       "provider": "together",
@@ -387,6 +399,17 @@
       }
     },
     {
+      "id": "minimax-m3-preview",
+      "name": "MiniMax M3 Preview",
+      "provider": "venice",
+      "logo": "minimaxai",
+      "pricing": {
+        "input": 0.30,
+        "output": 1.20,
+        "cacheRead": 0.06
+      }
+    },
+    {
       "id": "nvidia-nemotron-cascade-2-30b-a3b",
       "name": "Nemotron Cascade 2 30B A3B",
       "provider": "venice",
@@ -421,6 +444,17 @@
       "provider": "venice",
       "logo": "arcee",
       "pricing": null
+    },
+    {
+      "id": "xiaomi-mimo-v2-5",
+      "name": "Xiaomi MiMo V2.5",
+      "provider": "venice",
+      "logo": "xiaomi",
+      "pricing": {
+        "input": 0.17,
+        "output": 0.35,
+        "cacheRead": 0.06
+      }
     },
     {
       "id": "venice-uncensored",

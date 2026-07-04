@@ -325,9 +325,55 @@ def stream_chat():
     }
 
     if is_zai:
-        payload["temperature"] = min(payload["temperature"], 1.0)
-        if config.get('disable_thinking', False):
-            payload["thinking"] = {"type": "disabled"}
+        # 1. Temperature / top_p mutual exclusion (z.ai best practice: use one or the other)
+        if config.get('zai_use_top_p', False):
+            payload.pop('temperature', None)  # use top_p only
+        else:
+            payload.pop('top_p', None)  # use temperature only
+            # Clamp temperature with a warning log instead of silent clamp
+            temp = float(config.get('temperature', 0.7))
+            if temp > 1.0:
+                logger.warning(f"[ZAI] temperature {temp} > 1.0, clamping to 1.0")
+            payload["temperature"] = min(temp, 1.0)
+
+        # 2. Higher max_tokens default (z.ai default is 65536, not 2048)
+        zai_max = config.get('zai_max_tokens')
+        if zai_max:
+            payload["max_tokens"] = int(zai_max)
+        elif payload.get("max_tokens", 2048) <= 2048:
+            # No explicit override and user left the low default — raise to z.ai's intended default
+            payload["max_tokens"] = 65536
+
+        # 3. do_sample (default true; send false for deterministic mode)
+        payload["do_sample"] = bool(config.get('zai_do_sample', True))
+
+        # 4. Explicit thinking control (GLM-4.5+ only — gate by model)
+        #    reasoning_effort only on GLM-5.2+
+        #    Vision models (glm-4.6v-*, glm-4.5v-*) force thinking on z.ai's side — omit the thinking object
+        model_segments = model_name.split('-')
+        is_vision = len(model_segments) > 1 and 'v' in model_segments[1]
+        supports_thinking = (not is_vision) and (
+            model_name.startswith('glm-4.5') or
+            model_name.startswith('glm-4.6') or
+            model_name.startswith('glm-4.7') or
+            model_name.startswith('glm-5')
+        )
+        supports_reasoning_effort = (not is_vision) and model_name.startswith('glm-5.2')
+
+        if supports_thinking:
+            enable_thinking = config.get('zai_enable_thinking', True)
+            # Also respect the legacy disable_thinking checkbox
+            if config.get('disable_thinking', False):
+                enable_thinking = False
+            payload["thinking"] = {"type": "enabled" if enable_thinking else "disabled"}
+
+            if supports_reasoning_effort and enable_thinking:
+                effort = config.get('zai_reasoning_effort', 'max')
+                if effort in ('max', 'xhigh', 'high', 'medium', 'low', 'minimal', 'none'):
+                    payload["reasoning_effort"] = effort
+
+        # 5. Stream control (default True; False returns full response at once)
+        payload["stream"] = bool(config.get('zai_stream', True))
 
     if is_venice:
         # Build venice_parameters
@@ -502,6 +548,75 @@ def stream_chat():
                             headers['X-Venice-TEE-Model-Pub-Key'] = model_pub_key
                             headers['X-Venice-TEE-Signing-Algo'] = 'ecdsa'
 
+                        # --- Non-streaming path (z.ai stream=False) ---
+                        if not payload.get("stream", True):
+                            try:
+                                resp = client.post(
+                                    f"{target_api_base}/chat/completions",
+                                    headers=headers,
+                                    json=payload
+                                )
+                                if resp.status_code >= 400:
+                                    error_body = resp.text
+                                    logger.error(f"[Chat] HTTP {resp.status_code} from {provider}: {error_body[:500]}")
+                                    try:
+                                        err_json = json.loads(error_body)
+                                        err_msg = err_json.get('error', error_body[:200])
+                                        if isinstance(err_msg, dict):
+                                            err_msg = err_msg.get('message', str(err_msg))
+                                    except Exception:
+                                        err_msg = error_body[:200]
+                                    yield f"data: {json.dumps({'event': 'error', 'error': err_msg})}\n\n"
+                                    return
+
+                                data_obj = resp.json()
+
+                                # Usage / cache logging
+                                if data_obj.get('usage'):
+                                    usage = data_obj['usage']
+                                    cache_read = usage.get('cache_read_input_tokens', 0)
+                                    cache_write = usage.get('cache_creation_input_tokens', 0)
+                                    if cache_read > 0:
+                                        logger.info(f"\U0001f7e2 [ZAI] CACHE HIT: {cache_read:,} tokens")
+                                    last_usage = {
+                                        'input_tokens': usage.get('prompt_tokens', 0),
+                                        'output_tokens': usage.get('completion_tokens', 0),
+                                        'cache_read_tokens': cache_read,
+                                        'cache_write_tokens': cache_write,
+                                    }
+
+                                if data_obj.get('choices'):
+                                    choice = data_obj['choices'][0]
+                                    msg = choice.get('message', {})
+
+                                    # Reasoning content (if present)
+                                    reasoning = msg.get('reasoning_content') or msg.get('reasoning')
+                                    if reasoning and not strip_thinking:
+                                        yield f"data: {json.dumps({'event': 'reasoning', 'content': reasoning})}\n\n"
+
+                                    content = msg.get('content', '')
+                                    if content:
+                                        if strip_thinking:
+                                            import re
+                                            _ot = chr(60) + 'thinking' + chr(62)
+                                            _ct = chr(60) + '/thinking' + chr(62)
+                                            content = re.sub(re.escape(_ot) + r'.*?' + re.escape(_ct), '', content, flags=re.DOTALL).strip()
+                                        safe, lore_events = _process_lore_chunk(content, lore_buf, char_name)
+                                        full_response += safe
+                                        for ev in lore_events:
+                                            yield f"data: {ev}\n\n"
+                                        if safe:
+                                            yield f"data: {json.dumps({'event': 'chunk', 'content': safe})}\n\n"
+
+                                stream_complete = True
+                                got_finish_reason = True
+                            except Exception as e:
+                                logger.error(f"[Chat] Non-streaming request failed: {e}")
+                                yield f"data: {json.dumps({'event': 'error', 'error': str(e)})}\n\n"
+                                return
+                            break  # Success, exit retry loop
+
+                        # --- Streaming path (default) ---
                         with client.stream(
                             "POST",
                             f"{target_api_base}/chat/completions",

@@ -15,6 +15,7 @@ import { initInstalledModels, populateSelect, getDisplayName, getInstalledModels
 import { showModelManager } from './ui/settings.js';
 import { initDialog } from './ui/dialog.js';
 import { dualModelManager } from './components/DualModelManager.js';
+import { zaiOptionsManager } from './components/ZaiOptionsManager.js';
 import { AnchorsManager } from './components/AnchorsManager.js';
 import { saveConfigApi } from './api.js';
 import { settingsPersistence } from './utils/SettingsPersistence.js';
@@ -34,6 +35,7 @@ import { videoModeManager } from './components/VideoModeManager.js';
 import { togetherVideoModeManager } from './components/TogetherVideoModeManager.js';
 import { imageEditor } from './components/ImageEditor.js';
 import { lightbox } from './components/Lightbox.js';
+import { createZaiHamburger } from './utils/zaiHamburger.js';
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', async () => {
@@ -71,6 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     lightbox.init();
     settingsPersistence.init();
     dualModelManager.init();
+    zaiOptionsManager.init();
     const anchorsManager = new AnchorsManager();
     window.anchorsManager = anchorsManager;
     initWritingToolsPanel(anchorsManager);
@@ -152,6 +155,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         '#model, #desktop_tts_provider, #desktop_tts_voice, #import-character, #image-generate-model, #image-results-count, #glm-image-size, #glm-image-quality, #upscaler-scale, #editor-model-select, #venice-edit-aspect-ratio, #image-param-aspect_ratio, #image-param-resolution, #video-aspect-ratio, #video-resolution, #video-fps'
     );
     dropdowns.forEach(select => uiManager.initCustomDropdown(select));
+
+    // Force-refresh the main model dropdown so z.ai hamburger button appears
+    // (filterModelDropdownForE2EE may have rebuilt the select after initCustomDropdown)
+    uiManager.updateCustomDropdown(document.getElementById('model'));
 
     // 8. Initial Render
     await refreshSidebar();
@@ -378,6 +385,16 @@ function showModelSelector(button) {
             const groupLabel = document.createElement('div');
             groupLabel.className = 'context-menu-group-label';
             groupLabel.textContent = child.label;
+
+            // Add z.ai options hamburger button to the z.ai group header
+            if (child.label === 'z.ai') {
+                groupLabel.classList.add('has-action');
+                const hamburger = createZaiHamburger();
+                // Close the context menu before opening the modal
+                hamburger.addEventListener('click', () => menu.remove(), { capture: true });
+                groupLabel.appendChild(hamburger);
+            }
+
             menu.appendChild(groupLabel);
 
             Array.from(child.children).forEach(opt => {
@@ -409,6 +426,7 @@ async function syncInstalledModels() {
     await initInstalledModels();
     document.querySelectorAll('.model-select-ssot').forEach(sel => {
         populateSelect(sel);
+        uiManager.updateCustomDropdown(sel);
     });
 }
 window.syncInstalledModels = syncInstalledModels;

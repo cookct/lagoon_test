@@ -99,7 +99,7 @@ export function filterModelDropdownForE2EE(e2eeOn) {
     }
     
     // Sync custom dropdown UI if it exists
-    const { uiManager } = import('../core/UIManager.js').then(m => {
+    import('../core/UIManager.js').then(m => {
         m.uiManager.updateCustomDropdown(sel);
     });
 }

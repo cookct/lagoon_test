@@ -34,8 +34,17 @@ export class DualModelManager {
     }
 
     bindModalEvents() {
-        // Modal close — button only, no backdrop click
+        const modal = document.getElementById('dual-model-modal');
+
+        // Modal close — header X, Cancel button, backdrop click, and Escape key
         document.getElementById('dual-modal-close-btn')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('dual-cancel-btn')?.addEventListener('click', () => this.closeModal());
+        modal?.addEventListener('mousedown', (e) => {
+            if (e.target === modal) this.closeModal();
+        });
+        modal?.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') this.closeModal();
+        });
 
         // Start button
         const startBtn = document.getElementById('dual-start-btn');
@@ -358,6 +367,7 @@ export class DualModelManager {
             tempB: document.getElementById('dual-model-b-temp')?.value || '0.7',
             maxTurns: document.getElementById('dual-max-turns')?.value || '10',
             venicePrompt: document.getElementById('dual-venice-prompt')?.checked ?? true,
+            initialPrompt: document.getElementById('dual-initial-prompt')?.value || '',
         };
         localStorage.setItem('dual_model_config', JSON.stringify(cfg));
         const btn = document.getElementById('dual-save-config-btn');
@@ -435,6 +445,12 @@ export class DualModelManager {
 
             const venicePrompt = document.getElementById('dual-venice-prompt');
             if (venicePrompt && cfg.venicePrompt !== undefined) venicePrompt.checked = cfg.venicePrompt;
+
+            // Restore the opening scenario so a stop→reopen cycle doesn't wipe it
+            if (cfg.initialPrompt !== undefined) {
+                const initialEl = document.getElementById('dual-initial-prompt');
+                if (initialEl) initialEl.value = cfg.initialPrompt;
+            }
 
             return true;
         } catch (e) {
@@ -530,6 +546,8 @@ export class DualModelManager {
             includeVenicePrompt: venicePrompt?.checked ?? true
         };
 
+        // Persist the scenario so it survives a stop→reopen cycle
+        this.saveConfig();
         this.closeModal();
         this.start(initialPrompt.value.trim());
     }

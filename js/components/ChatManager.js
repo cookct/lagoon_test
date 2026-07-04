@@ -733,6 +733,7 @@ export class ChatManager {
                             if (isFirstChunk) {
                                 assistantMessage.content = '';
                                 assistantMessageDiv.innerHTML = '';
+                                this._cleanupStreamingState(assistantMessageDiv);
                                 isFirstChunk = false;
                             }
                             
@@ -751,6 +752,7 @@ export class ChatManager {
                             if (isFirstChunk) {
                                 assistantMessage.content = '';
                                 assistantMessageDiv.innerHTML = '';
+                                this._cleanupStreamingState(assistantMessageDiv);
                                 isFirstChunk = false;
                             }
                             
@@ -857,8 +859,11 @@ export class ChatManager {
             document.body.classList.remove('e2ee-active');
             
             if (assistantMessage.content && assistantMessage.content !== '...') {
-                // Use the same helper for final render to maintain consistency
-                this.updateStreamingDOM(assistantMessageDiv, assistantMessage.content);
+                // Flush any pending throttled render, clean up streaming state,
+                // then do a synchronous final markdown render
+                assistantMessageDiv._streamRenderPending = false;
+                this._cleanupStreamingState(assistantMessageDiv);
+                this.updateStreamingDOMImmediate(assistantMessageDiv, assistantMessage.content);
                 
                 // Trigger auto-read on desktop if enabled
                 const { audioService } = await import('../services/AudioService.js');
@@ -983,33 +988,27 @@ export class ChatManager {
         };
     }
 
-    // Helper to update DOM during streaming with separate think/main blocks
-    updateStreamingDOM(container, fullText) {
+    // Immediate (non-throttled) DOM update for final render after stream ends
+    updateStreamingDOMImmediate(container, fullText) {
         const { thinkContent, mainContent } = this.parseThinkTags(fullText);
         
-        // Handle Think Container
         let thinkContainer = container.querySelector('.think-container');
         if (thinkContent) {
             if (!thinkContainer) {
                 thinkContainer = document.createElement('details');
                 thinkContainer.className = 'think-container';
                 thinkContainer.innerHTML = '<summary>Thinking...</summary><div class="think-content"></div>';
-                
-                // Insert at the top
                 if (container.firstChild) {
                     container.insertBefore(thinkContainer, container.firstChild);
                 } else {
                     container.appendChild(thinkContainer);
                 }
             }
-            // Update content
             const thinkBody = thinkContainer.querySelector('.think-content');
             thinkBody.innerHTML = parseMarkdown(thinkContent);
-            // Ensure it's visible if we have content
             thinkContainer.style.display = 'block'; 
         }
         
-        // Handle Main Content
         let mainContainer = container.querySelector('.main-content-stream');
         if (!mainContainer) {
             mainContainer = document.createElement('div');
@@ -1020,8 +1019,87 @@ export class ChatManager {
         if (mainContent) {
              mainContainer.innerHTML = parseMarkdown(mainContent, state.currentSearchResults);
         } else {
-             mainContainer.innerHTML = ''; // Clear if no main content yet
+             mainContainer.innerHTML = '';
         }
+    }
+
+    // Streaming DOM update with scroll-pinned markdown rendering.
+    // Throttled to ~80ms so rapid SSE chunks coalesce, and scroll position
+    // is preserved across the innerHTML replacement so nothing jumps.
+    updateStreamingDOM(container, fullText) {
+        // If a render is already pending, just store the latest text and return
+        if (container._streamRenderPending) {
+            container._streamRenderText = fullText;
+            return;
+        }
+
+        container._streamRenderText = fullText;
+        container._streamRenderPending = true;
+
+        // Throttle to ~80ms — fast enough to feel responsive, slow enough to avoid
+        // hammering the browser with full markdown re-renders every 16ms
+        container._streamRenderTimer = setTimeout(() => {
+            container._streamRenderPending = false;
+            const text = container._streamRenderText;
+            if (text === undefined) return;
+
+            const { thinkContent, mainContent } = this.parseThinkTags(text);
+
+            // Pin scroll position across the innerHTML replacement.
+            // Only manage scroll if user hasn't scrolled away — if they scrolled
+            // up to stop auto-scroll, don't touch scroll at all.
+            const scrollEl = dom.chatMessages;
+            const prevScrollHeight = scrollEl ? scrollEl.scrollHeight : 0;
+            const shouldAutoScroll = scrollEl && !state.userScrolledAway;
+
+            // --- Think container ---
+            let thinkContainer = container.querySelector('.think-container');
+            if (thinkContent) {
+                if (!thinkContainer) {
+                    thinkContainer = document.createElement('details');
+                    thinkContainer.className = 'think-container';
+                    thinkContainer.innerHTML = '<summary>Thinking...</summary><div class="think-content"></div>';
+                    if (container.firstChild) {
+                        container.insertBefore(thinkContainer, container.firstChild);
+                    } else {
+                        container.appendChild(thinkContainer);
+                    }
+                }
+                const thinkBody = thinkContainer.querySelector('.think-content');
+                thinkBody.innerHTML = parseMarkdown(thinkContent);
+                thinkContainer.style.display = 'block';
+            }
+
+            // --- Main content ---
+            let mainContainer = container.querySelector('.main-content-stream');
+            if (!mainContainer) {
+                mainContainer = document.createElement('div');
+                mainContainer.className = 'main-content-stream';
+                container.appendChild(mainContainer);
+            }
+
+            if (mainContent) {
+                mainContainer.innerHTML = parseMarkdown(mainContent, state.currentSearchResults);
+            } else {
+                mainContainer.innerHTML = '';
+            }
+
+            // Only adjust scroll if auto-scrolling (user hasn't scrolled away).
+            // If they scrolled up, leave scroll alone — the browser handles it.
+            if (shouldAutoScroll) {
+                scrollEl.scrollTop = scrollEl.scrollHeight;
+            }
+        }, 80);
+    }
+
+    // Clean up streaming state markers after stream ends
+    _cleanupStreamingState(container) {
+        if (container._streamRenderTimer) {
+            clearTimeout(container._streamRenderTimer);
+        }
+        delete container._streamRenderPending;
+        delete container._streamRenderText;
+        delete container._streamRenderTimer;
     }
 
     setStreamingState(streaming) {
