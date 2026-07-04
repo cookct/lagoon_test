@@ -1,11 +1,12 @@
 # TRIO-PLAN.md
 # Three-Way Chat System (Trio Mode) — Architecture & Implementation Plan
-
 > **Status:** PLANNED — Not yet built
-> **Version:** 2.4
+> **Version:** 2.5
 > **Date:** 2026-07-04
 > **Example Characters:** Kelly Bailey & Nathan Young (Misfits)
 > **Reviewers:** This document is structured for 3rd-party architectural review.
+> **Changelog (V2.5):** Bug fixes from V2.4 review: (1) `_split_safe_unsafe_yield` rewritten with suffix-scan instead of broken `rfind('<')` — correctly handles multi-char partial markers like `<<YIE`. (2) Trailing vocative wired into `resolve_addressee` — was defined but never called; now checked in both-names-matched branch before first-mentioned fallback. Vocative rule tightened to comma-form only (`, Kelly`) to prevent last-mentioned-wins behavior. (3) Off-by-one in prefix-fallback guard fixed: `> 3` → `>= 3` so "kelvin" (diff=3) is correctly rejected for "Kel". (4) Patience decay moved from monitor instance to `trio_state` so it survives across turns. (5) Input sanitization uses `re.MULTILINE` to catch forged labels on any line. (6) Config cache threaded through all resolver functions (`_detect_names`, `_detect_names_prefix`, `_check_trailing_vocative`, Tier 3 keyword loop). (7) Test suite rewritten to match new design: probabilistic patience with seeded RNG, trailing vocative tests, prefix guard tests, sanitization tests, call budget/degraded mode tests, clause boundary truncation tests, `_split_safe_unsafe_yield` tests, energy-only clamp, cross-turn patience decay test. (8) Label regex alternatives sorted longest-first. (9) Separate `_keyword_window` (200 chars) in InterruptMonitor so keywords spanning the patience buffer trim boundary are caught. (10) Copy-paste corruption in §8.3 fixed (duplicate `_reset_consecutive` removed). (11) §13 Q6 corrected — em-dashes are NOT parsed by TokenBufferQueue. (12) Truncation example fixed — `rpartition` does not complete partial words. (13) Edge case table updated to mention vocative override.
+> **Changelog (V2.4):** Complete frontend design spec added (§9): TrioSetupModal with character selection + relationship dynamic editor, ParticipantStrip with emotional state indicators, TrioManager state machine, speaker-attributed message rendering, streaming display with speaker switching, interrupt visual feedback with animations, passive reaction styling, @mention autocomplete, mobile considerations, file structure, and accessibility.
 > **Changelog (V2.4):** Complete frontend design spec added (§9): TrioSetupModal with character selection + relationship dynamic editor, ParticipantStrip with emotional state indicators, TrioManager state machine, speaker-attributed message rendering, streaming display with speaker switching, interrupt visual feedback with animations, passive reaction styling, @mention autocomplete, mobile considerations, file structure, and accessibility.
 
 ---

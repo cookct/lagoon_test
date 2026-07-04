@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>TRIO-PLAN V2.4</title>
+<title>TRIO-PLAN V2.5</title>
 <style>
 @page { size: A4; margin: 2cm 1.8cm; @bottom-center { content: "Page " counter(page) " of " counter(pages); font-size: 9px; color: #888; } }
 body { font-family: Helvetica, Arial, sans-serif; font-size: 10.5px; line-height: 1.55; color: #1a1a1a; }
@@ -33,10 +33,12 @@ h1:first-of-type { font-size: 26px; text-align: center; border-bottom: none; mar
 <h1 id="three-way-chat-system-trio-mode-architecture-implementation-plan">Three-Way Chat System (Trio Mode) — Architecture &amp; Implementation Plan</h1>
 <blockquote>
 <p><strong>Status:</strong> PLANNED — Not yet built<br>
-<strong>Version:</strong> 2.4<br>
+<strong>Version:</strong> 2.5<br>
 <strong>Date:</strong> 2026-07-04<br>
 <strong>Example Characters:</strong> Kelly Bailey &amp; Nathan Young (Misfits)<br>
 <strong>Reviewers:</strong> This document is structured for 3rd-party architectural review.<br>
+<strong>Changelog (V2.5):</strong> Bug fixes from V2.4 review: (1) <code>_split_safe_unsafe_yield</code> rewritten with suffix-scan instead of broken <code>rfind('&lt;')</code> — correctly handles multi-char partial markers like <code>&lt;&lt;YIE</code>. (2) Trailing vocative wired into <code>resolve_addressee</code> — was defined but never called; now checked in both-names-matched branch before first-mentioned fallback. Vocative rule tightened to comma-form only (<code>, Kelly</code>) to prevent last-mentioned-wins behavior. (3) Off-by-one in prefix-fallback guard fixed: <code>&gt; 3</code> → <code>&gt;= 3</code> so "kelvin" (diff=3) is correctly rejected for "Kel". (4) Patience decay moved from monitor instance to <code>trio_state</code> so it survives across turns. (5) Input sanitization uses <code>re.MULTILINE</code> to catch forged labels on any line. (6) Config cache threaded through all resolver functions (<code>_detect_names</code>, <code>_detect_names_prefix</code>, <code>_check_trailing_vocative</code>, Tier 3 keyword loop). (7) Test suite rewritten to match new design: probabilistic patience with seeded RNG, trailing vocative tests, prefix guard tests, sanitization tests, call budget/degraded mode tests, clause boundary truncation tests, <code>_split_safe_unsafe_yield</code> tests, energy-only clamp, cross-turn patience decay test. (8) Label regex alternatives sorted longest-first. (9) Separate <code>_keyword_window</code> (200 chars) in InterruptMonitor so keywords spanning the patience buffer trim boundary are caught. (10) Copy-paste corruption in §8.3 fixed (duplicate <code>_reset_consecutive</code> removed). (11) §13 Q6 corrected — em-dashes are NOT parsed by TokenBufferQueue. (12) Truncation example fixed — <code>rpartition</code> does not complete partial words. (13) Edge case table updated to mention vocative override.<br>
+<strong>Changelog (V2.4):</strong> Complete frontend design spec added (§9): TrioSetupModal with character selection + relationship dynamic editor, ParticipantStrip with emotional state indicators, TrioManager state machine, speaker-attributed message rendering, streaming display with speaker switching, interrupt visual feedback with animations, passive reaction styling, @mention autocomplete, mobile considerations, file structure, and accessibility.<br>
 <strong>Changelog (V2.4):</strong> Complete frontend design spec added (§9): TrioSetupModal with character selection + relationship dynamic editor, ParticipantStrip with emotional state indicators, TrioManager state machine, speaker-attributed message rendering, streaming display with speaker switching, interrupt visual feedback with animations, passive reaction styling, @mention autocomplete, mobile considerations, file structure, and accessibility.</p>
 </blockquote>
 <hr>
