@@ -14,13 +14,14 @@ Lagoon is a local-first AI writing workspace built for long-form collaborative f
 4. [Writing Tools](#writing-tools)
 5. [Style Overseer](#style-overseer)
 6. [Dual Model](#dual-model)
-7. [Image Mode](#image-mode)
-8. [Video Mode](#video-mode)
-9. [Export & Import](#export--import)
-10. [Providers & Models](#providers--models)
-11. [Voice](#voice)
-12. [Design Mode](#design-mode)
-13. [End-to-End Encryption](#end-to-end-encryption)
+7. [Trio Mode](#trio-mode)
+8. [Image Mode](#image-mode)
+9. [Video Mode](#video-mode)
+10. [Export & Import](#export--import)
+11. [Providers & Models](#providers--models)
+12. [Voice](#voice)
+13. [Design Mode](#design-mode)
+14. [End-to-End Encryption](#end-to-end-encryption)
 
 ---
 
@@ -323,6 +324,56 @@ Switch the video provider to Together.ai to access the Together video pipeline. 
 ### Video Cache
 
 Generated videos are cached locally in `video_cache/`. Inline playback in the UI; videos persist across sessions.
+
+---
+
+## Trio Mode
+
+**Three-way conversations with emotional intelligence.**
+
+Trio Mode extends Dual Model into a full three-way conversation: you and two AI characters, all in the same chat. Characters can interrupt each other, react passively, and track shifting emotional states across turns — producing dialogue that feels alive rather than turn-based.
+
+### Session Builder
+
+The Trio Session Builder is a full GUI for configuring every aspect of a three-way conversation before it starts. Accessed via the **"Create Trio Session"** button in the sidebar, it lets you:
+
+- Pick two existing characters from your saved configs
+- Choose a shared model
+- Define relationship dynamics (A→B and B→A)
+- Set initial emotional states for both characters
+- Toggle interactive behaviours (interruptions, passive reactions, emotional tracking, ambient mode)
+- Configure turn management (max consecutive turns, let-them-talk rounds, per-character patience thresholds)
+
+Every field has a hover tooltip explaining what it does and its default value.
+
+### Relationship Dynamics
+
+Define how each character feels about the other — `A → B` and `B → A` dynamics are injected into each character's system prompt separately. A shared history field gives both characters the same background context, so they reference the same past events without contradiction.
+
+### Interactive Behaviours
+
+| Behaviour | What it does |
+|-----------|-------------|
+| **Interruptions** | The non-speaking character can cut in mid-response once the speaker passes their patience threshold (configurable in characters of dialogue). Lower thresholds produce more impulsive characters. |
+| **Passive Reactions** | The non-speaking character produces body language, facial expressions, and muttered asides without taking a full speaking turn. Adds texture and presence. |
+| **Emotional Tracking** | Each character's emotional state is tracked across turns and updated based on what happens. A character who starts *guarded* may shift to *vulnerable* after a confession — subsequent responses reflect the shift. |
+| **Ambient Mode** | Both characters respond to every user message simultaneously rather than taking turns. Useful for compare-and-contrast scenes. |
+
+### Turn Management
+
+- **Max Consecutive Turns** — prevents one character from monopolising the conversation. After the limit, the other character is forced to respond. Default 2.
+- **Let Them Talk** — runs rounds of back-and-forth dialogue between the two characters without user input, then yields control back to you. Configurable 1–6 rounds.
+
+### Participant Strip & Sidebar Integration
+
+A coloured participant strip at the top of the chat shows both characters, their current emotional state, and who is actively speaking. Trio configs are badged with a **TRIO** tag in the sidebar. Right-click a trio config to **"Edit Trio Session"** — reopens the builder to adjust any setting mid-conversation.
+
+### Use Cases
+
+- Three-way character scenes with the user as participant
+- Dynamic dialogue where characters react to and interrupt each other
+- Emotional arcs that evolve across the conversation
+- Compare-and-contrast scenes with ambient mode
 
 ---
 

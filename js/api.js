@@ -313,6 +313,15 @@ export async function deleteSummaryApi(chatId, summaryId) {
     return response.json();
 }
 
+export async function updateSummaryApi(chatId, summaryId, text) {
+    const response = await fetch('/api/update_summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, summary_id: summaryId, text })
+    });
+    return response.json();
+}
+
 export async function approveSummaryApi(chatId, summaryId, messages) {
     const response = await fetch('/api/approve_summary', {
         method: 'POST',

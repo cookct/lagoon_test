@@ -194,11 +194,10 @@ def append_to_summary_stack(chat_id, text, message_count, model, pending_review=
         "text": text,
         "message_count": message_count,
         "model": model,
-        "created_at": datetime.utcnow().isoformat()
+        "created_at": datetime.utcnow().isoformat(),
+        "pending_review": pending_review,  # Always save, even if False
+        "msgs_to_keep": msgs_to_keep  # Always save, even if None
     }
-    if pending_review:
-        entry["pending_review"] = True
-        entry["msgs_to_keep"] = msgs_to_keep
     file_data = _load_summary_file(chat_id) or {"summaries": []}
     file_data.setdefault("summaries", [])
     file_data["summaries"].append(entry)
@@ -602,8 +601,30 @@ def manage_context(messages, model_name, api_key, chat_id=None, max_bytes=None, 
         raw_to_store = config_system_msgs + conversation_to_store
         _sync_to_disk(chat_id, raw_to_store)
 
-    # Hard byte limit on LLM payload only
-    while len(json.dumps(llm_payload)) > max_bytes and len(llm_payload) > 3:
+    # Hard byte limit on LLM payload only — but EXCLUDE image data from the size check.
+    # Base64 images (often 3-7MB for phone photos) would otherwise blow past the 3MB limit
+    # and trigger pruning of conversation history even when the text content is tiny.
+    # Images are metered by the vision API separately; only text should count toward this limit.
+    def _payload_text_size(payload):
+        """Compute JSON byte size with image_url content replaced by a small placeholder."""
+        stripped = []
+        for msg in payload:
+            content = msg.get('content')
+            if isinstance(content, list):
+                new_content = []
+                for item in content:
+                    if isinstance(item, dict) and item.get('type') == 'image_url':
+                        new_content.append({"type": "image_url", "image_url": {"url": "[IMAGE]"}})
+                    else:
+                        new_content.append(item)
+                new_msg = dict(msg)
+                new_msg['content'] = new_content
+                stripped.append(new_msg)
+            else:
+                stripped.append(msg)
+        return len(json.dumps(stripped))
+
+    while _payload_text_size(llm_payload) > max_bytes and len(llm_payload) > 3:
         for i in range(len(llm_payload)):
             if llm_payload[i].get('role') != 'system':
                 llm_payload.pop(i)

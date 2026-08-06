@@ -237,7 +237,34 @@ export function renderCitations(results) {
 export function renderMessages(onRegenerate, onDeleteMessage, onUpdateGauge, onEdit, onToggleKeep, onFork = null, onCorrect = null) {
     const target = dom.messagesContainer || dom.chatMessages;
     if (!target) return;
+    
+    // Preserve open states of think-containers before clearing
+    const openThinkContainers = new Set();
+    target.querySelectorAll('.think-container').forEach(details => {
+        if (details.hasAttribute('open')) {
+            // Store the message index this belongs to
+            const group = details.closest('.message-group');
+            const msgIndex = group?.dataset?.index;
+            if (msgIndex !== undefined) {
+                openThinkContainers.add(msgIndex);
+            }
+        }
+    });
+    
     target.innerHTML = '';
+    
+    // Restore open states after render
+    requestAnimationFrame(() => {
+        openThinkContainers.forEach(msgIndex => {
+            const group = target.querySelector(`.message-group[data-index="${msgIndex}"]`);
+            if (group) {
+                const details = group.querySelector('.think-container');
+                if (details) {
+                    details.setAttribute('open', '');
+                }
+            }
+        });
+    });
     state.messages.forEach((msg, index) => {
         // Find if this message has associated search results in state
         const config = { ...state.currentConfig };

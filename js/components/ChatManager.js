@@ -35,6 +35,7 @@ export const VENICE_PRICING = {
     'qwen3-coder-480b-a35b-instruct':           { in: 0.75,  out: 3.00 },
     'qwen3-coder-480b-a35b-instruct-turbo':     { in: 0.35,  out: 1.50,  cacheRead: 0.04 },
     'qwen3-5-35b-a3b':                          { in: 0.31,  out: 1.25,  cacheRead: 0.16 },
+    'Qwen/Qwen3.6-Plus':                        { in: 0.50,  out: 3.00 },
     'qwen3-vl-235b-a22b':                       { in: 0.25,  out: 1.50 },
     'hermes-3-llama-3.1-405b':                  { in: 1.10,  out: 3.00 },
     'google-gemma-3-27b-it':                    { in: 0.12,  out: 0.20 },
@@ -65,6 +66,7 @@ export const VENICE_PRICING = {
     'minimax-m21':                              { in: 0.35,  out: 1.50,  cacheRead: 0.04 },
     'minimax-m25':                              { in: 0.34,  out: 1.19,  cacheRead: 0.04 },
     'minimax-m27':                              { in: 0.38,  out: 1.50,  cacheRead: 0.07 },
+    'MiniMaxAI/MiniMax-M3':                     { in: 0.30,  out: 1.20,  cacheRead: 0.06 },
     'nvidia-nemotron-3-nano-30b-a3b':           { in: 0.07,  out: 0.30 },
     'e2ee-venice-uncensored-24b-p':             { in: 0.25,  out: 1.15 },
     'e2ee-gemma-3-27b-p':                       { in: 0.14,  out: 0.50 },
@@ -78,6 +80,36 @@ export const VENICE_PRICING = {
     'e2ee-glm-5':                               { in: 1.10,  out: 4.15 },
     'e2ee-qwen3-5-122b-a10b':                   { in: 0.50,  out: 4.00 },
 };
+
+/**
+ * Strip OOC (out-of-character) messages from state.messages.
+ * OOC messages are user messages wrapped in ((...)) that shape model behavior
+ * for one response then should disappear from context.
+ * Called after streaming completes, before saving.
+ */
+function stripOocMessages() {
+    const before = state.messages.length;
+    state.messages = state.messages.filter(msg => {
+        if (msg.role !== 'user') return true;
+        const content = msg.content || '';
+        // Check if message is entirely OOC (starts with (( and ends with ))
+        // or is ONLY OOC content with optional whitespace
+        const trimmed = content.trim();
+        if (trimmed.startsWith('((') && trimmed.endsWith('))')) {
+            // Verify it's not mixed content (OOC + regular)
+            const inner = trimmed.slice(2, -2).trim();
+            // If there's another (( inside, it's mixed content - keep it
+            if (inner.includes('((')) return true;
+            return false; // Pure OOC, strip it
+        }
+        return true;
+    });
+    const removed = before - state.messages.length;
+    if (removed > 0) {
+        console.log(`[OOC] Stripped ${removed} ephemeral OOC message(s)`);
+    }
+    return removed;
+}
 
 export class ChatManager {
     constructor() {
@@ -295,9 +327,16 @@ export class ChatManager {
     }
 
     handleStopGeneration() {
+        // Abort regular chat
         if (state.abortController) {
             state.abortController.abort();
             state.abortController = null;
+        }
+        // Abort trio mode
+        if (state.currentConfig?.mode === 'trio') {
+            import('./TrioManager.js').then(({ trioManager }) => {
+                trioManager.abort();
+            });
         }
     }
 
@@ -311,7 +350,13 @@ export class ChatManager {
         if (this.dom.costTokensEl) this.dom.costTokensEl.textContent = '';
     }
 
-    startNewChatSession(config, parentConfigFilename) {
+    async startNewChatSession(config, parentConfigFilename) {
+        // Cleanup trio mode if we were in it
+        if (state.currentConfig?.mode === 'trio') {
+            const { trioManager } = await import('./TrioManager.js');
+            trioManager.cleanup();
+        }
+        
         state.currentChatId = null;
         state.messages = [];
         state.currentConfig = { ...config };
@@ -357,6 +402,12 @@ export class ChatManager {
         this.updateModelButtonText();
         this.updateContextGauge();
         
+        // Initialize trio mode if applicable
+        if (state.currentConfig.mode === 'trio') {
+            const { trioManager } = await import('./TrioManager.js');
+            trioManager.init(state.currentConfig);
+        }
+        
         // Sync toggle state
         if (this.dom.veniceToggle) {
             this.dom.veniceToggle.checked = !!state.currentConfig.include_venice_system_prompt;
@@ -365,6 +416,12 @@ export class ChatManager {
 
     async loadChat(chatId) {
         try {
+            // Cleanup trio mode if we were in it
+            if (state.currentConfig?.mode === 'trio') {
+                const { trioManager } = await import('./TrioManager.js');
+                trioManager.cleanup();
+            }
+            
             this.clearContextFile();
             this._resetSessionCost();
             const chatData = await fetchChat(chatId);
@@ -395,6 +452,30 @@ export class ChatManager {
                             state.currentConfig[field] = liveConfig[field];
                         }
                     }
+                    
+                    // Rebuild system message from live config (the saved one may be stale)
+                    const systemParts = [];
+                    if (state.currentConfig.system_prompt) {
+                        systemParts.push(state.currentConfig.system_prompt);
+                    }
+                    if (state.currentConfig.system_context && state.currentConfig.context_mode !== 'rag') {
+                        systemParts.push(state.currentConfig.system_context);
+                    }
+                    if (state.currentConfig.character_card) {
+                        systemParts.push(`USER-DEFINED INSTRUCTIONS:\n${state.currentConfig.character_card}`);
+                    }
+                    
+                    // Replace old system message with rebuilt one
+                    if (systemParts.length > 0) {
+                        const newSystemContent = systemParts.join('\n\n');
+                        // Find and replace existing system message, or insert at beginning
+                        const sysIdx = state.messages.findIndex(m => m.role === 'system');
+                        if (sysIdx >= 0) {
+                            state.messages[sysIdx].content = newSystemContent;
+                        } else {
+                            state.messages.unshift({ role: 'system', content: newSystemContent });
+                        }
+                    }
                 }
             }
 
@@ -420,6 +501,12 @@ export class ChatManager {
 
             this.renderMessages();
             this.enableChatInput(true);
+            
+            // Initialize trio mode if applicable
+            if (state.currentConfig.mode === 'trio') {
+                const { trioManager } = await import('./TrioManager.js');
+                trioManager.init(state.currentConfig);
+            }
             
             document.querySelectorAll('.list-item').forEach(item => {
                 item.classList.toggle('active', item.dataset.chatId === chatId);
@@ -481,6 +568,9 @@ export class ChatManager {
             return;
         }
 
+        // Store original chat ID for metadata copy
+        const originalChatId = state.currentChatId;
+
         // Save current chat first if it has content
         if (state.messages.length > 0 && state.currentChatId) {
             await this.saveChat();
@@ -498,6 +588,24 @@ export class ChatManager {
         // Save the forked chat
         try {
             await this.saveChat();
+            
+            // Copy summary stack and RAG files from original chat to forked chat
+            if (originalChatId && state.currentChatId) {
+                try {
+                    await fetch('/api/copy_chat_metadata', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            source_chat_id: originalChatId,
+                            target_chat_id: state.currentChatId,
+                            message_count: forkedMessages.length
+                        })
+                    });
+                } catch (err) {
+                    console.warn('[Fork] Failed to copy chat metadata:', err);
+                }
+            }
+            
             await refreshSidebar();
             
             // Re-render messages to show the forked state
@@ -544,6 +652,15 @@ export class ChatManager {
     async handleSendMessage(textToSend = null, systemInjections = []) {
         const userMessage = this.dom.messageInput.value.trim();
         if (!userMessage || !state.currentConfig.model) return;
+
+        // ── Trio mode: delegate to TrioManager ──
+        if (state.currentConfig.mode === 'trio') {
+            const { trioManager } = await import('./TrioManager.js');
+            this.dom.messageInput.value = '';
+            this.dom.messageInput.style.height = 'auto';
+            await trioManager.sendMessage(userMessage);
+            return;
+        }
 
         // Sync author's note textarea to state before sending — so changes take effect
         // without requiring an explicit Apply click
@@ -639,6 +756,7 @@ export class ChatManager {
         }, 100);
 
         state.abortController = new AbortController();
+        let pendingSummaryData = null; // Defer summarization sync until streaming ends
 
         try {
             let historyToSend;
@@ -770,21 +888,9 @@ export class ChatManager {
 
                         } else if (eventData.event === 'summarized') {
                             console.log('[DEBUG] Summarized event received. New messages count:', eventData.new_messages ? eventData.new_messages.length : 'none');
-                            if (eventData.new_messages) {
-                                console.log('[DEBUG] Syncing state with backend summary...');
-                                // Replace messages but ensure we keep the in-flight assistant message object
-                                const inFlightMsg = assistantMessage; 
-                                state.messages = eventData.new_messages;
-                                
-                                // Re-insert the in-flight message at the end
-                                if (!state.messages.includes(inFlightMsg)) {
-                                    state.messages.push(inFlightMsg);
-                                }
-                                
-                                this.renderMessages();
-                                this.updateContextGauge();
-                                console.log('[DEBUG] State synchronized. New count:', state.messages.length);
-                            }
+                            // Defer summarization sync until AFTER streaming completes to prevent blank screen
+                            // Store the event data for later processing
+                            pendingSummaryData = eventData.new_messages;
                             showSummarizedNotification();
                         } else if (eventData.event === 'review_needed') {
                             this._showReviewNeededBanner();
@@ -873,6 +979,15 @@ export class ChatManager {
             }
             this.updateContextGauge();
 
+            // Process deferred summarization sync now that streaming is complete
+            if (pendingSummaryData) {
+                console.log('[DEBUG] Processing deferred summarization sync after streaming');
+                state.messages = pendingSummaryData;
+                this.renderMessages();
+                this.updateContextGauge();
+                console.log('[DEBUG] Summarization sync complete. Message count:', state.messages.length);
+            }
+
             // Notify in manual mode when context is getting full
             if (localStorage.getItem('summarize_mode') === 'manual') {
                 const maxTokens = CONTEXT_WINDOWS[state.currentConfig?.model] || 200000;
@@ -926,7 +1041,7 @@ export class ChatManager {
             return;
         }
         
-        // Store the current chat ID to return to it after forking
+        // Store the current chat ID to copy summary/RAG files
         const originalChatId = state.currentChatId;
         
         // Create a forked display name
@@ -941,6 +1056,23 @@ export class ChatManager {
         
         // Save the forked chat
         await this.saveChat();
+        
+        // Copy summary stack and RAG files from original chat to forked chat
+        if (originalChatId && state.currentChatId) {
+            try {
+                await fetch('/api/copy_chat_metadata', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        source_chat_id: originalChatId,
+                        target_chat_id: state.currentChatId,
+                        message_count: forkedMessages.length
+                    })
+                });
+            } catch (err) {
+                console.warn('[Fork] Failed to copy chat metadata:', err);
+            }
+        }
         
         // Show notification
         if (typeof window.showNotification === 'function') {
@@ -994,6 +1126,9 @@ export class ChatManager {
         
         let thinkContainer = container.querySelector('.think-container');
         if (thinkContent) {
+            // Preserve the open state across re-render
+            const wasOpen = thinkContainer?.hasAttribute('open');
+            
             if (!thinkContainer) {
                 thinkContainer = document.createElement('details');
                 thinkContainer.className = 'think-container';
@@ -1004,6 +1139,12 @@ export class ChatManager {
                     container.appendChild(thinkContainer);
                 }
             }
+            
+            // Restore open state if user had opened it during streaming
+            if (wasOpen) {
+                thinkContainer.setAttribute('open', '');
+            }
+            
             const thinkBody = thinkContainer.querySelector('.think-content');
             thinkBody.innerHTML = parseMarkdown(thinkContent);
             thinkContainer.style.display = 'block'; 
@@ -1055,6 +1196,9 @@ export class ChatManager {
             // --- Think container ---
             let thinkContainer = container.querySelector('.think-container');
             if (thinkContent) {
+                // Preserve the open state across re-render
+                const wasOpen = thinkContainer?.hasAttribute('open');
+                
                 if (!thinkContainer) {
                     thinkContainer = document.createElement('details');
                     thinkContainer.className = 'think-container';
@@ -1065,6 +1209,12 @@ export class ChatManager {
                         container.appendChild(thinkContainer);
                     }
                 }
+                
+                // Restore open state if user had opened it during streaming
+                if (wasOpen) {
+                    thinkContainer.setAttribute('open', '');
+                }
+                
                 const thinkBody = thinkContainer.querySelector('.think-content');
                 thinkBody.innerHTML = parseMarkdown(thinkContent);
                 thinkContainer.style.display = 'block';
@@ -1136,6 +1286,16 @@ export class ChatManager {
 
     async saveChat(options = {}) {
         if (!state.currentChatId) return;
+        
+        // Strip ephemeral OOC messages before saving
+        // These are ((...)) wrapped user messages that shape model behavior for one response then vanish
+        const removed = stripOocMessages();
+        
+        // Re-render if we removed any OOC messages
+        if (removed > 0) {
+            this.renderMessages();
+        }
+        
         const activeChatItem = document.querySelector(`.list-item[data-chat-id="${state.currentChatId}"] .chat-name`);
         const displayName = activeChatItem ? activeChatItem.textContent : null;
 

@@ -4,7 +4,7 @@
 
 import { state, dom, getDefaultSystemPrompt, setDefaultSystemPrompt } from '../state.js';
 import { fetchSystemPrompts, createSystemPrompt, updateSystemPrompt, deleteSystemPrompt, saveConfigApi,
-         generateDetailedSummaryApi, applySummaryApi, deleteSummaryApi, approveSummaryApi,
+         generateDetailedSummaryApi, applySummaryApi, deleteSummaryApi, approveSummaryApi, updateSummaryApi,
          fetchCustomEndpoints, saveCustomEndpoint, deleteCustomEndpoint } from '../api.js';
 import { lagoonAlert, lagoonPrompt, lagoonConfirm } from './dialog.js';
 import { getWritingToolsOptions, saveWritingToolsOptions, DEFAULT_WRITING_TOOLS } from './messages.js';
@@ -169,10 +169,10 @@ export async function showContextViewer() {
                         ${isPending ? '<span class="pending-badge">PENDING REVIEW</span> ' : ''}Summary ${idx + 1}${date ? ' &mdash; ' + date : ''} (${entry.message_count || '?'} msgs)
                     </span>
                     ${isPending ? '<p class="pending-warning">Messages will NOT be pruned until you approve this summary.</p>' : ''}
-                    <pre class="summary-card-preview">${entry.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                    <pre class="summary-card-preview" ${isPending ? 'contenteditable="true"' : ''}>${entry.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
                 </div>
                 <div class="summary-card-actions">
-                    ${isPending ? '<button class="context-approve-btn summary-approve-btn">Approve</button>' : ''}
+                    ${isPending ? '<button class="context-save-btn summary-save-btn" style="display:none;">Save</button><button class="context-approve-btn summary-approve-btn">Approve</button>' : ''}
                     <button class="context-copy-btn">Copy</button>
                     <button class="context-delete-btn summary-delete-btn">Del</button>
                 </div>
@@ -190,7 +190,39 @@ export async function showContextViewer() {
                 }
             });
             if (isPending) {
+                const preEl = card.querySelector('.summary-card-preview');
+                const saveBtn = card.querySelector('.summary-save-btn');
+                
+                // Show save button when content is edited
+                preEl.addEventListener('input', () => {
+                    saveBtn.style.display = 'inline-block';
+                });
+                
+                // Save edited summary
+                saveBtn.addEventListener('click', async () => {
+                    const newText = preEl.textContent.trim();
+                    if (!newText) {
+                        lagoonAlert('Summary cannot be empty');
+                        return;
+                    }
+                    try {
+                        const result = await updateSummaryApi(state.currentChatId, entry.id, newText);
+                        if (result.error) throw new Error(result.error);
+                        entry.text = newText; // Update local copy
+                        saveBtn.style.display = 'none';
+                        lagoonAlert('Summary updated');
+                    } catch (e) {
+                        lagoonAlert('Failed to update summary: ' + e.message);
+                    }
+                });
+                
+                // Approve summary
                 card.querySelector('.summary-approve-btn').addEventListener('click', async () => {
+                    // Check if there are unsaved edits
+                    const currentText = preEl.textContent.trim();
+                    if (currentText !== entry.text) {
+                        if (!await lagoonConfirm('You have unsaved edits. Approve anyway (edits will be lost)?')) return;
+                    }
                     if (!await lagoonConfirm('Approve this summary? This will prune old messages from the chat history. This cannot be undone.')) return;
                     try {
                         const result = await approveSummaryApi(state.currentChatId, entry.id, state.messages);
@@ -303,7 +335,7 @@ export async function showContextViewer() {
                 summarizeBtn.querySelector('.btn-label').textContent = 'Summarizing...';
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 120000);
+                    const timeoutId = setTimeout(() => controller.abort(), 330000);
                     const response = await fetch('/api/force_summarize', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },

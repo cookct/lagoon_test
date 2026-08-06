@@ -39,6 +39,7 @@
     <link rel="stylesheet" href="css/mobile-chat.css">
     <link rel="stylesheet" href="css/mobile-input.css">
     <link rel="stylesheet" href="css/mobile-menu.css">
+    <link rel="stylesheet" href="css/trio.css">
     <!-- User design overrides — loaded last, always wins -->
     <link rel="stylesheet" href="css/user-overrides.css">
 </head>
@@ -212,6 +213,7 @@
             <div id="sidebar-header">
                 <button id="quick-chat-btn">New Chat</button>
                 <button id="create-char-btn" class="secondary-btn">Create Character</button>
+                <button id="create-trio-btn" class="secondary-btn" style="grid-column: span 2;">Create Trio Session</button>
                 <div style="display: flex; gap: 5px; grid-column: span 2;">
                     <button id="import-chat-btn" class="secondary-btn" style="flex: 1;">Import</button>
                     <a href="/logout" style="flex: 1;">Logout</a>
@@ -326,6 +328,7 @@
                         <option value="gemini-3-pro-edit">Nano Banana Pro Edit (Google)</option>
                         <option value="qwen-image-2-edit">Qwen Image 2 Edit</option>
                         <option value="qwen-image-2-pro-edit">Qwen Image 2 Pro</option>
+                        <option value="qwen-edit-uncensored">Qwen Edit Uncensored</option>
                         <option value="grok-imagine-edit">Grok Imagine Edit</option>
                         <option value="wan-2-7-pro-edit">Wan 2.7 Pro Edit</option>
                         <option value="seedream-v5-lite-edit">Seedream V5 Lite Edit</option>
@@ -704,6 +707,7 @@
                                 </button>
                             </div>
                             <textarea id="system_context" rows="2" placeholder="Context from uploaded file..." class="hidden"></textarea>
+                            <div id="system-context-files" class="context-file-chips"></div>
                         </div>
                     </div>
 
@@ -735,6 +739,7 @@
                             <label><input type="checkbox" id="style_overseer"> Style Overseer</label>
                             <label><input type="checkbox" id="desktop_auto_read"> Auto Read</label>
                         </div>
+                        <div id="shared-lore-status" class="context-status hidden"></div>
                         <div class="field-group">
                             <label>TTS Provider</label>
                             <select id="desktop_tts_provider" class="select-input">
@@ -748,6 +753,131 @@
                                 <select id="desktop_tts_voice" class="select-input" style="flex: 1;"></select>
                                 <button id="desktop_test_voice_btn" class="action-btn" title="Test Voice" style="background: var(--accent); color: white; border: none; border-radius: 4px; width: 32px; height: 32px; cursor: pointer;">▶</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Trio Session Builder Modal -->
+    <div id="trio-builder-modal" class="modal-overlay hidden">
+        <div class="modal-content config-modal-wide">
+            <div class="config-header">
+                <h2>Trio Session Builder</h2>
+                <div class="modal-actions-top">
+                    <button type="button" id="trio-cancel-btn" class="btn-cancel">Cancel</button>
+                    <button type="button" id="trio-save-btn" class="btn-save">Save & Launch</button>
+                </div>
+            </div>
+            <form id="trio-builder-form" onsubmit="return false;">
+                <div class="config-columns">
+                    <!-- Left: Participants -->
+                    <div class="config-col">
+                        <div class="field-group">
+                            <label title="The display name for this trio session. Used in the sidebar and as the chat title.">Session Name</label>
+                            <input type="text" id="trio-session-name" placeholder="e.g. Kelly & Nathan" autocomplete="off" title="The display name for this trio session. Used in the sidebar and as the chat title.">
+                        </div>
+                        <div class="field-group">
+                            <label title="The first character in the conversation. Their character card, system prompt, and personality will be used when this character speaks.">Character A</label>
+                            <select id="trio-char-a" title="The first character in the conversation. Their character card, system prompt, and personality will be used when this character speaks."></select>
+                        </div>
+                        <div class="field-group">
+                            <label title="The second character in the conversation. Must be different from Character A. Their character card, system prompt, and personality will be used when this character speaks.">Character B</label>
+                            <select id="trio-char-b" title="The second character in the conversation. Must be different from Character A. Their character card, system prompt, and personality will be used when this character speaks."></select>
+                        </div>
+                        <div class="field-group">
+                            <label title="The AI model used for both characters. Both participants share the same model in a trio session.">Shared Model</label>
+                            <select id="trio-model" class="model-select-ssot" title="The AI model used for both characters. Both participants share the same model in a trio session."></select>
+                        </div>
+                        <div class="field-group">
+                            <label title="Controls randomness/creativity. Higher values produce more varied and unpredictable responses. 0.8 is a good default for character-driven dialogue.">Temperature: <span id="trio-temp-value">0.8</span></label>
+                            <input type="range" id="trio-temperature" min="0" max="2" step="0.1" value="0.8" title="Controls randomness/creativity. Higher values produce more varied and unpredictable responses. 0.8 is a good default for character-driven dialogue.">
+                        </div>
+                        <div class="field-group">
+                            <label title="Maximum number of tokens (roughly 3/4 of a word) generated per response. 2048 is sufficient for most dialogue turns. Increase for longer monologues.">Max Tokens</label>
+                            <input type="number" id="trio-max-tokens" value="2048" title="Maximum number of tokens (roughly 3/4 of a word) generated per response. 2048 is sufficient for most dialogue turns. Increase for longer monologues.">
+                        </div>
+                    </div>
+
+                    <!-- Middle: Relationship -->
+                    <div class="config-col">
+                        <div class="field-group">
+                            <label title="Describes how Character A feels about Character B. Injected into A's system prompt so their responses reflect this dynamic. e.g. 'A is secretly in love with B but hides it behind sarcasm.'">A &#8594; B Dynamic</label>
+                            <textarea id="trio-dynamic-ab" rows="3" placeholder="How A feels about B..." title="Describes how Character A feels about Character B. Injected into A's system prompt so their responses reflect this dynamic. e.g. 'A is secretly in love with B but hides it behind sarcasm.'"></textarea>
+                        </div>
+                        <div class="field-group">
+                            <label title="Describes how Character B feels about Character A. Injected into B's system prompt so their responses reflect this dynamic. e.g. 'B is protective of A but resentful of their recklessness.'">B &#8594; A Dynamic</label>
+                            <textarea id="trio-dynamic-ba" rows="3" placeholder="How B feels about A..." title="Describes how Character B feels about Character A. Injected into B's system prompt so their responses reflect this dynamic. e.g. 'B is protective of A but resentful of their recklessness.'"></textarea>
+                        </div>
+                        <div class="field-group">
+                            <label title="Background context shared by both characters. What happened before this conversation started? Injected into both system prompts so both characters are aware of the same history.">Shared History</label>
+                            <textarea id="trio-history" rows="3" placeholder="What happened before this conversation..." title="Background context shared by both characters. What happened before this conversation started? Injected into both system prompts so both characters are aware of the same history."></textarea>
+                        </div>
+                        <div class="field-group">
+                            <label title="Sets A's starting emotional state. The AI uses this to color A's tone, word choice, and body language. Emotional tracking can shift this over the course of the conversation.">A's Emotional State</label>
+                            <select id="trio-mood-a" title="Sets A's starting emotional state. The AI uses this to color A's tone, word choice, and body language. Emotional tracking can shift this over the course of the conversation.">
+                                <option value="neutral">Neutral</option>
+                                <option value="guarded">Guarded</option>
+                                <option value="angry">Angry</option>
+                                <option value="amused">Amused</option>
+                                <option value="annoyed">Annoyed</option>
+                                <option value="affectionate">Affectionate</option>
+                                <option value="vulnerable">Vulnerable</option>
+                                <option value="performing">Performing</option>
+                                <option value="deflecting">Deflecting</option>
+                                <option value="serious">Serious</option>
+                                <option value="playful">Playful</option>
+                                <option value="sad">Sad</option>
+                                <option value="excited">Excited</option>
+                                <option value="happy">Happy</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label title="Sets B's starting emotional state. The AI uses this to color B's tone, word choice, and body language. Emotional tracking can shift this over the course of the conversation.">B's Emotional State</label>
+                            <select id="trio-mood-b" title="Sets B's starting emotional state. The AI uses this to color B's tone, word choice, and body language. Emotional tracking can shift this over the course of the conversation.">
+                                <option value="neutral">Neutral</option>
+                                <option value="guarded">Guarded</option>
+                                <option value="angry">Angry</option>
+                                <option value="amused">Amused</option>
+                                <option value="annoyed">Annoyed</option>
+                                <option value="affectionate">Affectionate</option>
+                                <option value="vulnerable">Vulnerable</option>
+                                <option value="performing">Performing</option>
+                                <option value="deflecting">Deflecting</option>
+                                <option value="serious">Serious</option>
+                                <option value="playful">Playful</option>
+                                <option value="sad">Sad</option>
+                                <option value="excited">Excited</option>
+                                <option value="happy">Happy</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Right: Session Toggles -->
+                    <div class="config-col">
+                        <div class="toggles-vertical">
+                            <label title="When enabled, the non-speaking character can interrupt the active speaker mid-response if they have something urgent to say. Interrupts are triggered by the patience threshold."><input type="checkbox" id="trio-interrupts" checked> Interruptions</label>
+                            <label title="When enabled, the non-speaking character can produce passive reactions (body language, facial expressions, muttered asides) without taking a full speaking turn. Adds texture to the scene."><input type="checkbox" id="trio-passive" checked> Passive Reactions</label>
+                            <label title="When enabled, the system tracks each character's emotional state across turns and updates it based on what happens in the conversation. Shifts in mood are reflected in subsequent responses."><input type="checkbox" id="trio-emotional" checked> Emotional Tracking</label>
+                            <label title="When enabled, both characters respond to every user message simultaneously rather than taking turns. Useful for compare-and-contrast scenes. Disable for natural back-and-forth dialogue."><input type="checkbox" id="trio-ambient"> Ambient (both respond)</label>
+                            <label title="When enabled, internal thinking/reasoning blocks from models like GLM-4.5+ are stripped from output. Enable for cleaner dialogue without meta-commentary."><input type="checkbox" id="trio-strip-thinking" checked> Strip Thinking</label>
+                        </div>
+                        <div class="field-group" style="margin-top: 10px;">
+                            <label title="Maximum number of consecutive turns one character can speak before the other is forced to respond. Prevents one character from monopolizing the conversation. Default 2.">Max Consecutive Turns</label>
+                            <input type="number" id="trio-max-consecutive" value="2" min="1" max="5" title="Maximum number of consecutive turns one character can speak before the other is forced to respond. Prevents one character from monopolizing the conversation. Default 2.">
+                        </div>
+                        <div class="field-group">
+                            <label title="How many rounds of back-and-forth dialogue happen when you click the 'Let Them Talk' button in the participant strip. Default 2.">Let Them Talk Rounds</label>
+                            <input type="number" id="trio-ltt-rounds" value="2" min="1" max="6" title="How many rounds of back-and-forth dialogue happen when you click the 'Let Them Talk' button in the participant strip. Default 2.">
+                        </div>
+                        <div class="field-group">
+                            <label title="How many characters of the other person's response Character A will tolerate before interrupting. Lower values make A more impulsive and likely to cut in. Default 400.">A: Patience Threshold (chars)</label>
+                            <input type="number" id="trio-patience-a" value="400" title="How many characters of the other person's response Character A will tolerate before interrupting. Lower values make A more impulsive and likely to cut in. Default 400.">
+                        </div>
+                        <div class="field-group">
+                            <label title="How many characters of the other person's response Character B will tolerate before interrupting. Lower values make B more impulsive and likely to cut in. Default 400.">B: Patience Threshold (chars)</label>
+                            <input type="number" id="trio-patience-b" value="400" title="How many characters of the other person's response Character B will tolerate before interrupting. Lower values make B more impulsive and likely to cut in. Default 400.">
                         </div>
                     </div>
                 </div>

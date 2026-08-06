@@ -16,6 +16,7 @@ export class ConfigManager {
         this.dom = {};
         this._editingConfigFilename = null; // tracks which config is open in the editor (NOT the active chat's parent)
         this._editingSharedLore = [];
+        this._contextFiles = []; // [{ name, content }] — supports multiple attached context files
         this.refreshDom();
     }
 
@@ -49,6 +50,9 @@ export class ConfigManager {
             systemContextBtn: document.getElementById('system-context-btn'),
             systemContextInput: document.getElementById('system-context-input'),
             systemContextTextarea: document.getElementById('system_context'),
+            contextFilesContainer: document.getElementById('system-context-files'),
+            contextStatus: document.getElementById('system_context_status'),
+            sharedLoreStatus: document.getElementById('shared-lore-status'),
             contextMode: document.getElementById('context_mode'),
             contextFileBtn: document.getElementById('context-file-btn'),
             contextFileInput: document.getElementById('context-file-input'),
@@ -182,6 +186,7 @@ export class ConfigManager {
     handleCreateCharacter() {
         this._editingConfigFilename = null;
         this._editingSharedLore = [];
+        this._contextFiles = [];
         this.dom.configForm.reset();
         this.dom.configName.value = '';
         this.dom.avatarPreview.src = DEFAULT_AVATAR_URI;
@@ -196,8 +201,19 @@ export class ConfigManager {
             if (contextLabel) contextLabel.classList.add('hidden');
             if (contextBtn) contextBtn.classList.add('hidden');
         }
+        this._renderContextFileChips();
         if (state.currentConfig) state.currentConfig.system_context = '';
         if (this.dom.contextMode) this.dom.contextMode.value = 'always';
+        
+        // Clear status displays
+        if (this.dom.contextStatus) {
+            this.dom.contextStatus.classList.add('hidden');
+            this.dom.contextStatus.textContent = '';
+        }
+        if (this.dom.sharedLoreStatus) {
+            this.dom.sharedLoreStatus.classList.add('hidden');
+            this.dom.sharedLoreStatus.textContent = '';
+        }
 
         // Load persisted settings from localStorage
         const savedSettings = JSON.parse(localStorage.getItem('lagoon_desktop_settings') || '{}');
@@ -360,17 +376,37 @@ export class ConfigManager {
                 this.dom.systemContextTextarea.classList.remove('hidden');
                 if (contextLabel) contextLabel.classList.remove('hidden');
                 if (contextBtn) contextBtn.classList.remove('hidden');
+                // Parse existing system_context into individual file chips
+                this._contextFiles = this._parseContextIntoFiles(configData.system_context);
             } else {
                 this.dom.systemContextTextarea.value = '';
                 this.dom.systemContextTextarea.classList.add('hidden');
                 if (contextLabel) contextLabel.classList.add('hidden');
                 if (contextBtn) contextBtn.classList.add('hidden');
+                this._contextFiles = [];
             }
+            this._renderContextFileChips();
         }
 
         // Context mode dropdown
         if (this.dom.contextMode) {
             this.dom.contextMode.value = configData.context_mode || 'always';
+        }
+
+        // Update context file status
+        this._updateContextStatus(configData.system_context, configData.context_mode);
+
+        // Update shared lore status
+        this._updateSharedLoreStatus(configData.shared_lore);
+
+        // Clear status displays for new character creation
+        if (!configFilename && !this._editingConfigFilename) {
+            if (this.dom.contextStatus) {
+                this.dom.contextStatus.classList.add('hidden');
+            }
+            if (this.dom.sharedLoreStatus) {
+                this.dom.sharedLoreStatus.classList.add('hidden');
+            }
         }
 
         this.dom.temperature.value = configData.temperature || 0.7;
@@ -455,29 +491,31 @@ export class ConfigManager {
         try {
             if (ext === 'pdf') {
                  const result = await parseFileApi(file);
-                 content = `[SYSTEM CONTEXT: ${file.name}]
-${result.content}`;
+                 content = `[SYSTEM CONTEXT: ${file.name}]\n${result.content}`;
             } else {
                  const rawText = await file.text();
                  if (CODE_EXTENSIONS[ext]) {
                      content = `[SYSTEM CONTEXT: ${file.name}]\n\`\`\`${CODE_EXTENSIONS[ext]}\n${rawText}\n\`\`\``;
                  } else {
-                     content = `[SYSTEM CONTEXT: ${file.name}]
-${rawText}`;
+                     content = `[SYSTEM CONTEXT: ${file.name}]\n${rawText}`;
                  }
             }
 
+            // Push to multi-file array (supports multiple attached files)
+            this._contextFiles.push({ name: file.name, content });
+            this._rebuildSystemContextTextarea();
+            this._renderContextFileChips();
+
             if (this.dom.systemContextTextarea) {
-                this.dom.systemContextTextarea.value = content;
                 this.dom.systemContextTextarea.classList.remove('hidden');
-                
                 const contextLabel = document.getElementById('system_context_label');
                 const contextBtn = document.getElementById('system_context_expand_btn');
                 if (contextLabel) contextLabel.classList.remove('hidden');
                 if (contextBtn) contextBtn.classList.remove('hidden');
-                
                 if (!state.currentConfig) state.currentConfig = {};
-                state.currentConfig.system_context = content;
+                state.currentConfig.system_context = this.dom.systemContextTextarea.value;
+                const mode = this.dom.contextMode ? this.dom.contextMode.value : 'always';
+                this._updateContextStatus(this.dom.systemContextTextarea.value, mode);
             }
             this.dom.systemContextInput.value = '';
 
@@ -502,6 +540,92 @@ ${rawText}`;
 
         } catch (error) {
             await lagoonAlert(`Error reading file: ${error.message}`);
+        }
+    }
+
+    // Merge all attached context files into the hidden textarea for backward compatibility
+    _rebuildSystemContextTextarea() {
+        if (!this.dom.systemContextTextarea) return;
+        if (this._contextFiles.length === 0) {
+            this.dom.systemContextTextarea.value = '';
+        } else if (this._contextFiles.length === 1) {
+            this.dom.systemContextTextarea.value = this._contextFiles[0].content;
+        } else {
+            this.dom.systemContextTextarea.value = this._contextFiles
+                .map(f => f.content)
+                .join('\n\n---\n\n');
+        }
+    }
+
+    // Parse a merged system_context string back into individual file objects
+    // Splits on [SYSTEM CONTEXT: filename] headers; content without headers becomes one "Context" entry
+    _parseContextIntoFiles(contextText) {
+        if (!contextText || !contextText.trim()) return [];
+        
+        // Split on the [SYSTEM CONTEXT: ...] header, keeping the header with its content
+        const parts = contextText.split(/(?=\[SYSTEM CONTEXT: [^\]]+\])/);
+        const files = [];
+        
+        for (const part of parts) {
+            const trimmed = part.trim();
+            if (!trimmed) continue;
+            const match = trimmed.match(/^\[SYSTEM CONTEXT: ([^\]]+)\]/);
+            if (match) {
+                files.push({ name: match[1], content: trimmed });
+            } else {
+                // Content without a header — treat as a single unnamed context block
+                files.push({ name: 'Context', content: trimmed });
+            }
+        }
+        return files;
+    }
+
+    // Render visual chips for each attached context file with X remove buttons
+    _renderContextFileChips() {
+        const container = this.dom.contextFilesContainer;
+        if (!container) return;
+        container.innerHTML = '';
+
+        this._contextFiles.forEach((fileObj, index) => {
+            const chip = document.createElement('span');
+            chip.className = 'context-file-chip';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'context-file-chip-name';
+            nameSpan.textContent = '📎 ' + fileObj.name;
+            nameSpan.title = fileObj.name;
+            chip.appendChild(nameSpan);
+
+            const xBtn = document.createElement('button');
+            xBtn.type = 'button';
+            xBtn.className = 'context-file-chip-x';
+            xBtn.innerHTML = '&times;';
+            xBtn.title = 'Remove file';
+            xBtn.addEventListener('click', () => this._removeContextFile(index));
+            chip.appendChild(xBtn);
+
+            container.appendChild(chip);
+        });
+    }
+
+    // Remove a context file by index and rebuild
+    _removeContextFile(index) {
+        this._contextFiles.splice(index, 1);
+        this._rebuildSystemContextTextarea();
+        this._renderContextFileChips();
+
+        if (this.dom.systemContextTextarea) {
+            if (this._contextFiles.length === 0) {
+                this.dom.systemContextTextarea.classList.add('hidden');
+                const contextLabel = document.getElementById('system_context_label');
+                const contextBtn = document.getElementById('system_context_expand_btn');
+                if (contextLabel) contextLabel.classList.add('hidden');
+                if (contextBtn) contextBtn.classList.add('hidden');
+            }
+            if (!state.currentConfig) state.currentConfig = {};
+            state.currentConfig.system_context = this.dom.systemContextTextarea.value;
+            const mode = this.dom.contextMode ? this.dom.contextMode.value : 'always';
+            this._updateContextStatus(this.dom.systemContextTextarea.value, mode);
         }
     }
 
@@ -531,6 +655,52 @@ ${rawText}`;
             console.warn('[ConfigManager] Context embedding failed:', err);
             await lagoonAlert('RAG embedding unavailable — context will fall back to full injection');
         }
+    }
+
+    _updateContextStatus(contextText, contextMode) {
+        const statusEl = this.dom.contextStatus;
+        if (!statusEl) return;
+
+        if (!contextText) {
+            statusEl.classList.add('hidden');
+            statusEl.textContent = '';
+            return;
+        }
+
+        // Extract ALL filenames from [SYSTEM CONTEXT: filename] headers
+        const matches = [...contextText.matchAll(/\[SYSTEM CONTEXT: ([^\]]+)\]/g)];
+        const modeLabel = contextMode === 'rag' ? 'RAG' : 'Always';
+
+        if (matches.length === 0) {
+            statusEl.textContent = `📎 Context file (${modeLabel})`;
+        } else if (matches.length === 1) {
+            statusEl.textContent = `📎 ${matches[0][1]} (${modeLabel})`;
+        } else {
+            const names = matches.slice(0, 3).map(m => m[1]).join(', ');
+            const more = matches.length > 3 ? ` +${matches.length - 3} more` : '';
+            statusEl.textContent = `📎 ${matches.length} files: ${names}${more} (${modeLabel})`;
+        }
+        statusEl.classList.remove('hidden');
+    }
+
+    _updateSharedLoreStatus(sharedLore) {
+        const statusEl = this.dom.sharedLoreStatus;
+        if (!statusEl) return;
+
+        const loreArray = Array.isArray(sharedLore) ? sharedLore : (sharedLore ? [sharedLore] : []);
+
+        if (loreArray.length === 0) {
+            statusEl.classList.add('hidden');
+            statusEl.textContent = '';
+            return;
+        }
+
+        const count = loreArray.length;
+        const names = loreArray.slice(0, 3).join(', ');
+        const more = count > 3 ? ` +${count - 3} more` : '';
+
+        statusEl.textContent = `📚 Shared lore: ${names}${more}`;
+        statusEl.classList.remove('hidden');
     }
 }
 

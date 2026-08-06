@@ -1,0 +1,228 @@
+/* === Trio Mode Styles === */
+
+/* Participant Strip */
+.trio-participant-strip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+
+.participant-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    min-width: 120px;
+}
+
+.participant-card.active {
+    border-color: var(--participant-color, var(--accent));
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--participant-color, var(--accent)) 15%, var(--bg-tertiary));
+}
+
+.participant-card.interrupted {
+    animation: flash-red 0.5s ease 3;
+}
+
+@keyframes flash-red {
+    0%, 100% { background: var(--bg-tertiary); }
+    50% { background: rgba(239, 68, 68, 0.3); }
+}
+
+.participant-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    flex-shrink: 0;
+}
+
+.participant-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.participant-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.participant-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.participant-mood {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.mood-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: background-color 0.5s ease;
+}
+
+/* Let Them Talk button */
+.trio-let-them-talk-btn {
+    margin-left: auto;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.trio-let-them-talk-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Mood Picker Popup */
+.trio-mood-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    z-index: 10000;
+    max-width: 200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.trio-mood-picker .mood-option {
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.15s ease;
+}
+
+.trio-mood-picker .mood-option:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Trio Messages */
+.trio-message .message.assistant {
+    border-left: 3px solid var(--participant-color, #888);
+    padding-left: 12px;
+}
+
+.trio-message .message-sender {
+    color: var(--participant-color, #888);
+    font-weight: 600;
+}
+
+/* Interrupted messages */
+.trio-message.interrupted .message::after {
+    content: '▌';
+    animation: blink-cursor 0.8s infinite;
+    color: var(--participant-color, #888);
+    margin-left: 2px;
+}
+
+@keyframes blink-cursor {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* Interrupting messages (the one who cuts in) */
+.trio-message.interruption .message {
+    animation: slide-in-interrupt 0.3s ease;
+}
+
+@keyframes slide-in-interrupt {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Passive reactions */
+.trio-message.passive-reaction {
+    opacity: 0.7;
+}
+
+.trio-message.passive-reaction .message {
+    font-size: 0.9em;
+    font-style: italic;
+    border-left-style: dashed;
+}
+
+.trio-message.passive-reaction .message::before {
+    content: '↳ ';
+    opacity: 0.5;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .trio-participant-strip {
+        gap: 8px;
+        padding: 6px 10px;
+    }
+
+    .participant-card {
+        min-width: auto;
+        padding: 4px 8px;
+    }
+
+    .participant-info {
+        display: none;
+    }
+
+    .participant-card.active .participant-info {
+        display: flex;
+    }
+
+    .trio-let-them-talk-btn {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .participant-card,
+    .trio-message.interruption .message,
+    .trio-message.interrupted .message::after {
+        animation: none;
+        transition: none;
+    }
+}

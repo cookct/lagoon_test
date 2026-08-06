@@ -57,6 +57,13 @@ export const modelConfigs =
       },
       "ui_controls": ["dimensions", "quality"]
     },
+    "qwen-edit-uncensored": {
+      "provider": "venice",
+      "endpoint": "/images/edit",
+      "display_name": "Qwen Edit Uncensored",
+      "category": "edit",
+      "price_per_image": 0.04
+    },
     "e2ee-gemma-3-27b-p": {
       "provider": "venice",
       "display_name": "Gemma 3 27B (E2EE)",

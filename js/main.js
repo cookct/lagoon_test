@@ -7,6 +7,7 @@ import { store } from './core/Store.js';
 import { uiManager } from './core/UIManager.js';
 import { modelConfigManager } from './core/ModelConfigManager.js';
 import { chatManager } from './components/ChatManager.js';
+window.chatManager = chatManager;
 import { configManager } from './components/ConfigManager.js';
 import { sessionManager } from './components/SessionManager.js';
 import { initModalDraggability } from './utils/Draggable.js';
@@ -30,6 +31,8 @@ import { setupScrollDetection, handleScrollVisibility, autoScroll } from './ui/s
 
 import { showContextViewer, showSettingsMenu, filterModelDropdownForE2EE, toggleAppMode } from './ui/settings.js';
 
+import { trioManager } from './components/TrioManager.js';
+import { trioBuilder } from './components/TrioBuilder.js';
 import { imageModeManager } from './components/ImageModeManager.js';
 import { videoModeManager } from './components/VideoModeManager.js';
 import { togetherVideoModeManager } from './components/TogetherVideoModeManager.js';
@@ -74,6 +77,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     settingsPersistence.init();
     dualModelManager.init();
     zaiOptionsManager.init();
+    trioManager.init(state.currentConfig);
+    window.trioManager = trioManager;
+    trioBuilder.init();
+    window.trioBuilder = trioBuilder;
     const anchorsManager = new AnchorsManager();
     window.anchorsManager = anchorsManager;
     initWritingToolsPanel(anchorsManager);
@@ -279,6 +286,12 @@ function addGlobalListeners() {
         e.stopPropagation();
         showModelSelector(e.currentTarget);
     });
+
+    // Trio Builder button
+    const createTrioBtn = document.getElementById('create-trio-btn');
+    if (createTrioBtn) {
+        createTrioBtn.addEventListener('click', () => trioBuilder.open());
+    }
 
     if (dom.viewContextBtn) dom.viewContextBtn.addEventListener('click', showContextViewer);
     if (dom.closeContextBtn) dom.closeContextBtn.addEventListener('click', () => dom.contextModal.classList.add('hidden'));

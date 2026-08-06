@@ -1,6 +1,16 @@
 {
   "models": [
     {
+      "id": "qwen-edit-uncensored",
+      "name": "Qwen Edit Uncensored",
+      "provider": "venice",
+      "logo": "qwen",
+      "pricing": {
+        "input": 0,
+        "output": 0.04
+      }
+    },
+    {
       "id": "aion-labs.aion-2-0",
       "name": "Aion 2.0",
       "provider": "venice",
@@ -410,6 +420,17 @@
       }
     },
     {
+      "id": "MiniMaxAI/MiniMax-M3",
+      "name": "MiniMax M3 (Together)",
+      "provider": "together",
+      "logo": "minimaxai",
+      "pricing": {
+        "input": 0.30,
+        "output": 1.20,
+        "cacheRead": 0.06
+      }
+    },
+    {
       "id": "nvidia-nemotron-cascade-2-30b-a3b",
       "name": "Nemotron Cascade 2 30B A3B",
       "provider": "venice",
@@ -430,6 +451,17 @@
         "output": 3.75,
         "cacheRead": 0.06,
         "cacheWrite": 0.78
+      }
+    },
+    {
+      "id": "Qwen/Qwen3.6-Plus",
+      "name": "Qwen 3.6 Plus (Together)",
+      "provider": "together",
+      "logo": "qwen",
+      "context_tokens": 1000000,
+      "pricing": {
+        "input": 0.50,
+        "output": 3.00
       }
     },
     {

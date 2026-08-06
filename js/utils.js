@@ -27,8 +27,8 @@ export function initMarkdown() {
 export function parseMarkdown(text, searchResults = []) {
     if (!md) initMarkdown();
     
-    // Strip OOC nudges in double brackets ((like this)) from the UI
-    let cleanedText = text.replace(/\(\([\s\S]*?\)\)/g, '').trim();
+    // No longer stripping OOC nudges - show all content including ((...)) blocks
+    let cleanedText = text;
     
     // Strip various citation formats before rendering:
     // 1. "word.13 " or "word.56\n" - decimal citation style

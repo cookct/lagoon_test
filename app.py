@@ -11,14 +11,25 @@ from config import CHATS_DIR, CONFIG_DIR, MODEL_AVATARS_DIR, MAX_CONTENT_LENGTH,
 
 # --- Flask App Initialization ---
 app = Flask(__name__, template_folder='.')
-# Console logging only (no file output)
+
+# Console + File logging for trio (so Claude can read logs)
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s %(levelname)s: %(message)s'
 )
-app.logger.setLevel(logging.INFO)
+app.logger.setLevel(logging.DEBUG)
 logging.getLogger('httpx').setLevel(logging.WARNING)
-logging.getLogger('werkzeug').setLevel(logging.ERROR)
+logging.getLogger('werkzeug').setLevel(logging.INFO)
+
+# Add file handler for trio logs (Claude can read this)
+trio_log_file = os.path.join(os.path.dirname(__file__), 'logs', 'trio.log')
+os.makedirs(os.path.dirname(trio_log_file), exist_ok=True)
+trio_file_handler = logging.FileHandler(trio_log_file, mode='a')
+trio_file_handler.setLevel(logging.DEBUG)
+trio_file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
+# Apply to trio routes and services
+logging.getLogger('routes.trio').addHandler(trio_file_handler)
+logging.getLogger('services.trio').addHandler(trio_file_handler)
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 app.config['SECRET_KEY'] = 'lagoon-secret-key'
 app.config['TEMPLATES_AUTO_RELOAD'] = True  # Disable template caching
@@ -66,7 +77,7 @@ def logout():
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # --- Register Blueprints ---
-from routes import configs_bp, chats_bp, system_prompts_bp, files_bp, chat_bp, macros_bp, models_bp, anchors_bp, custom_endpoints_bp, design_bp, video_bp, together_video_bp
+from routes import configs_bp, chats_bp, system_prompts_bp, files_bp, chat_bp, macros_bp, models_bp, anchors_bp, custom_endpoints_bp, design_bp, video_bp, together_video_bp, trio_bp
 from services import installed_models as _im; _im.load()  # seed installed_models.json if missing
 
 app.register_blueprint(configs_bp)
@@ -81,6 +92,7 @@ app.register_blueprint(custom_endpoints_bp)
 app.register_blueprint(design_bp)
 app.register_blueprint(video_bp)
 app.register_blueprint(together_video_bp)
+app.register_blueprint(trio_bp)
 
 # --- Register Gemini Live Socket.IO handlers ---
 from routes.gemini_live import register_gemini_live

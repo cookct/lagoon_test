@@ -634,6 +634,7 @@
     <li><a href="#writing-tools">Writing Tools</a></li>
     <li><a href="#overseer">Overseer</a></li>
     <li><a href="#dual-model">Dual Model</a></li>
+    <li><a href="#trio-mode">Trio Mode</a></li>
     <li><a href="#export">Export</a></li>
     <li><a href="#providers">Providers</a></li>
     <li><a href="#voice">Voice</a></li>
@@ -1052,8 +1053,93 @@
 
   </div>
 </section>
+</section>
 
-<!-- ── Export ─────────────────────────────────────────────────── -->
+<!-- ── Trio Mode ──────────────────────────────────────────────────────────── -->
+<section id="trio-mode">
+  <div class="container">
+    <span class="section-tag">Trio Mode</span>
+    <h2 class="section-title">Three-way conversations with emotional intelligence.</h2>
+    <p class="section-lead">
+      Trio Mode extends Dual Model into a full three-way conversation: you and two AI characters,
+      all in the same chat. Characters can interrupt each other, react passively, and track shifting
+      emotional states across turns — producing dialogue that feels alive rather than turn-based.
+    </p>
+
+    <div class="feature-row">
+      <div class="feature-text">
+        <h3>Session Builder</h3>
+        <p>
+          The Trio Session Builder lets you configure every aspect of a three-way conversation before
+          it starts. Pick two existing characters, define their relationship dynamics, set initial
+          emotional states, and toggle which interactive behaviours are active.
+        </p>
+        <p>
+          Every field has a hover tooltip explaining what it does — from patience thresholds to
+          ambient mode — so you never have to guess what an option controls.
+        </p>
+      </div>
+      <div class="feature-screenshot">
+        <img src="html_images/overview_trio.png" alt="Trio Session Builder">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="color:var(--text-bright); margin-bottom:1rem;">Relationship Dynamics</h3>
+      <p style="font-size:0.9rem; line-height:1.8;">
+        Define how each character feels about the other — <code>A &rarr; B</code> and
+        <code>B &rarr; A</code> dynamics are injected into each character's system prompt separately.
+        A shared history field gives both characters the same background context, so they reference
+        the same past events without contradiction.
+      </p>
+    </div>
+
+    <div class="panel" style="margin-top:1.5rem;">
+      <h3 style="color:var(--text-bright); margin-bottom:1rem;">Interactive Behaviours</h3>
+      <p style="font-size:0.9rem; line-height:1.8;">
+        <strong style="color:var(--text-bright);">Interruptions</strong> — The non-speaking character
+        can cut in mid-response once the speaker passes their patience threshold (configurable in
+        characters of dialogue). Lower thresholds produce more impulsive, reactive characters.<br><br>
+        <strong style="color:var(--text-bright);">Passive Reactions</strong> — The non-speaking
+        character produces body language, facial expressions, and muttered asides without taking a
+        full speaking turn. Adds texture and presence to the scene.<br><br>
+        <strong style="color:var(--text-bright);">Emotional Tracking</strong> — Each character's
+        emotional state is tracked across turns and updated based on what happens in the conversation.
+        A character who starts <em>guarded</em> may shift to <em>vulnerable</em> after a confession,
+        and their subsequent responses reflect that shift in tone and word choice.<br><br>
+        <strong style="color:var(--text-bright);">Ambient Mode</strong> — Both characters respond to
+        every user message simultaneously rather than taking turns. Useful for compare-and-contrast
+        scenes where you want both perspectives at once.
+      </p>
+    </div>
+
+    <div class="panel" style="margin-top:1.5rem;">
+      <h3 style="color:var(--text-bright); margin-bottom:1rem;">Turn Management</h3>
+      <p style="font-size:0.9rem; line-height:1.8;">
+        <strong style="color:var(--text-bright);">Max Consecutive Turns</strong> prevents one
+        character from monopolising the conversation — after the limit, the other character is
+        forced to respond.<br><br>
+        <strong style="color:var(--text-bright);">Let Them Talk</strong> mode runs rounds of
+        back-and-forth dialogue between the two characters without user input, then yields control
+        back to you. Set the number of rounds (1–6) in the builder.
+      </p>
+    </div>
+
+    <div class="panel" style="margin-top:1.5rem;">
+      <h3 style="color:var(--text-bright); margin-bottom:1rem;">Participant Strip</h3>
+      <p style="font-size:0.9rem; line-height:1.8;">
+        A coloured participant strip at the top of the chat shows both characters, their current
+        emotional state, and who is actively speaking. Trio configs are badged with a
+        <span style="background:var(--accent); color:white; padding:1px 6px; border-radius:8px; font-size:0.75em;">TRIO</span>
+        tag in the sidebar, and the right-click context menu offers "Edit Trio Session" to reopen
+        the builder and adjust any setting mid-conversation.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Export ─────────────────────────────────────────────────────────────── -->
 <section id="export">
   <div class="container">
     <span class="section-tag">Export</span>

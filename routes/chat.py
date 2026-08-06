@@ -20,7 +20,8 @@ from services.context import (
     manage_context, trigger_background_summarization, load_cached_summary, count_message_tokens,
     load_summary_stack, append_to_summary_stack, delete_summary_entry,
     generate_detailed_summary, _sync_to_disk, build_summary_messages, approve_pending_summary,
-    _generate_summary, strip_cot_from_messages
+    _generate_summary, strip_cot_from_messages,
+    _load_summary_file, _save_summary_file, _summary_cache
 )
 from services.anchors import scan_and_inject as lore_scan, mark_aware as lore_mark_aware, strip_lore_updates, get_matched_entries as lore_get_matched
 from services.rag import retrieve as rag_retrieve, trigger_background_chunking, invalidate_rag_store
@@ -898,6 +899,78 @@ def save_chat():
 
     except Exception as e:
         logger.error(f"!!! CRITICAL ERROR in /api/save_chat: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@chat_bp.route('/api/copy_chat_metadata', methods=['POST'])
+def copy_chat_metadata():
+    """Copy summary stack and RAG files when forking a chat.
+    
+    Copies metadata from source chat to target chat, adjusting summaries
+    to only include messages that exist in the forked conversation.
+    """
+    data = request.json
+    source_chat_id = data.get('source_chat_id')
+    target_chat_id = data.get('target_chat_id')
+    message_count = data.get('message_count')  # Number of messages in forked chat
+    
+    if not source_chat_id or not target_chat_id:
+        return jsonify({"error": "source_chat_id and target_chat_id required"}), 400
+    
+    try:
+        # Copy summary stack, filtering to only include summaries for messages in the fork
+        source_summary_path = os.path.join(CHATS_DIR, '.summaries', f'{source_chat_id}.json.summary.json')
+        if os.path.exists(source_summary_path):
+            with open(source_summary_path, 'r') as f:
+                summary_data = json.load(f)
+            
+            # Filter summaries to only those fully contained in the forked messages
+            # A summary covers messages up to a certain point - we keep summaries where
+            # the cumulative message count doesn't exceed the fork's message count
+            filtered_summaries = []
+            cumulative = 0
+            for summary in summary_data.get('summaries', []):
+                msg_count = summary.get('message_count', 0)
+                if cumulative + msg_count <= message_count:
+                    filtered_summaries.append(summary)
+                    cumulative += msg_count
+                else:
+                    # Stop once we hit a summary that would exceed the fork
+                    break
+            
+            if filtered_summaries:
+                target_summary_path = os.path.join(CHATS_DIR, '.summaries', f'{target_chat_id}.json.summary.json')
+                with open(target_summary_path, 'w') as f:
+                    json.dump({"summaries": filtered_summaries}, f, indent=2)
+        
+        # Copy RAG store (semantic memory for the conversation)
+        source_rag_path = os.path.join(CHATS_DIR, '.rag', f'{source_chat_id}.json.rag.json')
+        if os.path.exists(source_rag_path):
+            # For RAG, we need to filter chunks to only those from messages in the fork
+            with open(source_rag_path, 'r') as f:
+                rag_data = json.load(f)
+            
+            # RAG chunks have metadata about which message they came from
+            # Filter to only keep chunks from messages within the fork
+            if isinstance(rag_data, list):
+                filtered_rag = [chunk for chunk in rag_data 
+                               if chunk.get('message_index', float('inf')) < message_count]
+            elif isinstance(rag_data, dict) and 'chunks' in rag_data:
+                filtered_rag = {'chunks': [c for c in rag_data['chunks'] 
+                                          if c.get('message_index', float('inf')) < message_count]}
+            else:
+                filtered_rag = rag_data
+            
+            if filtered_rag and (isinstance(filtered_rag, list) and len(filtered_rag) > 0 or
+                                isinstance(filtered_rag, dict) and len(filtered_rag.get('chunks', [])) > 0):
+                target_rag_path = os.path.join(CHATS_DIR, '.rag', f'{target_chat_id}.json.rag.json')
+                with open(target_rag_path, 'w') as f:
+                    json.dump(filtered_rag, f)
+        
+        return jsonify({"success": True, "message": "Metadata copied"})
+    
+    except Exception as e:
+        logger.error(f"Error copying chat metadata: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
 
@@ -2046,6 +2119,35 @@ def delete_summary_route():
     # No disk rebuild needed — the chat file already has only raw messages.
     # The stack file was already updated by delete_summary_entry().
     return jsonify({"success": True})
+
+
+@chat_bp.route('/api/update_summary', methods=['POST'])
+def update_summary_route():
+    """Update the text of a pending-review summary before approval."""
+    data = request.json
+    chat_id = data.get('chat_id')
+    summary_id = data.get('summary_id')
+    new_text = data.get('text', '').strip()
+
+    if not chat_id or not summary_id or not new_text:
+        return jsonify({"error": "chat_id, summary_id, and text required"}), 400
+
+    file_data = _load_summary_file(chat_id)
+    if not file_data:
+        return jsonify({"error": "No summaries found"}), 404
+
+    entry = next((s for s in file_data.get('summaries', []) if s.get('id') == summary_id), None)
+    if not entry:
+        return jsonify({"error": "Summary not found"}), 404
+
+    if not entry.get('pending_review'):
+        return jsonify({"error": "Can only edit pending summaries"}), 400
+
+    entry['text'] = new_text
+    _save_summary_file(chat_id, file_data)
+    _summary_cache[chat_id] = file_data
+
+    return jsonify({"success": True, "summary": entry})
 
 
 @chat_bp.route('/api/approve_summary', methods=['POST'])

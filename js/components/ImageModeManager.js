@@ -22,6 +22,7 @@ const IMAGE_PRICES = {
     'wan-2-7-pro-edit': 0.09,
     'qwen-image-2-edit': 0.05,
     'qwen-image-2-pro-edit': 0.10,
+    'qwen-edit-uncensored': 0.04,
     'seedream-v5-lite-edit': 0.05,
     'seedream-v4-edit': 0.05,
     'seedream-v4': 0.05,
@@ -309,7 +310,7 @@ export class ImageModeManager {
         const isGemini = selectedModel.startsWith('gemini-') || selectedModel.startsWith('nano-');
         
         // Edit models should not show dimension params
-        const editModels = ['qwen-image-2-edit', 'seedream-v5-lite-edit', 'seedream-v4-edit', 'firered-image-edit', 'gemini-3-pro-edit', 'nano-banana-pro-edit', 'grok-imagine-edit'];
+        const editModels = ['qwen-image-2-edit', 'qwen-image-2-pro-edit', 'qwen-edit-uncensored', 'seedream-v5-lite-edit', 'seedream-v4-edit', 'firered-image-edit', 'gemini-3-pro-edit', 'nano-banana-pro-edit', 'grok-imagine-edit'];
         const isEditModel = editModels.includes(selectedModel) || this.editModeActive;
 
         if (this.dom.upscalerParams) {
@@ -518,7 +519,7 @@ export class ImageModeManager {
 
         // Target-only models in the main area — no reference cards, just the target card.
         // Separate from masking modal models (editor-model-select in index.html).
-        const editModels = ['qwen-image-2-edit', 'firered-image-edit', 'gemini-3-pro-edit'];
+        const editModels = ['qwen-image-2-edit', 'qwen-image-2-pro-edit', 'qwen-edit-uncensored', 'firered-image-edit', 'gemini-3-pro-edit'];
 
         // Gather images based on model type
         let images = [];
@@ -527,17 +528,21 @@ export class ImageModeManager {
             // Edit mode: use the stored source image directly — no card needed
             images = [this.editSourceImage];
         } else if (editModels.includes(modelId)) {
-            // Edit models use the first loaded card: target → ref-1 → ref-2
-            let editImg = null;
-            for (const cardId of ['target', 'ref-1', 'ref-2']) {
+            // Edit models: gather all loaded images from checked cards.
+            // Card order: target first, then ref-1, ref-2.
+            // Backend routes to /image/edit (single) or /image/multi-edit (array)
+            // based on model capabilities — sends all, backend strips if needed.
+            const order = ['target', 'ref-1', 'ref-2'];
+            for (const cardId of order) {
+                const checkbox = document.querySelector(`.image-card-checkbox[data-target="${cardId}"]`);
+                if (checkbox && !checkbox.checked) continue;
                 const img = document.querySelector(`#preview-${cardId} img`);
-                if (img?.src) { editImg = img; break; }
+                if (img && img.src) images.push(img.src);
             }
-            if (!editImg) {
+            if (images.length === 0) {
                 await lagoonAlert(`Load an image in any card to use ${modelId}.`);
                 return;
             }
-            images = [editImg.src];
         } else {
             // Generate models: gather images from all cards with checked checkboxes.
             // Card order: target first, then references (reversed for API).

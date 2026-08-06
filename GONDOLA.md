@@ -13,7 +13,7 @@
 - [2026-06-22] The outline has four parts spanning ~220K words: Part One (Ch 1-20) covers Aen-Vhar's origin through the father's murder
 - [2026-06-22] Eldest son of a First One mother and her Vhor'keth. Born with more old blood than anyone before—powerful enough to almos
 - [2026-07-03] Models are configured with fields: id, name, provider, logo, and pricing object containing input/output/cacheRead rates 
-- ... (27 total, see deep store)
+- ... (42 total, see deep store)
 
 ## Decisions
 
@@ -27,23 +27,23 @@
 - [2026-06-22] Lore explicitly states Muggle-borns ARE descendants—the trait resurfaced in Hermione. Her blood is Aen-Vhar's blood. Hav
 - [2026-06-23] Pim invented the liberation theory and waited 2000 years. Dramatic logic demands Pim go first, not be freed last 'by cho
 - [2026-07-03] Use rAF-throttled updateStreamingDOM during active streaming, but call synchronous updateStreamingDOMImmediate for the f
-- [2026-05-31] The correct approach for message correction: keep the bad message object in its original position, reset its content to 
-- ... (12 total, see deep store)
+- [2026-07-04] The vocative wiring uses a comma-only rule for detection, not em-dash. Both the implementation and spec (§5.3) were upda
+- ... (15 total, see deep store)
 
 ## Patterns
 
 - [2026-04-20] Development workflow: Claude Code writes implementation plan → Gondola codes on a COPY of itself → user tests → if works
 - [2026-07-03] Use rAF-based throttling for streaming DOM updates so rapid SSE chunks coalesce into a single DOM update per animation f
 - [2026-07-04] Use try-with-temperature-first approach: attempt API call with temperature: 0.3, catch 400 error mentioning 'temperature
+- [2026-07-07] User wants roleplay/narrative content converted to formal legal transcripts suitable for court review. Strip stage direc
 - [2026-04-28] Writing style emphasizes physical sensation—heat through nightshirts, tingles, flinching, motor control loss. User provi
 - [2026-04-30] GPT-OSS 120B models still have OpenAI training embedded despite 'open source' labeling - they struggle with policy bound
 - [2026-05-06] Refusal recovery (Priority 100) catches phrases like 'I cannot', 'I'm unable', 'I apologize but' and injects override in
 - [2026-05-08] MODEL_LOGOS in state.js stores SVG logo references. When adding a model with a new provider (e.g., nvidia), must add the
 - [2026-05-26] Celebrity clients come via word-of-mouth referrals from mother-in-law who is a high-profile real estate agent
 - [2026-07-03] When adding a model: (1) add entry to installed_models.json, (2) check if logo exists in MODEL_LOGOS - add if missing. M
-- [2026-04-20] The wife has her own cash stash and secretly pays contractors when her husband refuses. She schedules work behind his ba
-- [2026-04-30] Grok 4.20 Beta escalates content intensity aggressively without hesitation - each user comment triggers harder/more expl
-- ... (15 total, see deep store)
+- [2026-07-04] When building regex from known labels, alternatives must be sorted longest-first to prevent partial matching issues wher
+- ... (23 total, see deep store)
 
 ## Gotchas
 
@@ -55,12 +55,15 @@
 - [2026-05-08] Setting overflow-y: auto shows scrollbar even on empty inputs. Fix: JS toggles overflow-y to hidden by default, only swi
 - [2026-05-10] Hitting Byparr's /v1 endpoint for the first time triggers a ~5GB camoufox browser download from GitHub. This blocks all 
 - [2026-05-19] During transaction buffering, search and read operations see the disk file content, not the staged/buffered changes. Edi
-- ... (24 total, see deep store)
+- ... (47 total, see deep store)
 
 ## Active Context
 
-- [2026-06-23] Pim has been bowing to children, cleaning vomit at the Yule Ball, folding robes of boys who became Voldemort's followers
-- [2026-07-03] Models from Venice endpoint use provider: 'venice' in config. Added models: xiaomi-mimo-v2-5, minimax-m3-preview, claude
+- [2026-08-04] User's ongoing story has 12 characters with full continuity tracking: 5 main (Adam, Kelly, Simon, Nathan, Hailey) and 7 
+- [2026-08-04] User is AuDHD Level 1 + ADHD + Hyper-Sexuality + 133IQ. Self-directed learner (read at 3, rode 2-wheeler at 4). Identifi
+- [2026-07-29] User spent months tuning 'Lagoon uncensored' model. It's described as 'super uncensored' - only the strictest Anthropic 
+- [2026-07-26] Image models dropdown is hardcoded in index.html (lines 308-340), NOT dynamically populated from installed_models.json o
+- [2026-07-31] Session cleared by user. Tasks covered: look at this photo and stand by. this is a pic of a lagoon assistant response. |
 
 ## Preferences
 
@@ -68,7 +71,9 @@
 - [2026-04-20] Uses GLM 5 for most tasks, escalates to 5.1 after 2 failed attempts on difficult tasks. Endpoint choice: Z.ai for raw we
 - [2026-04-19] User prefers uncensored AI platforms (praised Grok for 'giving no fucks' about adult content) and is frustrated by tiere
 - [2026-05-26] Appreciates clients who treat him casually; stayed professional when tested with a celebrity 'feel test' about a Broadwa
+- [2026-07-07] User expects inconsistencies to be identified and fixed without being asked - like removing lines where a character seem
+- [2026-07-26] User expects architecture memory and semantic search to be utilized before asking questions - mentioned as reason for to
 
 ## Key Files
-installed_models.js, state.js, js/ui/settings.js, ChatManager.js, routes/chat.py, app.py, chats.py, scroll.js, js/components/ChatManager.js, chat.py, mobile.js, js/main.js
+js/core/modelConfigs.js, js/components/ImageModeManager.js, app.py, Trio.py, js/main.js, state.js, modelConfigs.js, Adam.js, ../utils.js, chats.py, installed_models.js, trio.py, js/components/ChatManager.js, index.html, chat.py
 

@@ -114,6 +114,14 @@ async function renderSidebar(configs, chats) {
         nameSpan.textContent = configFile === 'dual-model' ? 'Dual Conversations' : configName;
         summaryLeft.appendChild(nameSpan);
 
+        // Badge for trio configs
+        if (configData?.mode === 'trio') {
+            const trioBadge = document.createElement('span');
+            trioBadge.style.cssText = 'font-size:0.6em;background:var(--accent);color:white;padding:1px 5px;border-radius:8px;margin-left:6px;vertical-align:middle;';
+            trioBadge.textContent = 'TRIO';
+            summaryLeft.appendChild(trioBadge);
+        }
+
         const optionsBtn = document.createElement('button');
         optionsBtn.classList.add('options-btn');
         optionsBtn.innerHTML = '&#8801;';
@@ -374,7 +382,7 @@ async function deleteChat(chatId) {
     }
 }
 
-function showContextMenu(button, configFile) {
+async function showContextMenu(button, configFile) {
     document.querySelectorAll('.context-menu').forEach(menu => menu.remove());
     
     const menu = document.createElement('div');
@@ -402,6 +410,18 @@ function showContextMenu(button, configFile) {
         const { configManager } = await import('../components/ConfigManager.js');
         configManager.loadConfigToForm(configFile);
     };
+
+    // Check if this is a trio config — if so, offer "Edit Trio" instead
+    const configData = await fetchConfig(configFile);
+    const isTrio = configData?.mode === 'trio';
+    if (isTrio) {
+        editButton.textContent = 'Edit Trio Session';
+        editButton.onclick = async () => {
+            menu.remove();
+            const { trioBuilder } = await import('../components/TrioBuilder.js');
+            trioBuilder.open(configFile);
+        };
+    }
 
     const copyButton = document.createElement('button');
     copyButton.textContent = 'Copy Character';

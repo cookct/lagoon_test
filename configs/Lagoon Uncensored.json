@@ -12,7 +12,7 @@
     "max_tokens": 40000,
     "author_note": "",
     "author_note_depth": 4,
-    "enable_web_search": true,
+    "enable_web_search": false,
     "include_venice_system_prompt": false,
     "uncensored_mode": false,
     "strip_thinking": false,
